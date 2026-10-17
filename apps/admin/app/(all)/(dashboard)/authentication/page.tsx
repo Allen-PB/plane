@@ -173,6 +173,6 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - PathBuilder Web" }];
+export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - PathBuilder Sync Web" }];
 
 export default InstanceAuthenticationPage;

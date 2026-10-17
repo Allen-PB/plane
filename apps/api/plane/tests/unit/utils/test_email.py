@@ -3,8 +3,37 @@
 # See the LICENSE file for details.
 
 import pytest
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email import attach_invitation_logo, generate_plain_text_from_html
+
+
+@pytest.mark.unit
+class TestInvitationLogo:
+    @pytest.mark.parametrize("dark_background,template_name", [
+        (True, "workspace_invitation.html"), (False, "project_invitation.html"),
+    ])
+    def test_logo_is_embedded_with_matching_cid(self, dark_background, template_name):
+        message = EmailMultiAlternatives(
+            subject="Invitation", body="Join PathBuilder on PathBuilder Sync",
+            from_email="sender@example.invalid", to=["invitee@example.invalid"],
+        )
+        html = render_to_string(f"emails/invitations/{template_name}", {"workspace_name": "PathBuilder"})
+        assert 'src="cid:pathbuilder-sync-logo"' in html
+        assert 'alt="PathBuilder Sync"' in html
+        message.attach_alternative(html, "text/html")
+        attach_invitation_logo(message, dark_background=dark_background)
+
+        mime_message = message.message()
+        assert mime_message.get_content_type() == "multipart/related"
+        images = [part for part in mime_message.walk() if part.get_content_type() == "image/png"]
+        assert len(images) == 1
+        assert images[0]["Content-ID"] == "<pathbuilder-sync-logo>"
+        assert images[0].get_content_disposition() == "inline"
+        assert images[0].get_payload(decode=True).startswith(b"\x89PNG\r\n\x1a\n")
+        assert any(part.get_content_type() == "text/plain" for part in mime_message.walk())
+        assert any(part.get_content_type() == "text/html" for part in mime_message.walk())
 
 
 @pytest.mark.unit

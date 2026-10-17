@@ -67,15 +67,15 @@ export function AuthHeaderBase(props: TAuthHeaderBase) {
   const { pageTitle, additionalAction } = props;
   return (
     <>
-      <PageHead title={pageTitle + " - PathBuilder"} />
+      <PageHead title={pageTitle + " - PathBuilder Sync"} />
       <div className="sticky top-0 flex w-full flex-shrink-0 items-center justify-between gap-6">
-        <Link href="/">
+        <Link href="/" className="min-w-0">
           <img
             src="/branding/pathbuilder-lockup.svg"
-            alt="PathBuilder"
+            alt="PathBuilder Sync"
             height={28}
-            width={149}
-            className="dark:invert"
+            width={201}
+            className="h-auto w-[201px] max-w-full dark:invert"
           />
         </Link>
         {additionalAction}

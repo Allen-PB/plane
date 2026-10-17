@@ -19,9 +19,9 @@ with sync_playwright() as p:
  page.on('pageerror',lambda error:errors.append(str(error)))
  response=page.goto('http://127.0.0.1:3000/',wait_until='networkidle')
  assert response.status==200
- assert 'PathBuilder' in page.title(),page.title()
- assert page.get_by_text('PathBuilder · Plan. Build. Grow.').is_visible()
- assert page.get_by_role('img', name='PathBuilder', exact=True).count()>0
+ assert 'PathBuilder Sync' in page.title(),page.title()
+ assert page.get_by_text('PathBuilder Sync · Plan. Build. Grow.').is_visible()
+ assert page.get_by_role('img', name='PathBuilder Sync', exact=True).count()>0
  assert 'Join 10,000+' not in page.locator('body').inner_text()
  page.screenshot(path=str(out/'login-desktop.png'),full_page=True)
  page.evaluate("localStorage.setItem('theme','dark')");page.reload(wait_until='networkidle')
@@ -30,7 +30,7 @@ with sync_playwright() as p:
  page.set_viewport_size({'width':390,'height':844});page.reload(wait_until='networkidle')
  assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
  page.screenshot(path=str(out/'login-mobile.png'),full_page=True)
- for asset in ['pathbuilder-email-dark.png','pathbuilder-email-white.png','pathbuilder-mark.svg','pathbuilder-lockup.svg']:
+ for asset in ['pathbuilder-sync-email-dark.png','pathbuilder-sync-email-white.png','pathbuilder-mark.svg','pathbuilder-lockup.svg']:
   response=context.request.get('http://127.0.0.1:3000/branding/'+asset)
   assert response.status==200,(asset,response.status)
   assert response.headers.get('content-type','').startswith('image/'),response.headers

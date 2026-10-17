@@ -61,7 +61,7 @@ export const InstanceProvider = observer(function InstanceProvider({ children }:
             <img
               src={patternBackground}
               className="h-full w-screen object-cover"
-              alt="PathBuilder background pattern"
+              alt="PathBuilder Sync background pattern"
             />
           </div>
           <div className="relative z-10 flex-grow">

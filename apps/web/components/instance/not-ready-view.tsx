@@ -31,13 +31,13 @@ export function InstanceNotReady() {
         {/* Main content */}
         <div className="flex h-full w-full flex-col items-center px-8 pt-6 pb-10">
           <div className="sticky top-0 flex w-full shrink-0 items-center justify-between gap-6">
-            <PlaneLockup height={20} width={95} className="text-primary" />
+            <PlaneLockup height={24} width={173} className="text-primary" />
           </div>
           <div className="flex h-full w-full flex-col items-center justify-center gap-7">
             <div className="flex flex-col items-center gap-11">
               <PlaneLogo className="h-24 w-24 text-primary" />
               <div className="flex max-w-124 flex-col items-center gap-3">
-                <h1 className="text-h2-semibold text-primary">Welcome to PathBuilder</h1>
+                <h1 className="text-h2-semibold text-primary">Welcome to PathBuilder Sync</h1>
                 <p className="text-center text-body-md-regular text-secondary">
                   Set up your instance and create your first workspace to begin managing projects and work.
                 </p>

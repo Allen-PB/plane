@@ -1,7 +1,7 @@
 {
-  "name": "PathBuilder",
-  "short_name": "PathBuilder",
-  "description": "PathBuilder helps you plan your issues, cycles, and product modules.",
+  "name": "PathBuilder Sync",
+  "short_name": "PB Sync",
+  "description": "PathBuilder Sync helps you plan your issues, cycles, and product modules.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f9fafb",

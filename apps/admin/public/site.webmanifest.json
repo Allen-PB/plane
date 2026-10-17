@@ -1,7 +1,7 @@
 {
-  "name": "PathBuilder God Mode",
-  "short_name": "PathBuilder God Mode",
-  "description": "PathBuilder helps you plan your issues, cycles, and product modules.",
+  "name": "PathBuilder Sync God Mode",
+  "short_name": "PathBuilder Sync God Mode",
+  "description": "PathBuilder Sync helps you plan your issues, cycles, and product modules.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f9fafb",

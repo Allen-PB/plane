@@ -32,7 +32,7 @@
     "empty_state": {
       "upgrade": {
         "title": "Controlează haosul schimbărilor și evaluărilor cu Fluxuri de lucru.",
-        "description": "Setează reguli pentru unde se mută lucrul tău, de către cine și când cu Fluxuri de lucru în PathBuilder."
+        "description": "Setează reguli pentru unde se mută lucrul tău, de către cine și când cu Fluxuri de lucru în PathBuilder Sync."
       }
     },
     "quick_actions": {

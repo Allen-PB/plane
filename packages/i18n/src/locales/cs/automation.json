@@ -14,7 +14,7 @@
       "sidebar_header": "Konfigurace spouštěče",
       "input_label": "Co je spouštěčem této automatizace?",
       "input_placeholder": "Vyberte možnost",
-      "section_plane_events": "Události PathBuilder",
+      "section_plane_events": "Události PathBuilder Sync",
       "section_time_based": "Časově založené",
       "fixed_schedule": "Pevný rozvrh",
       "schedule": {

@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Dokumentieren mit KI-gestützten Seiten",
-        "description": "Seiten in PathBuilder ermöglichen es Ihnen, Projektinformationen zu erfassen, zu organisieren und daran zusammenzuarbeiten—ohne externe Tools."
+        "description": "Seiten in PathBuilder Sync ermöglichen es Ihnen, Projektinformationen zu erfassen, zu organisieren und daran zusammenzuarbeiten—ohne externe Tools."
       },
       "step_one": {
         "title": "Seite als Öffentlich oder Privat festlegen",
@@ -95,7 +95,7 @@
     "intake": {
       "step_zero": {
         "title": "Anfragen mit Intake optimieren",
-        "description": "Eine PathBuilder-exklusive Funktion, mit der Gäste Arbeitselemente für Fehler, Anfragen oder Tickets erstellen können."
+        "description": "Eine PathBuilder Sync-exklusive Funktion, mit der Gäste Arbeitselemente für Fehler, Anfragen oder Tickets erstellen können."
       },
       "step_one": {
         "title": "Offene/geschlossene Intake-Anfragen",
@@ -154,7 +154,7 @@
   },
   "get_started": {
     "title": "Hallo {name}, willkommen an Bord!",
-    "description": "Hier ist alles, was Sie brauchen, um Ihre Reise mit PathBuilder zu starten.",
+    "description": "Hier ist alles, was Sie brauchen, um Ihre Reise mit PathBuilder Sync zu starten.",
     "checklist_section": {
       "title": "Loslegen",
       "description": "Beginnen Sie mit der Einrichtung und sehen Sie, wie Ihre Ideen schneller zum Leben erwachen.",
@@ -188,8 +188,8 @@
       "more_integrations": "Weitere Integrationen durchsuchen"
     },
     "switch_to_plane_section": {
-      "title": "Entdecken Sie, warum Teams zu PathBuilder wechseln",
-      "description": "Vergleichen Sie PathBuilder mit den Tools, die Sie heute verwenden, und sehen Sie den Unterschied."
+      "title": "Entdecken Sie, warum Teams zu PathBuilder Sync wechseln",
+      "description": "Vergleichen Sie PathBuilder Sync mit den Tools, die Sie heute verwenden, und sehen Sie den Unterschied."
     }
   }
 }

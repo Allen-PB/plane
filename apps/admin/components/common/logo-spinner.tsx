@@ -8,7 +8,7 @@ import { PlaneLogo } from "@plane/blocks/icons";
 
 export function LogoSpinner() {
   return (
-    <div className="flex items-center justify-center" role="status" aria-label="Loading PathBuilder">
+    <div className="flex items-center justify-center" role="status" aria-label="Loading PathBuilder Sync">
       <PlaneLogo className="h-6 w-auto animate-pulse text-primary motion-reduce:animate-none sm:h-11" />
     </div>
   );

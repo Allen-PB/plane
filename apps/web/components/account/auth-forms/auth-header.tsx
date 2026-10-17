@@ -28,29 +28,29 @@ const Titles = {
   [EAuthModes.SIGN_IN]: {
     [EAuthSteps.EMAIL]: {
       header: "Work in all dimensions.",
-      subHeader: "Welcome back to PathBuilder.",
+      subHeader: "Welcome back to PathBuilder Sync.",
     },
     [EAuthSteps.PASSWORD]: {
       header: "Work in all dimensions.",
-      subHeader: "Welcome back to PathBuilder.",
+      subHeader: "Welcome back to PathBuilder Sync.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
       header: "Work in all dimensions.",
-      subHeader: "Welcome back to PathBuilder.",
+      subHeader: "Welcome back to PathBuilder Sync.",
     },
   },
   [EAuthModes.SIGN_UP]: {
     [EAuthSteps.EMAIL]: {
       header: "Work in all dimensions.",
-      subHeader: "Create your PathBuilder account.",
+      subHeader: "Create your PathBuilder Sync account.",
     },
     [EAuthSteps.PASSWORD]: {
       header: "Work in all dimensions.",
-      subHeader: "Create your PathBuilder account.",
+      subHeader: "Create your PathBuilder Sync account.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
       header: "Work in all dimensions.",
-      subHeader: "Create your PathBuilder account.",
+      subHeader: "Create your PathBuilder Sync account.",
     },
   },
 };

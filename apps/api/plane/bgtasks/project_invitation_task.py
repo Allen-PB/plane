@@ -16,7 +16,7 @@ from django.template.loader import render_to_string
 # Module imports
 from plane.db.models import Project, ProjectMemberInvite, User
 from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email import attach_invitation_logo, generate_plain_text_from_html
 from plane.utils.exception_logger import log_exception
 
 
@@ -32,7 +32,7 @@ def project_invitation(email, project_id, token, current_site, invitor):
 
         subject = (
             f"{user.first_name or user.display_name or user.email} invited you to join "
-            f"{project.name} on PathBuilder"
+            f"{project.name} on PathBuilder Sync"
         )
 
         context = {
@@ -79,6 +79,7 @@ def project_invitation(email, project_id, token, current_site, invitor):
         )
 
         msg.attach_alternative(html_content, "text/html")
+        attach_invitation_logo(msg, dark_background=False)
         msg.send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return
