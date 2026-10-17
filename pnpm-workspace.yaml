@@ -246,6 +246,7 @@ overrides:
   "yaml@2": 2.8.3
   # Pinned for Express 4 (apps/live), which needs path-to-regexp ~0.1.12.
   path-to-regexp: 0.1.13
+  "serve-handler>path-to-regexp": 3.3.0
   # Express 5's router needs path-to-regexp 8; the pin above would otherwise reach it
   # and break route matching at startup with `pathRegexp.match is not a function`.
   "router>path-to-regexp": "^8.4.2"
@@ -319,3 +320,6 @@ peerDependencyRules:
     # strict-peer-dependencies=false.
     "react-masonry-component>react": "19"
     "use-font-face-observer>react": "19"
+
+# Workspace output changes must not trigger concurrent reinstalls during Turbo builds.
+verifyDepsBeforeRun: false
