@@ -224,6 +224,7 @@ overrides:
   "yaml@1": 1.10.3
   "yaml@2": 2.8.3
   path-to-regexp: 0.1.13
+  "serve-handler>path-to-regexp": 3.3.0
   defu: 6.1.5
   postcss: 8.5.25
   axios: "catalog:"
@@ -252,10 +253,13 @@ allowBuilds:
   sharp: false
 
 minimumReleaseAgeExclude:
-  - '@storybook/addon-docs@10.4.6'
-  - '@storybook/builder-vite@10.4.6'
-  - '@storybook/csf-plugin@10.4.6'
-  - '@storybook/react-dom-shim@10.4.6'
-  - '@storybook/react-vite@10.4.6'
-  - '@storybook/react@10.4.6'
+  - "@storybook/addon-docs@10.4.6"
+  - "@storybook/builder-vite@10.4.6"
+  - "@storybook/csf-plugin@10.4.6"
+  - "@storybook/react-dom-shim@10.4.6"
+  - "@storybook/react-vite@10.4.6"
+  - "@storybook/react@10.4.6"
   - storybook@10.4.6
+
+# Workspace output changes must not trigger concurrent reinstalls during Turbo builds.
+verifyDepsBeforeRun: false

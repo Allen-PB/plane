@@ -176,7 +176,7 @@
         "title": "インテグレーション",
         "heading": "インテグレーション",
         "description": "人気のツールやサービスと接続して、ワークフローエコシステム全体で作業を同期します。",
-        "page_title": "Plane のデータを利用可能なアプリや自分のアプリで利用できます。",
+        "page_title": "PathBuilder のデータを利用可能なアプリや自分のアプリで利用できます。",
         "page_description": "このワークスペースまたはあなたが使用しているすべての連携を表示します。"
       },
       "imports": {
@@ -310,7 +310,7 @@
         },
         "app_created": {
           "title": "アプリが正常に作成されました",
-          "description": "認証情報を使用して、Plane ワークスペースにアプリをインストールしてください"
+          "description": "認証情報を使用して、PathBuilder ワークスペースにアプリをインストールしてください"
         },
         "installed_apps": "インストール済みアプリ",
         "all_apps": "すべてのアプリ",
@@ -351,7 +351,7 @@
         },
         "redirect_uris": {
           "label": "リダイレクトURI（スペース区切り）",
-          "description": "ユーザーは Plane で認証した後、このパスにリダイレクトされます。",
+          "description": "ユーザーは PathBuilder で認証した後、このパスにリダイレクトされます。",
           "placeholder": "https://example.com https://example.com/"
         },
         "app_available_description": "使用を開始するにはPlaneワークスペースに接続してください",
