@@ -5,9 +5,23 @@
 # Python imports
 import html
 import re
+from email.mime.image import MIMEImage
+from pathlib import Path
 
 # Django imports
 from django.utils.html import strip_tags
+from django.core.mail import EmailMultiAlternatives
+
+
+def attach_invitation_logo(message: EmailMultiAlternatives, *, dark_background: bool = True) -> None:
+    """Bundle the invitation wordmark so it needs no external image request."""
+    variant = "dark" if dark_background else "white"
+    asset = Path(__file__).resolve().parents[2] / "templates" / "emails" / "assets"
+    image = MIMEImage((asset / f"pathbuilder-sync-email-{variant}.png").read_bytes(), _subtype="png")
+    image.add_header("Content-ID", "<pathbuilder-sync-logo>")
+    image.add_header("Content-Disposition", "inline", filename="pathbuilder-sync-logo.png")
+    message.mixed_subtype = "related"
+    message.attach(image)
 
 
 def generate_plain_text_from_html(html_content):

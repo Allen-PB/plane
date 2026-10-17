@@ -5,7 +5,7 @@
       "not_right_now": "Teď ne",
       "create_project": {
         "title": "Vytvořit projekt",
-        "description": "Většina věcí začíná projektem v PathBuilder.",
+        "description": "Většina věcí začíná projektem v PathBuilder Sync.",
         "cta": "Začít"
       },
       "invite_team": {
@@ -19,7 +19,7 @@
         "cta": "Konfigurovat tento prostor"
       },
       "personalize_account": {
-        "title": "Přizpůsobte si PathBuilder.",
+        "title": "Přizpůsobte si PathBuilder Sync.",
         "description": "Vyberte si obrázek, barvy a další.",
         "cta": "Personalizovat nyní"
       },
@@ -53,7 +53,7 @@
       }
     },
     "new_at_plane": {
-      "title": "Novinky v PathBuilder"
+      "title": "Novinky v PathBuilder Sync"
     },
     "quick_tutorial": {
       "title": "Rychlý tutoriál"

@@ -114,8 +114,8 @@ class EmailCredentialCheckEndpoint(BaseAPIView):
             use_ssl=EMAIL_USE_SSL == "1",
         )
         # Prepare email details
-        subject = "Email Notification from PathBuilder"
-        message = "This is a sample email notification sent from PathBuilder application."
+        subject = "Email Notification from PathBuilder Sync"
+        message = "This is a sample email notification sent from PathBuilder Sync application."
         # Send the email
         try:
             msg = EmailMultiAlternatives(

@@ -7,7 +7,7 @@
 export function AuthFooter() {
   return (
     <div className="flex flex-col items-center gap-6">
-      <span className="text-center text-13 text-tertiary">PathBuilder · Plan. Build. Grow.</span>
+      <span className="text-center text-13 text-tertiary">PathBuilder Sync · Plan. Build. Grow.</span>
     </div>
   );
 }

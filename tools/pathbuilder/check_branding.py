@@ -4,6 +4,7 @@
 
 """Regression checks against the preview source before branding; no database required."""
 import ast
+import importlib.util
 import json
 import re
 import subprocess
@@ -30,10 +31,55 @@ def strings(value, prefix=()):
 
 
 class BrandingRegressionTests(unittest.TestCase):
+    def test_invitation_logo_is_embedded_for_both_backgrounds(self):
+        from django.conf import settings
+        from django.core.mail import EmailMultiAlternatives
+
+        if not settings.configured:
+            settings.configure(USE_I18N=False, USE_TZ=True)
+        spec = importlib.util.spec_from_file_location("branding_email", ROOT / "apps/api/plane/utils/email.py")
+        email_utils = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(email_utils)
+        for dark_background in (True, False):
+            with self.subTest(dark_background=dark_background):
+                message = EmailMultiAlternatives(
+                    subject="Invitation", body="Join PathBuilder on PathBuilder Sync",
+                    from_email="sender@example.invalid", to=["invitee@example.invalid"],
+                )
+                message.attach_alternative('<img src="cid:pathbuilder-sync-logo">', "text/html")
+                email_utils.attach_invitation_logo(message, dark_background=dark_background)
+                mime = message.message()
+                self.assertEqual(mime.get_content_type(), "multipart/related")
+                images = [part for part in mime.walk() if part.get_content_type() == "image/png"]
+                self.assertEqual(len(images), 1)
+                self.assertEqual(images[0]["Content-ID"], "<pathbuilder-sync-logo>")
+                self.assertEqual(images[0].get_content_disposition(), "inline")
+                variant = "dark" if dark_background else "white"
+                asset = ROOT / f"apps/api/templates/emails/assets/pathbuilder-sync-email-{variant}.png"
+                self.assertEqual(images[0].get_payload(decode=True), asset.read_bytes())
+
+    def test_invitation_distinguishes_workspace_from_product(self):
+        from django.conf import settings
+        from django.template import Context, Engine
+
+        if not settings.configured:
+            settings.configure(USE_I18N=False, USE_TZ=True)
+        engine = Engine(dirs=[str(ROOT / "apps/api/templates")])
+        template = engine.get_template("emails/invitations/workspace_invitation.html")
+        rendered = template.render(Context({
+            "first_name": "Test Admin", "workspace_name": "PathBuilder",
+            "email": "invitee@example.invalid", "abs_url": "http://localhost:8080/test-invite",
+        }))
+        self.assertIn("Join PathBuilder on PathBuilder Sync", rendered)
+        self.assertIn("<strong>PathBuilder</strong> workspace on PathBuilder Sync.", rendered)
+        self.assertIn('alt="PathBuilder Sync"', rendered)
+        self.assertIn('src="cid:pathbuilder-sync-logo"', rendered)
+        self.assertIn('href="http://localhost:8080/test-invite"', rendered)
+
     def test_auth_header_uses_pathbuilder_asset(self):
         text = (ROOT / "apps/web/components/auth-screens/header.tsx").read_text(encoding="utf-8")
         self.assertIn('src="/branding/pathbuilder-lockup.svg"', text)
-        self.assertIn('alt="PathBuilder"', text)
+        self.assertIn('alt="PathBuilder Sync"', text)
         self.assertNotIn("PlaneLockup", text)
 
     def test_main_header_has_no_github_star_button(self):
@@ -76,7 +122,7 @@ class BrandingRegressionTests(unittest.TestCase):
 
     def test_no_upstream_customer_endorsements_in_login_footer(self):
         text = (ROOT / "apps/web/components/auth-screens/footer.tsx").read_text()
-        self.assertIn("PathBuilder", text)
+        self.assertIn("PathBuilder Sync", text)
         for name in ["AccentureLogo", "SonyLogo", "DolbyLogo", "ZerodhaLogo", "10,000+"]:
             self.assertNotIn(name, text)
 

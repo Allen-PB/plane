@@ -11,4 +11,4 @@ export default function ForgotPasswordLayout() {
   return <Outlet />;
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Forgot Password - PathBuilder" }];
+export const meta: Route.MetaFunction = () => [{ title: "Forgot Password - PathBuilder Sync" }];

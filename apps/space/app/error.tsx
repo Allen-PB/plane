@@ -18,7 +18,7 @@ function ErrorPage() {
         <div className="space-y-2">
           <h3 className="text-16 font-semibold">Yikes! That doesn{"'"}t look good.</h3>
           <p className="mx-auto text-13 text-secondary md:w-1/2">
-            PathBuilder encountered an error. Try refreshing the page. If the problem continues, contact your
+            PathBuilder Sync encountered an error. Try refreshing the page. If the problem continues, contact your
             administrator.
           </p>
         </div>

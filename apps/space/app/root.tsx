@@ -24,8 +24,8 @@ import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wgh
 import "@fontsource/material-symbols-rounded";
 import "@fontsource/ibm-plex-mono";
 
-const APP_TITLE = "PathBuilder Publish | Make your PathBuilder boards public with one-click";
-const APP_DESCRIPTION = "Publish and share your PathBuilder boards.";
+const APP_TITLE = "PathBuilder Sync Publish | Make your PathBuilder Sync boards public with one-click";
+const APP_DESCRIPTION = "Publish and share your PathBuilder Sync boards.";
 
 export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },

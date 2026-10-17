@@ -19,7 +19,7 @@ export function PlaneLogo({ width = "52", height = "52", className, color = "cur
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       role="img"
-      aria-label="PathBuilder"
+      aria-label="PathBuilder Sync"
     >
       <path
         fillRule="evenodd"

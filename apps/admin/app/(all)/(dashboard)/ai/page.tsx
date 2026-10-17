@@ -27,7 +27,7 @@ const InstanceAIPage = observer(function InstanceAIPage(_props: Route.ComponentP
       header={{
         title: "AI features for all your workspaces",
         description:
-          "Configure your AI API credentials so PathBuilder AI features are turned on for all your workspaces.",
+          "Configure your AI API credentials so PathBuilder Sync AI features are turned on for all your workspaces.",
       }}
     >
       {formattedConfig ? (
