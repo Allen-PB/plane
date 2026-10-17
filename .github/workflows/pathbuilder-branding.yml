@@ -13,16 +13,17 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
-          version: 11.3.0
+          version: 11.10.0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec turbo run build --filter=web --filter=admin --filter=space --concurrency=1
+      - run: pnpm --filter @plane/blocks exec vitest run --project=dom src/icons/brand/pathbuilder.test.tsx
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - run: python -m pip install -r tools/pathbuilder/requirements.txt
       - run: python -m playwright install --with-deps chromium
       - run: |
@@ -32,7 +33,7 @@ jobs:
             sleep 1
           done
           python tools/pathbuilder/check_browser.py
-      - run: pnpm exec turbo run check:lint check:types --filter=web --filter=admin --filter=space --filter=@plane/propel --filter=@plane/constants --filter=@plane/i18n --concurrency=1
+      - run: pnpm exec turbo run check:lint check:types --filter=web --filter=admin --filter=space --filter=@plane/blocks --filter=@plane/constants --filter=@plane/i18n --concurrency=1
   branding-regressions:
     runs-on: ubuntu-latest
     steps:
@@ -41,6 +42,6 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - run: python -m pip install Django==5.2.15
       - run: python tools/pathbuilder/check_branding.py

@@ -17,7 +17,7 @@ with sync_playwright() as p:
  assert response.status==200
  assert 'PathBuilder' in page.title(),page.title()
  assert page.get_by_text('PathBuilder · Plan. Build. Grow.').is_visible()
- assert page.locator('svg[aria-label="PathBuilder"]').count()>0
+ assert page.get_by_role('img', name='PathBuilder', exact=True).count()>0
  assert 'Join 10,000+' not in page.locator('body').inner_text()
  page.screenshot(path=str(out/'login-desktop.png'),full_page=True)
  page.evaluate("localStorage.setItem('theme','dark')");page.reload(wait_until='networkidle')

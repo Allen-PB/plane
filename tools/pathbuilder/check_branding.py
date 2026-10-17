@@ -1,4 +1,4 @@
-"""Regression checks against the upstream v1.4.2 source; no database required."""
+"""Regression checks against the preview source before branding; no database required."""
 import ast
 import json
 import re
@@ -7,12 +7,13 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+BASELINE = "4e0e4038a176c335509b7d474f7cac4046b90e34"
 
 
 def upstream(path):
     relative = path.relative_to(ROOT).as_posix()
     return subprocess.check_output(
-        ["git", "show", f"v1.4.2:{relative}"], cwd=ROOT, text=True
+        ["git", "show", f"{BASELINE}:{relative}"], cwd=ROOT, text=True, encoding="utf-8"
     )
 
 
@@ -25,13 +26,23 @@ def strings(value, prefix=()):
 
 
 class BrandingRegressionTests(unittest.TestCase):
+    def test_auth_header_uses_pathbuilder_asset(self):
+        text = (ROOT / "apps/web/components/auth-screens/header.tsx").read_text(encoding="utf-8")
+        self.assertIn('src="/branding/pathbuilder-lockup.svg"', text)
+        self.assertIn('alt="PathBuilder"', text)
+        self.assertNotIn("PlaneLockup", text)
+
+    def test_main_header_has_no_github_star_button(self):
+        text = (ROOT / "apps/web/components/navigation/top-navigation-root.tsx").read_text(encoding="utf-8")
+        self.assertNotIn("StarUsOnGitHubLink", text)
+
     def test_translation_keys_and_placeholders_survive(self):
         paths = sorted((ROOT / "packages/i18n/src/locales").rglob("*.json"))
         self.assertGreater(len(paths), 100)
         for path in paths:
             with self.subTest(file=path.relative_to(ROOT)):
                 before = strings(json.loads(upstream(path)))
-                after = strings(json.loads(path.read_text()))
+                after = strings(json.loads(path.read_text(encoding="utf-8")))
                 self.assertEqual(before.keys(), after.keys())
                 for key in before:
                     if isinstance(before[key], str):
@@ -60,13 +71,13 @@ class BrandingRegressionTests(unittest.TestCase):
             self.assertEqual(expressions(before), expressions(after), path.name)
 
     def test_no_upstream_customer_endorsements_in_login_footer(self):
-        text = (ROOT / "apps/web/core/components/auth-screens/footer.tsx").read_text()
+        text = (ROOT / "apps/web/components/auth-screens/footer.tsx").read_text()
         self.assertIn("PathBuilder", text)
         for name in ["AccentureLogo", "SonyLogo", "DolbyLogo", "ZerodhaLogo", "10,000+"]:
             self.assertNotIn(name, text)
 
     def test_licenses_are_preserved(self):
-        for relative in ["packages/propel/src/icons/brand/plane-logo.tsx", "packages/propel/src/icons/brand/plane-lockup.tsx"]:
+        for relative in ["packages/blocks/src/icons/brand/plane-logo.tsx", "packages/blocks/src/icons/brand/plane-lockup.tsx"]:
             text = (ROOT / relative).read_text()
             self.assertIn("Copyright (c) 2023-present Plane Software", text)
             self.assertIn("AGPL-3.0-only", text)

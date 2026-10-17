@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { PlaneLogo } from "@plane/propel/icons";
+import { PlaneLogo } from "@plane/blocks/icons";
 
 export function LogoSpinner() {
   return (
