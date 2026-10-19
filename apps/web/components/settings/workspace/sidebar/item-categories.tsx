@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { Fragment } from "react";
 import { observer } from "mobx-react";
 import { FileUp } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -36,17 +37,6 @@ export const WorkspaceSettingsSidebarItemCategories = observer(function Workspac
 
   return (
     <div className="mt-3 flex flex-col divide-y divide-subtle px-3">
-      {allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE, workspaceSlug) && (
-        <div className="py-3">
-          <SettingsSidebarItem
-            as="link"
-            href={joinUrlPath(workspaceSlug ?? "", "settings/csv-import")}
-            isActive={pathname.includes("/settings/csv-import")}
-            icon={FileUp}
-            label="CSV Import"
-          />
-        </div>
-      )}
       {WORKSPACE_SETTINGS_CATEGORIES.map((category) => {
         const categoryItems = GROUPED_WORKSPACE_SETTINGS[category];
         const accessibleItems = categoryItems.filter((item) =>
@@ -68,14 +58,25 @@ export const WorkspaceSettingsSidebarItemCategories = observer(function Workspac
                     : new RegExp(`^/${workspaceSlug}${item.href}/`).test(pathname);
 
                 return (
-                  <SettingsSidebarItem
-                    key={item.key}
-                    as="link"
-                    href={joinUrlPath(workspaceSlug ?? "", item.href)}
-                    isActive={isItemActive}
-                    icon={WORKSPACE_SETTINGS_ICONS[item.key]}
-                    label={t(item.i18n_label)}
-                  />
+                  <Fragment key={item.key}>
+                    <SettingsSidebarItem
+                      as="link"
+                      href={joinUrlPath(workspaceSlug ?? "", item.href)}
+                      isActive={isItemActive}
+                      icon={WORKSPACE_SETTINGS_ICONS[item.key]}
+                      label={t(item.i18n_label)}
+                    />
+                    {item.key === "export" &&
+                      allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE, workspaceSlug) && (
+                        <SettingsSidebarItem
+                          as="link"
+                          href={joinUrlPath(workspaceSlug ?? "", "settings/csv-import")}
+                          isActive={pathname.includes("/settings/csv-import")}
+                          icon={FileUp}
+                          label="CSV Import"
+                        />
+                      )}
+                  </Fragment>
                 );
               })}
             </div>
