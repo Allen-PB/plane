@@ -70,6 +70,8 @@ export function CSVImportRoot({ workspaceSlug }: { workspaceSlug: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const submitting = useRef(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [selectedFileName, setSelectedFileName] = useState("");
   const running = job?.status === "queued" || job?.status === "processing";
   const jobId = job?.id;
   const draft = job?.status === "draft";
@@ -216,17 +218,26 @@ export function CSVImportRoot({ workspaceSlug }: { workspaceSlug: string }) {
       )}
       {projectId && metadataLoading && <p role="status">Loading project fields, states and labels…</p>}
       {metadata && !job && (
-        <label htmlFor="csv-import-upload" className="flex flex-col gap-2">
-          Upload CSV
-          <Input
+        <div className="flex flex-col gap-3 rounded-lg border border-subtle p-4">
+          <label htmlFor="csv-import-upload" className="text-body-md-medium">
+            Upload CSV
+          </label>
+          <p id="csv-import-upload-help" className="text-body-sm-regular text-secondary">
+            Choose a .csv file up to 5 MB. You can preview and map its columns before importing.
+          </p>
+          <input
+            ref={fileInput}
             id="csv-import-upload"
-            size="lg"
+            className="sr-only"
             type="file"
             accept=".csv,text/csv"
+            tabIndex={-1}
+            aria-describedby="csv-import-upload-help"
             disabled={busy}
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (!file) return;
+              setSelectedFileName(file.name);
               if (file.size > 5 * 1024 * 1024) {
                 setError("CSV must be at most 5 MB.");
                 return;
@@ -236,7 +247,21 @@ export function CSVImportRoot({ workspaceSlug }: { workspaceSlug: string }) {
               });
             }}
           />
-        </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              size="lg"
+              variant="primary"
+              stretch="auto"
+              label={busy ? "Uploading CSV…" : "Choose CSV file"}
+              disabled={busy}
+              onClick={() => fileInput.current?.click()}
+            />
+            <span role="status" className="min-w-0 text-body-sm-regular break-all text-secondary">
+              {selectedFileName || "No file selected"}
+            </span>
+          </div>
+        </div>
       )}
       {job && (
         <>
