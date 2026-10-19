@@ -52,6 +52,8 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
+import { WorkItemFieldGuidance } from "./components/field-guidance";
+import type { WorkItemGuidanceField } from "./components/field-guidance";
 
 export interface IssueFormProps {
   data?: Partial<TIssue>;
@@ -104,6 +106,9 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
 
   // states
   const [gptAssistantModal, setGptAssistantModal] = useState(false);
+  const [openGuidance, setOpenGuidance] = useState<WorkItemGuidanceField | null>(null);
+  const changeGuidance = (field: WorkItemGuidanceField, open: boolean) =>
+    setOpenGuidance((current) => (open ? field : current === field ? null : current));
   const [isMoving, setIsMoving] = useState<boolean>(false);
 
   // refs
@@ -383,34 +388,49 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   setSelectedParentIssue={setSelectedParentIssue}
                 />
               )}
-              <IssueTitleInput
-                control={control}
-                issueTitleRef={issueTitleRef}
-                formState={formState}
-                handleFormChange={handleFormChange}
-              />
+              <div>
+                <WorkItemFieldGuidance
+                  field="title"
+                  open={openGuidance === "title"}
+                  onOpenChange={(open) => changeGuidance("title", open)}
+                />
+                <IssueTitleInput
+                  control={control}
+                  issueTitleRef={issueTitleRef}
+                  formState={formState}
+                  handleFormChange={handleFormChange}
+                />
+              </div>
             </DialogHeader>
             <DialogBody tabIndex={0} render={<div className="vertical-scrollbar scrollbar-sm" />}>
-              <IssueDescriptionEditor
-                control={control}
-                isDraft={isDraft}
-                issueName={watch("name")}
-                issueId={data?.id}
-                descriptionHtmlData={data?.description_html}
-                editorRef={editorRef}
-                submitBtnRef={submitBtnRef}
-                gptAssistantModal={gptAssistantModal}
-                workspaceSlug={workspaceSlug?.toString()}
-                projectId={projectId}
-                handleFormChange={handleFormChange}
-                handleDescriptionHTMLDataChange={(description_html) =>
-                  setValue<"description_html">("description_html", description_html)
-                }
-                setGptAssistantModal={setGptAssistantModal}
-                handleGptAssistantClose={() => reset(getValues())}
-                onAssetUpload={onAssetUpload}
-                onClose={onClose}
+              <WorkItemFieldGuidance
+                field="description"
+                open={openGuidance === "description"}
+                onOpenChange={(open) => changeGuidance("description", open)}
               />
+              <div role="group" aria-labelledby="work-item-description-label">
+                <IssueDescriptionEditor
+                  guidanceOpen={openGuidance !== null}
+                  control={control}
+                  isDraft={isDraft}
+                  issueName={watch("name")}
+                  issueId={data?.id}
+                  descriptionHtmlData={data?.description_html}
+                  editorRef={editorRef}
+                  submitBtnRef={submitBtnRef}
+                  gptAssistantModal={gptAssistantModal}
+                  workspaceSlug={workspaceSlug?.toString()}
+                  projectId={projectId}
+                  handleFormChange={handleFormChange}
+                  handleDescriptionHTMLDataChange={(description_html) =>
+                    setValue<"description_html">("description_html", description_html)
+                  }
+                  setGptAssistantModal={setGptAssistantModal}
+                  handleGptAssistantClose={() => reset(getValues())}
+                  onAssetUpload={onAssetUpload}
+                  onClose={onClose}
+                />
+              </div>
             </DialogBody>
             <div className="shrink-0">
               <IssueDefaultProperties
