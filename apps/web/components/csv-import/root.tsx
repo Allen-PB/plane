@@ -38,7 +38,12 @@ function Dropdown({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-body-sm-medium">{label}</span>
-      <Select<string> value={value || null} onValueChange={(next) => onChange(next ?? "")} disabled={disabled}>
+      <Select<string>
+        items={options}
+        value={value || null}
+        onValueChange={(next) => onChange(next ?? "")}
+        disabled={disabled}
+      >
         <SelectTrigger size="lg" aria-label={label} placeholder="Select…" />
         <SelectContent>
           <SelectList>
