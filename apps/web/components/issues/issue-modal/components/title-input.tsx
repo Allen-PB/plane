@@ -75,7 +75,7 @@ export const IssueTitleInput = observer(function IssueTitleInput(props: TIssueTi
                   handleFormChange();
                 }}
                 ref={issueTitleRef || ref}
-                placeholder={t("title")}
+                placeholder="Enter a work item title"
                 autoFocus
                 tabIndex={getIndex("name")}
               />
