@@ -114,7 +114,12 @@ class BrandingRegressionTests(unittest.TestCase):
                 self.assertNotIn("https://media.docs.plane.so/logo/new-logo-", after)
 
     def test_python_email_changes_preserve_expressions(self):
-        paths = list((ROOT / "apps/api/plane/bgtasks").glob("*.py"))
+        # Compare the original files; new tasks have no pre-branding counterpart.
+        baseline_names = subprocess.check_output(
+            ["git", "ls-tree", "--name-only", f"{BASELINE}:apps/api/plane/bgtasks"],
+            cwd=ROOT, text=True, encoding="utf-8",
+        ).splitlines()
+        paths = [ROOT / "apps/api/plane/bgtasks" / name for name in baseline_names if name.endswith(".py")]
         for path in paths:
             before, after = ast.parse(upstream(path)), ast.parse(path.read_text())
             expressions = lambda tree: [ast.dump(node.value) for node in ast.walk(tree) if isinstance(node, ast.FormattedValue)]
