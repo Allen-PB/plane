@@ -18,6 +18,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec turbo run build --filter=web --filter=admin --filter=space --concurrency=1
+      - run: node --test packages/constants/tests/workspace-settings.test.mjs
       - run: pnpm --filter @plane/blocks exec vitest run --project=dom src/icons/brand/pathbuilder.test.tsx
       - uses: actions/setup-python@v5
         with:
