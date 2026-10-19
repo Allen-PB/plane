@@ -5,11 +5,13 @@
  */
 
 import { observer } from "mobx-react";
+import { FileUp } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useParams } from "react-router";
 // plane imports
 import {
   EUserPermissionsLevel,
+  EUserPermissions,
   GROUPED_WORKSPACE_SETTINGS,
   WORKSPACE_SETTINGS_CATEGORIES,
   WORKSPACE_SETTINGS_CATEGORY_LABELS,
@@ -34,6 +36,17 @@ export const WorkspaceSettingsSidebarItemCategories = observer(function Workspac
 
   return (
     <div className="mt-3 flex flex-col divide-y divide-subtle px-3">
+      {allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE, workspaceSlug) && (
+        <div className="py-3">
+          <SettingsSidebarItem
+            as="link"
+            href={joinUrlPath(workspaceSlug ?? "", "settings/csv-import")}
+            isActive={pathname.includes("/settings/csv-import")}
+            icon={FileUp}
+            label="CSV Import"
+          />
+        </div>
+      )}
       {WORKSPACE_SETTINGS_CATEGORIES.map((category) => {
         const categoryItems = GROUPED_WORKSPACE_SETTINGS[category];
         const accessibleItems = categoryItems.filter((item) =>

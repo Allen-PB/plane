@@ -271,6 +271,10 @@ export const coreRoutes: RouteConfigEntry[] = [
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/billing/page.tsx"
           ),
           route(
+            ":workspaceSlug/settings/csv-import",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/csv-import/page.tsx"
+          ),
+          route(
             ":workspaceSlug/settings/exports",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/exports/page.tsx"
           ),
