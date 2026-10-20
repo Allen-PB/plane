@@ -38,6 +38,12 @@ function floor(state: OfficeState, act = vi.fn()) {
 }
 
 describe("original office layout and presence controls", () => {
+  it("lets a member change their own avatar appearance", async () => {
+    const act = vi.fn();
+    render(floor(office, act));
+    await userEvent.selectOptions(screen.getByLabelText("Your avatar"), "female");
+    expect(act).toHaveBeenCalledWith({ action: "avatar", avatar_style: "female" });
+  });
   it("exposes keyboard-scrollable directory and list regions", async () => {
     render(floor(office));
     expect(screen.getByRole("complementary", { name: "Office directory" }).tabIndex).toBe(0);

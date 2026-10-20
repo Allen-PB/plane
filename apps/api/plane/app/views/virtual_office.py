@@ -20,7 +20,7 @@ from plane.db.models.virtual_office import OfficeAudit, OfficeDepartment, Office
 
 class ActionSerializer(serializers.Serializer):
     action = serializers.ChoiceField(
-        choices=["member", "reserve", "release", "time_in", "time_out", "heartbeat", "settings", "department"]
+        choices=["member", "reserve", "release", "time_in", "time_out", "heartbeat", "settings", "department", "avatar"]
     )
     user_id = serializers.UUIDField(required=False)
     member_id = serializers.UUIDField(required=False)
@@ -31,6 +31,7 @@ class ActionSerializer(serializers.Serializer):
     active = serializers.BooleanField(required=False)
     name = serializers.CharField(max_length=120, required=False)
     color = serializers.RegexField(r"^#[0-9a-fA-F]{6}$", required=False)
+    avatar_style = serializers.ChoiceField(choices=["male", "female"], required=False)
 
 
 def office_member(user):
@@ -65,6 +66,7 @@ def person(member):
         "department_id": member.department_id,
         "position": member.position,
         "active": member.active,
+        "avatar_style": member.avatar_style,
         "online": bool(
             member.active
             and member.timed_in_at
@@ -158,6 +160,12 @@ class OfficeView(BaseAPIView):
                     desk.member = target
                     desk.save(update_fields=["member"])
                     audit(request.user, action, desk_id=desk.id, member_id=str(target.id))
+                elif action == "avatar":
+                    if "avatar_style" not in data:
+                        raise ValidationError("Choose an avatar style.")
+                    actor.avatar_style = data["avatar_style"]
+                    actor.save(update_fields=["avatar_style"])
+                    audit(request.user, action, member_id=str(actor.pk), avatar_style=actor.avatar_style)
                 elif action == "time_in":
                     if not OfficeDesk.objects.filter(member=actor).exists():
                         raise ValidationError("Reserve a desk before timing in.")

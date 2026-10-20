@@ -9,6 +9,7 @@ export type OfficeMember = {
   role: OfficeRole;
   department_id: number | null;
   position: string;
+  avatar_style?: "male" | "female";
   active: boolean;
   online: boolean;
   timed_in_at: string | null;
@@ -28,7 +29,17 @@ export type OfficeAdminState = {
   audit: { id: number; action: string; created_at: string; details: Record<string, unknown> }[];
 };
 export type OfficeAction = {
-  action: "reserve" | "release" | "time_in" | "time_out" | "heartbeat" | "member" | "settings" | "department";
+  action:
+    | "reserve"
+    | "release"
+    | "time_in"
+    | "time_out"
+    | "heartbeat"
+    | "member"
+    | "settings"
+    | "department"
+    | "avatar";
+  avatar_style?: "male" | "female";
   desk_id?: number;
   member_id?: string;
   user_id?: string;

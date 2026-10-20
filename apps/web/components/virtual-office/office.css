@@ -1469,3 +1469,32 @@
     height: 170px;
   }
 }
+.vo-art-app .vo-brand img {
+  filter: none;
+}
+.vo-art-seat {
+  width: 94px;
+  height: 80px;
+  transform: translate(-50%, -50%);
+}
+.vo-art-person {
+  position: absolute;
+  width: 48px;
+  height: 66px;
+  object-fit: contain;
+  left: 40px;
+  top: 2px;
+  pointer-events: none;
+}
+.vo-art-wall-logo {
+  left: 1340px;
+  top: 265px;
+  width: 170px;
+}
+.vo-art-avatar {
+  top: -15px;
+  left: 45%;
+}
+.vo-art-zone {
+  transform: translate(-50%, -50%);
+}

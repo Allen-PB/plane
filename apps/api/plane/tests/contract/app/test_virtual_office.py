@@ -84,6 +84,23 @@ def test_floor_has_required_capacity(office):
     ]
 
 
+def test_member_can_choose_avatar_without_changing_presence_or_another_member(office):
+    member, other = new_member(), new_member()
+    api = client(member)
+    assert post(api, "avatar", avatar_style="female").status_code == 200
+    member.refresh_from_db()
+    assert member.avatar_style == "female"
+    assert member.timed_in_at is None
+    assert api.get(URL).data["me"]["avatar_style"] == "female"
+    assert post(api, "avatar", avatar_style="male", member_id=str(other.pk)).status_code == 403
+    other.refresh_from_db()
+    assert other.avatar_style == "male"
+    assert post(api, "avatar", avatar_style="unsupported").status_code == 400
+    assert post(api, "avatar").status_code == 400
+    member.refresh_from_db()
+    assert member.avatar_style == "female"
+
+
 def test_reservation_presence_and_lease(office):
     member = new_member()
     api = client(member)

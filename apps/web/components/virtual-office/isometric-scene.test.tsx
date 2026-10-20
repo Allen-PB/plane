@@ -29,16 +29,17 @@ const office: OfficeState = {
   ),
 };
 describe("aligned office artwork", () => {
-  it("places all 39 desks uniquely on a shared isometric grid", () => {
+  it("maps all expanded desks to distinct visible workstations", () => {
     const points = departmentAreas.flatMap((a, i) =>
       Array.from({ length: a.count }, (_, j) => deskLocation(i, j + 1)!)
     );
-    expect(points).toHaveLength(39);
-    expect(new Set(points.map((p) => `${p.x},${p.y}`)).size).toBe(39);
-    for (let i = 0; i < 7; i++) {
-      const a = deskLocation(i, 1)!,
-        b = deskLocation(i, 2)!;
-      expect([b.x - a.x, b.y - a.y]).toEqual([70, -28]);
+    expect(points).toHaveLength(44);
+    expect(new Set(points.map((p) => `${p.x},${p.y}`)).size).toBe(44);
+    for (const p of points) {
+      expect(p.x).toBeGreaterThan(0);
+      expect(p.x).toBeLessThan(1536);
+      expect(p.y).toBeGreaterThan(0);
+      expect(p.y).toBeLessThan(1024);
     }
     expect(deskLocation(0, 11, 20)).not.toBeNull();
     expect(deskLocation(0, 0)).toBeNull();
@@ -61,9 +62,9 @@ describe("aligned office artwork", () => {
         onDepartment={vi.fn()}
       />
     );
-    expect(container.querySelectorAll(".vo-art-seat")).toHaveLength(39);
+    expect(container.querySelectorAll(".vo-art-seat")).toHaveLength(44);
     const desk = screen.getByRole("button", { name: "DEV-01, reserved by Test Developer, online" });
-    expect(desk.querySelector("img")?.getAttribute("src")).toContain("workstation-occupied");
+    expect(desk.querySelector("img")?.getAttribute("src")).toContain("seated-avatar");
     fireEvent.click(desk);
     expect(select).toHaveBeenCalledWith(office.desks[0]);
     fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
@@ -82,7 +83,7 @@ describe("aligned office artwork", () => {
         .getByRole("button", { name: "DEV-01, reserved by Test Developer, offline" })
         .querySelector("img")
         ?.getAttribute("src")
-    ).toBe("/virtual-office/art-v1/workstation.png");
+    ).toBeUndefined();
     expect(container.querySelector(".vo-art-avatar")).toBeNull();
     expect(container.querySelector(".vo-art-world")?.getAttribute("style")).toBe(transform);
   });

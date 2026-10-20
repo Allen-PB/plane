@@ -38,6 +38,7 @@ class OfficeMember(models.Model):
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.EMPLOYEE)
     department = models.ForeignKey(OfficeDepartment, null=True, blank=True, on_delete=models.PROTECT)
     position = models.CharField(max_length=120, blank=True)
+    avatar_style = models.CharField(max_length=10, choices=[("male", "Male"), ("female", "Female")], default="male")
     active = models.BooleanField(default=True)
     timed_in_at = models.DateTimeField(null=True, blank=True)
     last_seen_at = models.DateTimeField(null=True, blank=True)

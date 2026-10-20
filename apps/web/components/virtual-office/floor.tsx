@@ -45,9 +45,9 @@ export function OfficeFloor({
             setOverviewKey((k) => k + 1);
           }}
         >
-          ? Office
+          Office
         </button>
-        <button onClick={() => setDetailsOpen(true)}>? Directory</button>
+        <button onClick={() => setDetailsOpen(true)}>Directory</button>
         <strong>Floor 1</strong>
         <button
           onClick={() => {
@@ -207,6 +207,18 @@ export function OfficeFloor({
           )}
         </section>
         <section className="vo-directory-presence" aria-label="Your office presence">
+          <label htmlFor="office-avatar-style">Your avatar</label>
+          <select
+            id="office-avatar-style"
+            value={office.me.avatar_style ?? "male"}
+            disabled={busy}
+            onChange={(event) =>
+              void act({ action: "avatar", avatar_style: event.target.value === "female" ? "female" : "male" })
+            }
+          >
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
           <strong>
             {office.me.name} · {office.me.online ? "Timed in" : "Timed out"}
           </strong>

@@ -164,6 +164,12 @@ export function IsometricOfficeScene({
             onError={() => setFailed(true)}
           />
 
+          <img
+            className="vo-art-wall-logo"
+            src="/virtual-office/art-v1/pathbuilder-only.svg"
+            alt="PathBuilder logo"
+            draggable={false}
+          />
           {office.departments.map((d) => {
             const area = departmentAreas[d.order];
             return area ? (
@@ -205,17 +211,18 @@ export function IsometricOfficeScene({
                 aria-pressed={selectedId === desk.id}
                 onClick={() => onSelect(desk)}
               >
-                <img
-                  className="vo-art-workstation"
-                  src={
-                    member?.online
-                      ? "/virtual-office/art-v1/workstation-occupied.png"
-                      : "/virtual-office/art-v1/workstation.png"
-                  }
-                  alt=""
-                  draggable={false}
-                  onError={() => setFailed(true)}
-                />
+                {member?.online && (
+                  <img
+                    className="vo-art-person"
+                    src={
+                      member.avatar_style === "female"
+                        ? "/virtual-office/art-v1/seated-avatar-female.png"
+                        : "/virtual-office/art-v1/seated-avatar.png"
+                    }
+                    alt=""
+                    draggable={false}
+                  />
+                )}
                 <span className="vo-art-seat-label">
                   <i className={`vo-art-dot ${member?.online ? "online" : member ? "reserved" : "available"}`} />
                   {label}
