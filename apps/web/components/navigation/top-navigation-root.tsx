@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import { useParams, usePathname } from "next/navigation";
 import { cn } from "@plane/utils";
 import { TopNavPowerK } from "@/components/navigation";
-import { HelpMenuRoot } from "@/components/workspace/sidebar/help-section/root";
+import { Building2 } from "lucide-react";
 import { UserMenuRoot } from "@/components/workspace/sidebar/user-menu-root";
 import { WorkspaceMenuRoot } from "@/components/workspace/sidebar/workspace-menu-root";
 import { useAppRailPreferences } from "@/hooks/use-navigation-preferences";
@@ -75,7 +75,16 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
             }}
           />
         </Tooltip>
-        <HelpMenuRoot />
+        <Tooltip label="Virtual Office" side="bottom">
+          <AppSidebarItem
+            variant="link"
+            item={{
+              href: "/virtual-office",
+              icon: <Building2 className="size-5" />,
+              isActive: pathname?.startsWith("/virtual-office"),
+            }}
+          />
+        </Tooltip>
         <div className="flex size-8 items-center justify-center rounded-md hover:bg-layer-1-hover">
           <UserMenuRoot />
         </div>
