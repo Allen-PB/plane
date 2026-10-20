@@ -7,6 +7,9 @@ import { OfficeScene } from "./scene";
 const engine = vi.hoisted(() => ({
   update: vi.fn(),
   reset: vi.fn(),
+  setMode: vi.fn(),
+  move: vi.fn(),
+  zoom: vi.fn(),
   dispose: vi.fn(),
   select: (_id: number) => {},
   fail: () => {},
@@ -57,6 +60,14 @@ describe("integrated WebGL scene", () => {
     expect(engine.dispose).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Reset view" }));
     expect(engine.reset).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByRole("button", { name: "Rotate" }));
+    expect(engine.setMode).toHaveBeenLastCalledWith("rotate");
+    await userEvent.click(screen.getByRole("button", { name: "Move" }));
+    expect(engine.setMode).toHaveBeenLastCalledWith("pan");
+    await userEvent.click(screen.getByRole("button", { name: "Move office view right" }));
+    expect(engine.move).toHaveBeenCalledWith(2, 0);
+    await userEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(engine.zoom).toHaveBeenCalledWith(1.2);
     unmount();
     expect(engine.dispose).toHaveBeenCalledOnce();
   });

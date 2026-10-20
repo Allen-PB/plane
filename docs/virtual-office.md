@@ -43,6 +43,14 @@ presence and reservations come exclusively from the office API. Camera movement
 does not reset on presence polling. Graphics resources and event listeners are
 released on unmount. No external models, fonts or texture URLs are loaded.
 
+The original `makarius-virtual-office-v0.1.zip` is the design reference for the
+full-height floor, dark header, compact directory, department filter and original
+`Time In` / `Time Out` wording. PathBuilder branding replaces the prototype name.
+Existing Sync button labels are outside this visual change. Primary drag or swipe
+moves the view; Rotate switches that gesture to orbit. Direction and zoom buttons
+provide visible alternatives to gestures. A missing department or desk is explained
+next to the presence buttons rather than leaving an unexplained disabled action.
+
 An isometric fallback and keyboard-accessible desk buttons remain available, with a
 table view for smaller screens and assistive technology. No browser storage
 authorizes access or stores reservations. The existing Sync auth wrapper handles
@@ -113,3 +121,16 @@ The first rollout backup is in `releases/79296727d8/dev-before.dump`, alongside
 additive office tables so no office data is lost. Do not restore an old database
 over newer Sync writes. The old images remain tagged locally. Do not run the
 generic DEV `launch.sh` when intending to retain the feature release.
+
+The office owns its scroll container inside Sync's fixed application shell.
+Management pages scroll vertically; on desktop the directory and workstation list
+scroll independently. Narrow screens scroll the stacked floor and directory as one
+page, including the presence controls. Fallback floor and list regions can receive
+keyboard focus for native arrow/Page Down scrolling. Wheel/pinch over the WebGL
+canvas zooms; dragging/swiping moves the camera by default. These handlers are
+attached only to that canvas and disposed when leaving the office.
+
+The renderer skips GPU draws while the scene is unchanged, disables live shadow
+maps and caps pixel density at 1.25. Camera damping and server-driven changes
+invalidate the scene. Office management shows account emails beside employee
+names; selecting an existing account loads its saved role and department.

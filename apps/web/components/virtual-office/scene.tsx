@@ -27,7 +27,7 @@ export function OfficeFallback({
   onSelect: (desk: OfficeDesk) => void;
 }) {
   return (
-    <div className="vo-scene-scroll" aria-label="Interactive isometric office">
+    <div className="vo-scene-scroll" role="region" aria-label="Interactive isometric office" tabIndex={0}>
       <div className="vo-scene-frame">
         <div className="vo-floor">
           <div className="vo-wall vo-wall-back" />
@@ -129,12 +129,18 @@ export function OfficeScene(props: {
   const renderer = useRef<OfficeRenderer | null>(null);
   const latest = useRef(props);
   const [ready, setReady] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+  const [mode, setMode] = useState<"pan" | "rotate">("pan");
   useEffect(() => {
     latest.current = props;
     renderer.current?.update(props.office, props.selectedId);
   }, [props]);
   useEffect(() => {
-    if (!host.current || typeof WebGL2RenderingContext === "undefined") return;
+    if (!host.current) return;
+    if (typeof WebGL2RenderingContext === "undefined") {
+      setUnavailable(true);
+      return;
+    }
     let active = true;
     void import("./webgl-office")
       .then(({ createOfficeRenderer }) => {
@@ -148,7 +154,10 @@ export function OfficeScene(props: {
           () => {
             renderer.current?.dispose();
             renderer.current = null;
-            if (active) setReady(false);
+            if (active) {
+              setReady(false);
+              setUnavailable(true);
+            }
           }
         );
         renderer.current.update(latest.current.office, latest.current.selectedId);
@@ -159,7 +168,10 @@ export function OfficeScene(props: {
         renderer.current?.dispose();
         renderer.current = null;
         console.warn("Virtual Office 3D renderer unavailable; using the accessible floor.", error);
-        if (active) setReady(false);
+        if (active) {
+          setReady(false);
+          setUnavailable(true);
+        }
       });
     return () => {
       active = false;
@@ -179,8 +191,52 @@ export function OfficeScene(props: {
       {ready ? (
         <>
           <div className="vo-camera-controls">
-            <span>Drag to rotate · Scroll or pinch to zoom · Two fingers to pan</span>
-            <button onClick={() => renderer.current?.reset()}>Reset view</button>
+            <span>
+              {mode === "pan" ? "Drag or swipe to move" : "Drag or swipe to rotate"} · Scroll or pinch to zoom
+            </span>
+            <div className="vo-camera-buttons">
+              <button
+                aria-pressed={mode === "pan"}
+                onClick={() => {
+                  setMode("pan");
+                  renderer.current?.setMode("pan");
+                }}
+              >
+                Move
+              </button>
+              <button
+                aria-pressed={mode === "rotate"}
+                onClick={() => {
+                  setMode("rotate");
+                  renderer.current?.setMode("rotate");
+                }}
+              >
+                Rotate
+              </button>
+              <button aria-label="Zoom in" onClick={() => renderer.current?.zoom(1.2)}>
+                +
+              </button>
+              <button aria-label="Zoom out" onClick={() => renderer.current?.zoom(1 / 1.2)}>
+                −
+              </button>
+              <button onClick={() => renderer.current?.reset()}>Reset view</button>
+            </div>
+          </div>
+          <div className="vo-camera-directions" aria-label="Move around the office">
+            <button aria-label="Move office view up" onClick={() => renderer.current?.move(0, 2)}>
+              ↑
+            </button>
+            <div>
+              <button aria-label="Move office view left" onClick={() => renderer.current?.move(-2, 0)}>
+                ←
+              </button>
+              <button aria-label="Move office view down" onClick={() => renderer.current?.move(0, -2)}>
+                ↓
+              </button>
+              <button aria-label="Move office view right" onClick={() => renderer.current?.move(2, 0)}>
+                →
+              </button>
+            </div>
           </div>
           <div className="vo-keyboard-desks" aria-label="Choose a workstation with your keyboard">
             {props.office.desks.map((desk) => {
@@ -195,7 +251,14 @@ export function OfficeScene(props: {
           </div>
         </>
       ) : (
-        <OfficeFallback {...props} />
+        <>
+          <OfficeFallback {...props} />
+          <div className="vo-fallback-note" role="status">
+            {unavailable
+              ? "2D office view · Scroll to move around, or use List view to choose a desk."
+              : "Loading 3D office…"}
+          </div>
+        </>
       )}
     </div>
   );

@@ -5,14 +5,9 @@ import useSWR from "swr";
 import { Button } from "@makeplane/propel/components/button";
 import { AuthenticationWrapper } from "@/lib/wrappers/authentication-wrapper";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
-import type {
-  OfficeAction,
-  OfficeAdminState,
-  OfficeMember,
-  OfficeRole,
-  OfficeState,
-} from "../../services/virtual-office.service";
-import { OfficeScene } from "./scene";
+import type { OfficeAction } from "../../services/virtual-office.service";
+import { OfficeFloor } from "./floor";
+import { AdminPanel } from "./admin-panel";
 // CSS is scoped under .vo-app to keep the rest of Sync unchanged.
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office.css";
@@ -49,12 +44,9 @@ function OfficeContent() {
     adminPage && isAdmin ? ["virtual-office-admin", query] : null,
     () => service.admin(query)
   );
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [assignMember, setAssignMember] = useState("");
   const [officeName, setOfficeName] = useState("");
-  const [view, setView] = useState<"scene" | "list">("scene");
 
   useEffect(() => {
     if (!status?.allowed || !office?.me.online) return;
@@ -82,23 +74,31 @@ function OfficeContent() {
     }
   }
 
-  const selected = office?.desks.find((d) => d.id === selectedId);
-  const occupant = office?.members.find((m) => m.id === selected?.member_id);
   const myDesk = office?.desks.find((d) => d.member_id === office.me.id);
-  const department = office?.departments.find((d) => d.id === office.me.department_id);
 
   return (
-    <div className="vo-app">
+    <div className={`vo-app ${adminPage ? "" : "vo-prototype"}`}>
       <header className="vo-header">
         <Link to="/virtual-office" className="vo-brand">
           <img src="/branding/pathbuilder-mark.svg" alt="" />
           <div>
             <span className="vo-eyebrow">PathBuilder Sync</span>
-            <strong>
-              Virtual Office<span style={{ color: "#4775e7" }}>.</span>
-            </strong>
+            <strong>Virtual Office</strong>
           </div>
         </Link>
+        {!adminPage && status?.allowed && office && !error && (
+          <div className="vo-header-stats">
+            <span>
+              <b>{office.members.filter((m) => m.online).length}</b> Online
+            </span>
+            <span>
+              <b>{office.desks.length - office.members.filter((m) => m.online).length}</b> Offline
+            </span>
+            <span>
+              <b>{office.desks.length}</b> Desks
+            </span>
+          </div>
+        )}
         <nav className="vo-nav" aria-label="Virtual Office">
           <Link to="/virtual-office" aria-current={!adminPage ? "page" : undefined}>
             Office floor
@@ -138,24 +138,26 @@ function OfficeContent() {
         <p className="vo-empty">Opening the office…</p>
       ) : (
         <main className="vo-main">
-          <div className="vo-intro">
-            <div>
-              <span className="vo-eyebrow">One team. Endless possibilities.</span>
-              <h1>{adminPage ? "Make room for great work." : "A little closer, wherever you work."}</h1>
-              <p className="vo-muted">{office.name} · 39 desks · 7 departments</p>
+          {adminPage && (
+            <div className="vo-intro">
+              <div>
+                <span className="vo-eyebrow">One team. Endless possibilities.</span>
+                <h1>Office management</h1>
+                <p className="vo-muted">{office.name} · 39 desks · 7 departments</p>
+              </div>
+              <div className="vo-actions">
+                <span className="vo-pill">{office.members.filter((m) => m.online).length} in the office</span>
+                <Button
+                  size="lg"
+                  stretch="auto"
+                  label={office.me.online ? "Time Out" : "Time In"}
+                  variant={office.me.online ? "secondary" : "primary"}
+                  disabled={busy || (!myDesk && !office.me.online)}
+                  onClick={() => void act({ action: office.me.online ? "time_out" : "time_in" })}
+                />
+              </div>
             </div>
-            <div className="vo-actions">
-              <span className="vo-pill">{office.members.filter((m) => m.online).length} in the office</span>
-              <Button
-                size="lg"
-                stretch="auto"
-                label={office.me.online ? "Time out" : "Time in"}
-                variant={office.me.online ? "secondary" : "primary"}
-                disabled={busy || (!myDesk && !office.me.online)}
-                onClick={() => void act({ action: office.me.online ? "time_out" : "time_in" })}
-              />
-            </div>
-          </div>
+          )}
           {message && (
             <div className="vo-message" role="status">
               {message}
@@ -265,320 +267,10 @@ function OfficeContent() {
               </>
             )
           ) : (
-            <div className="vo-layout">
-              <section className="vo-card">
-                <div className="vo-card-head">
-                  <span>THE OFFICE FLOOR</span>
-                  <div className="vo-legend">
-                    <span>
-                      <i className="online" />
-                      Online
-                    </span>
-                    <span>
-                      <i className="mine" />
-                      Your desk
-                    </span>
-                    <button onClick={() => setView(view === "scene" ? "list" : "scene")}>
-                      {view === "scene" ? "List view" : "3D view"}
-                    </button>
-                  </div>
-                </div>
-                {view === "scene" ? (
-                  <OfficeScene office={office} selectedId={selectedId} onSelect={(desk) => setSelectedId(desk.id)} />
-                ) : (
-                  <div className="vo-table-wrap">
-                    <table className="vo-table">
-                      <thead>
-                        <tr>
-                          <th>Department</th>
-                          <th>Desk</th>
-                          <th>Reserved by</th>
-                          <th />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {office.desks.map((desk) => (
-                          <tr key={desk.id}>
-                            <td>{office.departments.find((d) => d.id === desk.department_id)?.name}</td>
-                            <td>{desk.number}</td>
-                            <td>{office.members.find((m) => m.id === desk.member_id)?.name ?? "Available"}</td>
-                            <td>
-                              <button onClick={() => setSelectedId(desk.id)}>Select desk</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <div className="vo-roster">
-                  {office.departments.map((d) => (
-                    <span key={d.id}>
-                      <i className="vo-dot" style={{ background: d.color }} />
-                      {d.name} · {office.desks.filter((desk) => desk.department_id === d.id).length}
-                    </span>
-                  ))}
-                </div>
-              </section>
-              <aside className="vo-side">
-                <section className="vo-card vo-panel">
-                  <span className="vo-eyebrow">Your workspace</span>
-                  <h3>{office.me.name}</h3>
-                  <p className="vo-muted">{office.me.position || "Office administrator"}</p>
-                  <div className="vo-stat">
-                    <span>Department</span>
-                    <strong>{department?.name ?? "Unassigned"}</strong>
-                  </div>
-                  <div className="vo-stat">
-                    <span>Your desk</span>
-                    <strong>{myDesk ? `Desk ${myDesk.number}` : "Choose a desk"}</strong>
-                  </div>
-                  <div className="vo-stat">
-                    <span>Status</span>
-                    <strong>{office.me.online ? "Timed in" : "Timed out"}</strong>
-                  </div>
-                  <p className="vo-info">
-                    Your desk stays yours when you time out. Choose any available desk in your department to settle in.
-                  </p>
-                </section>
-                <section className="vo-card vo-panel">
-                  <h2>
-                    {selected
-                      ? `${office.departments.find((d) => d.id === selected.department_id)?.name} · Desk ${selected.number}`
-                      : "Find your spot"}
-                  </h2>
-                  <p className="vo-info">
-                    {selected
-                      ? occupant
-                        ? `Reserved by ${occupant.name}${occupant.online ? " · In the office" : " · Away"}`
-                        : "This desk is available."
-                      : "Select a workstation on the floor to see its details. You can also use the list view."}
-                  </p>
-                  {selected && !selected.member_id && selected.department_id === office.me.department_id && (
-                    <Button
-                      size="lg"
-                      stretch="auto"
-                      variant="primary"
-                      label="Choose this desk"
-                      disabled={busy}
-                      onClick={() => void act({ action: "reserve", desk_id: selected.id })}
-                    />
-                  )}
-                  {isAdmin && selected && (
-                    <>
-                      <label htmlFor="desk-employee" className="vo-muted">
-                        Assign to employee
-                      </label>
-                      <select
-                        id="desk-employee"
-                        className="vo-department-select"
-                        value={assignMember}
-                        onChange={(event) => setAssignMember(event.target.value)}
-                      >
-                        <option value="">Choose employee</option>
-                        {office.members
-                          .filter((m) => m.department_id === selected.department_id)
-                          .map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name}
-                            </option>
-                          ))}
-                      </select>
-                      <div className="vo-actions">
-                        <Button
-                          size="lg"
-                          stretch="auto"
-                          variant="primary"
-                          label="Assign desk"
-                          disabled={busy || !assignMember || !!selected.member_id}
-                          onClick={() => void act({ action: "reserve", desk_id: selected.id, member_id: assignMember })}
-                        />
-                        {selected.member_id && (
-                          <Button
-                            size="lg"
-                            stretch="auto"
-                            label="Release desk"
-                            variant="secondary"
-                            disabled={busy}
-                            onClick={() => void act({ action: "release", desk_id: selected.id })}
-                          />
-                        )}
-                      </div>
-                    </>
-                  )}
-                </section>
-                <section className="vo-card vo-panel">
-                  <h2>Here today</h2>
-                  {office.members
-                    .filter((m) => m.online)
-                    .map((m) => (
-                      <div key={m.id} className="vo-stat">
-                        <span>
-                          <i className="vo-dot online" />
-                          {m.name}
-                        </span>
-                        <span className="vo-muted">{m.position}</span>
-                      </div>
-                    ))}
-                  {!office.members.some((m) => m.online) && (
-                    <p className="vo-info">Be the first to bring the office to life.</p>
-                  )}
-                </section>
-              </aside>
-            </div>
+            <OfficeFloor office={office} busy={busy} act={act} />
           )}
         </main>
       )}
-    </div>
-  );
-}
-
-function AdminPanel({
-  office,
-  admin,
-  query,
-  setQuery,
-  act,
-  busy,
-}: {
-  office: OfficeState;
-  admin: OfficeAdminState;
-  query: string;
-  setQuery: (query: string) => void;
-  act: (action: OfficeAction) => Promise<void>;
-  busy: boolean;
-}) {
-  const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<OfficeRole>("employee");
-  const [departmentId, setDepartmentId] = useState("");
-  const [position, setPosition] = useState("");
-  const [active, setActive] = useState(true);
-  const superAdmin = office.me.role === "super_admin";
-  const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
-  function edit(member: OfficeMember) {
-    setUserId(member.user_id);
-    setRole(member.role);
-    setDepartmentId(String(member.department_id ?? ""));
-    setPosition(member.position);
-    setActive(member.active);
-  }
-  return (
-    <div className="vo-admin-grid">
-      <form
-        className="vo-card vo-panel vo-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void act({
-            action: "member",
-            user_id: userId,
-            role,
-            department_id: departmentId ? Number(departmentId) : null,
-            position,
-            active,
-          });
-        }}
-      >
-        <h2>Employee access</h2>
-        <p className="vo-info">Choose an existing Sync account. Office roles are independent of Sync permissions.</p>
-        <label htmlFor="office-search">Find a Sync account by email</label>
-        <input
-          id="office-search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search email…"
-        />
-        <label htmlFor="office-user">Sync account</label>
-        <select id="office-user" required value={userId} onChange={(event) => setUserId(event.target.value)}>
-          <option value="">Select an account</option>
-          {userId && !admin.users.some((u) => u.id === userId) && (
-            <option value={userId}>{admin.members.find((m) => m.user_id === userId)?.name ?? userId}</option>
-          )}
-          {admin.users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.email}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="office-role">Virtual Office role</label>
-        <select id="office-role" value={role} onChange={(event) => setRole(event.target.value as OfficeRole)}>
-          <option value="employee">Employee</option>
-          {superAdmin && (
-            <>
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
-            </>
-          )}
-        </select>
-        <label htmlFor="office-department">Department</label>
-        <select
-          id="office-department"
-          required={role === "employee"}
-          value={departmentId}
-          onChange={(event) => setDepartmentId(event.target.value)}
-        >
-          <option value="">Unassigned</option>
-          {office.departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="office-position">Job position</label>
-        <input
-          id="office-position"
-          required={role === "employee"}
-          value={position}
-          maxLength={120}
-          onChange={(event) => setPosition(event.target.value)}
-        />
-        <label htmlFor="office-active">Access</label>
-        <select
-          id="office-active"
-          value={active ? "active" : "revoked"}
-          onChange={(event) => setActive(event.target.value === "active")}
-        >
-          <option value="active">Active</option>
-          <option value="revoked">Revoked</option>
-        </select>
-        <p className="vo-info">
-          Changing department or revoking access releases the employee's desk and ends presence.
-        </p>
-        <Button size="lg" stretch="auto" variant="primary" label="Save employee access" type="submit" disabled={busy} />
-      </form>
-      <section className="vo-card">
-        <div className="vo-card-head">OFFICE DIRECTORY · {admin.members.length} PEOPLE</div>
-        <div className="vo-table-wrap">
-          <table className="vo-table">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Department / position</th>
-                <th>Role / access</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {admin.members.map((member) => (
-                <tr key={member.id}>
-                  <td>{member.name}</td>
-                  <td>
-                    {office.departments.find((d) => d.id === member.department_id)?.name ?? "Unassigned"}
-                    <br />
-                    <span className="vo-muted">{member.position}</span>
-                  </td>
-                  <td>
-                    {member.role.replaceAll("_", " ")}
-                    <br />
-                    <span className="vo-muted">{member.active ? "Active" : "Revoked"}</span>
-                  </td>
-                  <td>{editable(member) && <button onClick={() => edit(member)}>Edit</button>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </div>
   );
 }
