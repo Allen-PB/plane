@@ -1,3 +1,5 @@
+import { chairAnchors } from "./avatar-anchors";
+import type { AvatarAnchor } from "./avatar-anchors";
 export const officeArtwork = { width: 1536, height: 1024 };
 // Desk centers are mapped to the cohesive architectural bank artwork.
 export const bankSeats: readonly (readonly [number, number])[][] = [
@@ -60,18 +62,41 @@ export const bankSeats: readonly (readonly [number, number])[][] = [
     [790, 200],
   ],
 ];
-export function avatarFacing(order: number) {
-  return order === 6 ? "front" : order === 0 || order === 3 ? "right" : "back";
-}
-export const departmentAreas = [
-  { code: "DEV", count: 12, cols: 4, x: 270, y: 290 },
-  { code: "QA", count: 5, cols: 3, x: 905, y: 290 },
-  { code: "PM", count: 6, cols: 3, x: 350, y: 535 },
-  { code: "UIUX", count: 3, cols: 3, x: 585, y: 725 },
-  { code: "BIZ", count: 8, cols: 4, x: 940, y: 575 },
-  { code: "AM", count: 6, cols: 3, x: 1310, y: 705 },
-  { code: "LEAD", count: 4, cols: 2, x: 720, y: 150 },
+type DepartmentArea = {
+  code: string;
+  count: number;
+  cols: number;
+  x: number;
+  y: number;
+  avatarAnchor?: AvatarAnchor;
+  chairRows?: { first: number; stride: number; count: number; avatarAnchor: AvatarAnchor }[];
+};
+export const departmentAreas: DepartmentArea[] = [
+  { code: "DEV", count: 12, cols: 4, x: 270, y: 290, avatarAnchor: chairAnchors.northEast },
+  { code: "QA", count: 5, cols: 3, x: 905, y: 290, avatarAnchor: chairAnchors.northWest },
+  { code: "PM", count: 6, cols: 3, x: 350, y: 535, avatarAnchor: chairAnchors.northWest },
+  { code: "UIUX", count: 3, cols: 3, x: 585, y: 725, avatarAnchor: chairAnchors.northEast },
+  { code: "BIZ", count: 8, cols: 4, x: 940, y: 575, avatarAnchor: chairAnchors.northWest },
+  { code: "AM", count: 6, cols: 3, x: 1310, y: 705, avatarAnchor: chairAnchors.northWest },
+  {
+    code: "LEAD",
+    count: 4,
+    cols: 2,
+    x: 720,
+    y: 150,
+    avatarAnchor: chairAnchors.northEast,
+    chairRows: [{ first: 2, stride: 2, count: 2, avatarAnchor: chairAnchors.southWest }],
+  },
 ];
+export function workstationPlacement(order: number, number: number) {
+  const position = deskLocation(order, number),
+    area = departmentAreas[order];
+  if (!position || !area) return null;
+  const row = area.chairRows?.find(
+    (r) => number >= r.first && (number - r.first) % r.stride === 0 && (number - r.first) / r.stride < r.count
+  );
+  return { position, avatarAnchor: row?.avatarAnchor ?? area.avatarAnchor ?? chairAnchors.northWest };
+}
 export type OfficeCamera = { scale: number; x: number; y: number };
 export function deskLocation(order: number, number: number, _capacity?: number) {
   const area = departmentAreas[order];

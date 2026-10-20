@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import type { OfficeDesk, OfficeState } from "../../services/virtual-office.service";
-import { avatarFacing, departmentAreas, deskLocation, fitOfficeCamera, zoomOfficeCamera } from "./isometric-layout";
+import {
+  departmentAreas,
+  deskLocation,
+  workstationPlacement,
+  fitOfficeCamera,
+  zoomOfficeCamera,
+} from "./isometric-layout";
 import type { OfficeCamera } from "./isometric-layout";
+import { SeatedAvatar, AvatarNameplate } from "./seated-avatar";
+import { arrangeNameplates, seatedAvatarModel } from "./avatar-anchors";
 
 export function IsometricOfficeScene({
   office,
@@ -140,6 +148,28 @@ export function IsometricOfficeScene({
       reset();
     }
   }
+  const occupants = office.desks.flatMap((desk) => {
+    const member = office.members.find((m) => m.id === desk.member_id),
+      department = office.departments.find((d) => d.id === desk.department_id);
+    const workstation = department ? workstationPlacement(department.order, desk.number) : null;
+    return member?.online && workstation ? [{ member, workstation }] : [];
+  });
+  const nameplates = arrangeNameplates(
+    occupants.map(({ member, workstation: { position, avatarAnchor } }) => ({
+      id: member.id,
+      x: position.x + avatarAnchor.x,
+      y: position.y + avatarAnchor.y + seatedAvatarModel(avatarAnchor, member.avatar_style).nameplateY,
+      width: Math.min(190, member.name.length * 6.5 + 28),
+    })),
+    office.departments.flatMap((d) => {
+      const area = departmentAreas[d.order];
+      if (!area) return [];
+      const width = Math.max(80, d.name.length * 8 + 28),
+        x = area.x + 25,
+        y = area.y - 105;
+      return [{ left: x - width / 2, right: x + width / 2, top: y - 27, bottom: y + 27 }];
+    })
+  );
   return (
     <div className="vo-art-scene">
       <div
@@ -187,12 +217,9 @@ export function IsometricOfficeScene({
           {office.desks.map((desk) => {
             const department = office.departments.find((d) => d.id === desk.department_id);
             if (!department) return null;
-            const point = deskLocation(
-              department.order,
-              desk.number,
-              office.desks.filter((d) => d.department_id === department.id).length
-            );
-            if (!point) return null;
+            const workstation = workstationPlacement(department.order, desk.number);
+            if (!workstation) return null;
+            const point = workstation.position;
             const member = office.members.find((m) => m.id === desk.member_id);
             const label = `${departmentAreas[department.order].code}-${String(desk.number).padStart(2, "0")}`;
             return (
@@ -211,30 +238,32 @@ export function IsometricOfficeScene({
                 aria-pressed={selectedId === desk.id}
                 onClick={() => onSelect(desk)}
               >
-                {member?.online && (
-                  <img
-                    className={`vo-art-person vo-person-${avatarFacing(department.order)}`}
-                    src={`/virtual-office/art-v1/seated-avatar${member.avatar_style === "female" ? "-female" : ""}${avatarFacing(department.order) === "front" ? "-front" : ""}.png`}
-                    alt=""
-                    draggable={false}
-                  />
-                )}
+                {member?.online && <SeatedAvatar member={member} anchor={workstation.avatarAnchor} position={point} />}
                 <span className="vo-art-seat-label">
                   <i className={`vo-art-dot ${member?.online ? "online" : member ? "reserved" : "available"}`} />
                   {label}
                 </span>
-                {member?.online && (
-                  <span className="vo-art-avatar" aria-hidden="true">
-                    {member.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </span>
-                )}
               </button>
             );
           })}
+          <div className="vo-art-nameplate-layer" aria-label="Online employees">
+            <svg className="vo-nameplate-connectors" viewBox="0 0 1536 1024" aria-hidden="true">
+              {nameplates
+                .filter((p) => p.y !== p.naturalY)
+                .map((p) => (
+                  <line key={p.id} x1={p.x} y1={p.y} x2={p.x} y2={p.naturalY + 6} />
+                ))}
+            </svg>
+            {occupants.map(({ member, workstation }) => (
+              <AvatarNameplate
+                key={member.id}
+                member={member}
+                anchor={workstation.avatarAnchor}
+                position={workstation.position}
+                labelPosition={nameplates.find((p) => p.id === member.id)}
+              />
+            ))}
+          </div>
         </div>
       </div>
       <div className="vo-art-heading">

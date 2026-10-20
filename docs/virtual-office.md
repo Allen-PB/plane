@@ -149,3 +149,15 @@ history. Older events are marked `Current profile (legacy event)` and leave the
 historical desk blank. Lease expiry and administrator releases are separate audit
 events, not explicit Time Out button events. Spreadsheet formula cells are escaped.
 The download is streamed and marked `Cache-Control: no-store`.
+
+## Seated avatar anchors
+
+The active floor is a fixed isometric illustration with seated avatar sprites; the previous WebGL renderer is not mounted. Camera controls pan and zoom rather than orbiting the illustration.
+
+Each workstation resolves its avatar anchor from the department bank and chair row. The anchor is a local seat-cushion offset and keyboard-facing direction. Leadership has alternating front/back rows, so facing is derived from the row configuration rather than the department or employee/desk ID. Missing anchor metadata defaults to the existing north-west chair convention.
+
+The avatar is parented to the workstation's local origin. A dedicated child applies the sprite-facing correction once. Each male/female seated image has calibrated pixel dimensions, hip origin, opaque height and head position; transparent padding no longer changes the apparent seat position. Foreground illustration masks restore chair backrests and the desk edge over the body where appropriate. Employee nameplates are rendered in a separate upright layer and avoid other names and department badges.
+
+Selecting a desk still inspects it. The live avatar follows the server-confirmed reservation; an unsuccessful claim cannot move it. Time Out removes the avatar while preserving the reservation. No backend model, permission or attendance changes are required for anchor placement.
+
+Validation includes all visible chair anchors, opposing Leadership rows, repeated reservation switches, male/female poses, nameplate overlap avoidance, and stable orientation through selection/pan/zoom. Free camera rotation cannot be validated against this fixed-view artwork; a future orbiting renderer must use actual 3D workstations and skeletal avatar poses.
