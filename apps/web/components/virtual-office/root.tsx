@@ -77,14 +77,10 @@ function OfficeContent() {
   const myDesk = office?.desks.find((d) => d.member_id === office.me.id);
 
   return (
-    <div className={`vo-app ${adminPage ? "" : "vo-prototype"}`}>
+    <div className={`vo-app ${adminPage ? "" : "vo-prototype vo-art-app"}`}>
       <header className="vo-header">
         <Link to="/virtual-office" className="vo-brand">
-          <img src="/branding/pathbuilder-mark.svg" alt="" />
-          <div>
-            <span className="vo-eyebrow">PathBuilder Sync</span>
-            <strong>Virtual Office</strong>
-          </div>
+          <img className="vo-office-lockup" src="/virtual-office/art-v1/pathbuilder-only.svg" alt="PathBuilder" />
         </Link>
         {!adminPage && status?.allowed && office && !error && (
           <div className="vo-header-stats">

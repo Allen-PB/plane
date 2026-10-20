@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@makeplane/propel/components/button";
 import type { OfficeAction, OfficeDesk, OfficeState } from "../../services/virtual-office.service";
-import { OfficeScene } from "./scene";
+import { IsometricOfficeScene } from "./isometric-scene";
 
 const codes = ["DEV", "QA", "PM", "UIUX", "BIZ", "AM", "LEAD"];
 export function workstationLabel(office: OfficeState, desk: OfficeDesk) {
@@ -66,13 +66,19 @@ export function OfficeFloor({
             </table>
           </div>
         ) : (
-          <OfficeScene office={office} selectedId={selected?.id ?? null} onSelect={(desk) => setSelectedId(desk.id)} />
+          <IsometricOfficeScene
+            office={office}
+            selectedId={selected?.id ?? null}
+            departmentId={filter ? Number(filter) : null}
+            onDepartment={(id) => setFilter(String(id))}
+            onSelect={(desk) => setSelectedId(desk.id)}
+          />
         )}
       </section>
       <aside className="vo-office-directory" aria-label="Office directory" tabIndex={0}>
         <div className="vo-directory-heading">
           <h2>Office directory</h2>
-          <button onClick={() => setListView(!listView)}>{listView ? "3D view" : "List view"}</button>
+          <button onClick={() => setListView(!listView)}>{listView ? "Office view" : "List view"}</button>
         </div>
         <p>Select a workstation to see its reservation. Time In and Time Out control your own avatar.</p>
         <label htmlFor="office-department-filter">Department</label>

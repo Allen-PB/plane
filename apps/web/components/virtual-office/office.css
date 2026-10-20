@@ -1067,3 +1067,272 @@
     margin-left: 0;
   }
 }
+/* Artwork is confined to Virtual Office; PM pages keep their existing styles. */
+.vo-art-app .vo-header {
+  background: #fff;
+  color: #172337;
+  border-bottom: 1px solid #e2e8ef;
+}
+.vo-art-app .vo-office-lockup {
+  width: 220px;
+  height: 44px;
+  object-fit: contain;
+}
+.vo-art-app .vo-header-stats,
+.vo-art-app .vo-nav {
+  color: #34465b;
+}
+.vo-art-app .vo-main {
+  padding: 0;
+}
+.vo-art-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  overflow: hidden;
+  background: #eaf0f2;
+  color: #24364c;
+}
+.vo-art-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  outline-offset: -3px;
+}
+.vo-art-viewport:active {
+  cursor: grabbing;
+}
+.vo-art-world {
+  position: absolute;
+  width: 1536px;
+  height: 1024px;
+  transform-origin: 0 0;
+}
+.vo-art-environment,
+.vo-art-rugs {
+  position: absolute;
+  inset: 0;
+  width: 1536px;
+  height: 1024px;
+  pointer-events: none;
+  user-select: none;
+}
+.vo-art-wall-logo {
+  position: absolute;
+  left: 1190px;
+  top: 219px;
+  width: 166px;
+  transform: matrix(1, 0.48, 0, 1, 0, 0);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.vo-art-seat {
+  position: absolute;
+  width: 90px;
+  height: 94px;
+  transform: translate(-50%, -88%);
+  border: 0;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+.vo-art-workstation {
+  position: absolute;
+  inset: 0;
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 3px 2px #152f3b12);
+}
+.vo-art-seat:hover,
+.vo-art-seat:focus-visible,
+.vo-art-seat.selected {
+  outline: 2px solid var(--vo-department);
+  background: #ffffff35;
+}
+.vo-art-seat-label {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  padding: 3px 5px;
+  background: #fffffff0;
+  border-radius: 5px;
+  border-bottom: 3px solid var(--vo-department);
+  font-size: 11px;
+  color: #23374c;
+}
+.vo-hide-art-labels .vo-art-seat-label {
+  opacity: 0;
+}
+.vo-hide-art-labels .vo-art-seat:hover .vo-art-seat-label,
+.vo-hide-art-labels .vo-art-seat:focus-visible .vo-art-seat-label,
+.vo-hide-art-labels .vo-art-seat.selected .vo-art-seat-label {
+  opacity: 1;
+}
+.vo-art-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #aab3bf;
+  flex-shrink: 0;
+}
+.vo-art-dot.online {
+  background: #16ab68;
+}
+.vo-art-dot.available {
+  background: white;
+  border: 1px solid #9aafbd;
+}
+.vo-art-avatar {
+  position: absolute;
+  top: -8px;
+  left: 48%;
+  width: 23px;
+  height: 23px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #2f936d;
+  color: white;
+  font-size: 8px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 5px #0002;
+}
+.vo-art-zone {
+  position: absolute;
+  z-index: 1500;
+  transform: translate(-50%, -50%);
+  background: var(--vo-department);
+  border: 2px solid white;
+  border-radius: 10px;
+  color: white;
+  padding: 7px 11px;
+  text-align: left;
+  box-shadow: 0 4px 10px #23364a26;
+  cursor: pointer;
+}
+.vo-art-zone strong {
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.vo-art-zone small {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+}
+.vo-art-seat.dimmed,
+.vo-art-zone.dimmed {
+  opacity: 0.35;
+}
+.vo-art-seat.dimmed:hover {
+  opacity: 1;
+}
+.vo-art-heading {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 10px 14px;
+  background: #fffffff0;
+  border: 1px solid #dde5eb;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 1600;
+}
+.vo-art-heading strong,
+.vo-art-heading small {
+  display: block;
+}
+.vo-art-heading small {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #607286;
+}
+.vo-art-legend {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  padding: 10px;
+  background: #fffffff0;
+  border-radius: 9px;
+  z-index: 1600;
+}
+.vo-art-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vo-art-controls {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 1600;
+}
+.vo-art-controls button,
+.vo-art-controls > span {
+  min-width: 36px;
+  height: 36px;
+  border: 1px solid #dbe3eb;
+  border-radius: 8px;
+  background: #fffffff5;
+  color: #25384e;
+  padding: 7px;
+  font-size: 13px;
+}
+.vo-art-controls button {
+  cursor: pointer;
+}
+.vo-art-controls > span {
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+}
+.vo-art-failure {
+  position: absolute;
+  bottom: 65px;
+  left: 18px;
+  right: 18px;
+  z-index: 1700;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+@media (max-width: 850px) {
+  .vo-art-app .vo-office-lockup {
+    width: 170px;
+  }
+  .vo-art-heading {
+    top: 10px;
+    left: 10px;
+  }
+  .vo-art-legend {
+    bottom: 55px;
+    left: 10px;
+    gap: 7px;
+    font-size: 10px;
+  }
+  .vo-art-controls {
+    bottom: 10px;
+    right: 10px;
+  }
+}
