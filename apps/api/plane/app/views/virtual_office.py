@@ -14,7 +14,7 @@ from plane.db.models.virtual_office import OfficeAudit, OfficeDepartment, Office
 
 class ActionSerializer(serializers.Serializer):
     action = serializers.ChoiceField(
-        choices=["member", "reserve", "release", "time_in", "time_out", "heartbeat", "settings"]
+        choices=["member", "reserve", "release", "time_in", "time_out", "heartbeat", "settings", "department"]
     )
     user_id = serializers.UUIDField(required=False)
     member_id = serializers.UUIDField(required=False)
@@ -24,6 +24,7 @@ class ActionSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=OfficeMember.Role.choices, required=False)
     active = serializers.BooleanField(required=False)
     name = serializers.CharField(max_length=120, required=False)
+    color = serializers.RegexField(r"^#[0-9a-fA-F]{6}$", required=False)
 
 
 def office_member(user):
@@ -88,10 +89,19 @@ class OfficeView(BaseAPIView):
             actor = office_member(request.user)
             action = data["action"]
             admin = actor.role in ("admin", "super_admin")
-            if action in ("member", "release", "settings") and not admin:
+            if action in ("member", "release", "settings", "department") and not admin:
                 raise PermissionDenied("Office administrator access required.")
             if action == "member":
                 self.update_member(request, actor, data)
+            elif action == "department":
+                department = get_object_or_404(OfficeDepartment, pk=data.get("department_id"), office_id=1)
+                name = data.get("name", department.name)
+                if len(name) > 80 or OfficeDepartment.objects.filter(name=name).exclude(pk=department.pk).exists():
+                    raise ValidationError("Department names must be unique and at most 80 characters.")
+                department.name = name
+                department.color = data.get("color", department.color)
+                department.save(update_fields=["name", "color"])
+                audit(request.user, action, department_id=department.pk, name=name, color=department.color)
             elif action == "settings":
                 if actor.role != "super_admin":
                     raise PermissionDenied("Super Admin access required.")

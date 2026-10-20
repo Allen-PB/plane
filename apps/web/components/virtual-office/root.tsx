@@ -170,40 +170,81 @@ function OfficeContent() {
               <>
                 <nav className="vo-nav" style={{ marginBottom: 20 }}>
                   <Link to="/virtual-office/admin/access">People & access</Link>
-                  {office.me.role === "super_admin" && <Link to="/virtual-office/admin/settings">Office settings</Link>}
+                  <Link to="/virtual-office/admin/settings">Office settings</Link>
                   <Link to="/virtual-office">Desk assignments ↗</Link>
                 </nav>
                 {settingsPage ? (
-                  office.me.role !== "super_admin" ? (
-                    <p>Super Admin access required.</p>
-                  ) : (
-                    <form
-                      className="vo-card vo-panel vo-form"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        void act({ action: "settings", name: officeName });
-                      }}
-                    >
-                      <h2>Office identity</h2>
-                      <label htmlFor="office-name">Office name</label>
-                      <input
-                        id="office-name"
-                        maxLength={120}
-                        required
-                        value={officeName}
-                        placeholder={office.name}
-                        onChange={(event) => setOfficeName(event.target.value)}
-                      />
-                      <Button
-                        size="lg"
-                        stretch="auto"
-                        variant="primary"
-                        label="Save settings"
-                        type="submit"
-                        disabled={busy}
-                      />
-                    </form>
-                  )
+                  <div className="vo-side">
+                    {office.me.role === "super_admin" && (
+                      <form
+                        className="vo-card vo-panel vo-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void act({ action: "settings", name: officeName });
+                        }}
+                      >
+                        <h2>Office identity</h2>
+                        <label htmlFor="office-name">Office name</label>
+                        <input
+                          id="office-name"
+                          maxLength={120}
+                          required
+                          value={officeName}
+                          placeholder={office.name}
+                          onChange={(event) => setOfficeName(event.target.value)}
+                        />
+                        <Button
+                          size="lg"
+                          stretch="auto"
+                          variant="primary"
+                          label="Save settings"
+                          type="submit"
+                          disabled={busy}
+                        />
+                      </form>
+                    )}
+                    <section className="vo-card vo-panel">
+                      <h2>Departments</h2>
+                      <p className="vo-info">
+                        Manage department names and colors. The seven sections retain their fixed 39-desk capacity.
+                      </p>
+                      {office.departments.map((d) => (
+                        <form
+                          key={`${d.id}-${d.name}-${d.color}`}
+                          className="vo-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            const form = new FormData(event.currentTarget);
+                            void act({
+                              action: "department",
+                              department_id: d.id,
+                              name: String(form.get("name")),
+                              color: String(form.get("color")),
+                            });
+                          }}
+                        >
+                          <label htmlFor={`department-name-${d.id}`}>Department {d.order + 1}</label>
+                          <input
+                            id={`department-name-${d.id}`}
+                            name="name"
+                            required
+                            maxLength={80}
+                            defaultValue={d.name}
+                          />
+                          <label htmlFor={`department-color-${d.id}`}>Section color</label>
+                          <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
+                          <Button
+                            size="lg"
+                            stretch="auto"
+                            variant="secondary"
+                            label={`Save ${d.name}`}
+                            type="submit"
+                            disabled={busy}
+                          />
+                        </form>
+                      ))}
+                    </section>
+                  </div>
                 ) : admin ? (
                   <AdminPanel office={office} admin={admin} query={query} setQuery={setQuery} act={act} busy={busy} />
                 ) : (

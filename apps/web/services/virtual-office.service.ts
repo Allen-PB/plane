@@ -28,7 +28,7 @@ export type OfficeAdminState = {
   audit: { id: number; action: string; created_at: string; details: Record<string, unknown> }[];
 };
 export type OfficeAction = {
-  action: "reserve" | "release" | "time_in" | "time_out" | "heartbeat" | "member" | "settings";
+  action: "reserve" | "release" | "time_in" | "time_out" | "heartbeat" | "member" | "settings" | "department";
   desk_id?: number;
   member_id?: string;
   user_id?: string;
@@ -37,6 +37,7 @@ export type OfficeAction = {
   position?: string;
   active?: boolean;
   name?: string;
+  color?: string;
 };
 class VirtualOfficeService extends APIService {
   constructor() {

@@ -151,6 +151,18 @@ def test_operator_bootstrap_is_explicit_and_audited(office, create_user):
     assert OfficeAudit.objects.filter(action="operator_super_admin").count() == 1
 
 
+def test_department_management_requires_office_admin(office):
+    employee, admin = new_member(), new_member("admin")
+    department = employee.department
+    data = {"department_id": department.pk, "name": "Engineering", "color": "#123abc"}
+    assert post(client(employee), "department", **data).status_code == 403
+    assert post(client(admin), "department", **data).status_code == 200
+    assert post(client(admin), "department", department_id=department.pk, color="invalid").status_code == 400
+    assert OfficeDesk.objects.count() == 39
+    assert OfficeDepartment.objects.get(pk=department.pk).name == "Engineering"
+    assert OfficeAudit.objects.filter(action="department").exists()
+
+
 def test_database_prevents_multiple_reservations(office):
     member = new_member()
     desks = list(OfficeDesk.objects.filter(department=member.department)[:2])

@@ -17,6 +17,8 @@ endpoint. `/virtual-office/setup` explains the access requirement. A Super Admin
 can then grant Admin or Employee access through `/virtual-office/admin/access`.
 Admins manage employees; only Super Admins manage office administrators. The
 last active Super Admin cannot be revoked or demoted through the API.
+Admins can also edit department names and colors in office settings. Department
+count and workstation capacity remain fixed; only Super Admins edit office identity.
 
 Employees require a department and job position. Changing department or revoking
 access releases their desk and ends presence. Admins can release or assign desks
@@ -80,3 +82,24 @@ explicit approval. No production data or credentials are copied for this feature
 The handoff ZIP was not available in the supplied attachments. The implementation
 uses the written requirements; visual comparison against that prototype remains
 pending if the ZIP is supplied later.
+
+## DEV rollout and rollback
+
+Feature source lives in `artifacts/virtual-office-worktree` locally on
+`company/virtual-office-phase-1`, based on the verified deployed `preview` commit.
+This clean worktree excludes unrelated edits in the original checkout.
+
+DEV releases are under `/opt/pathbuilder-dev/releases/`. Each feature image has
+an immutable `vo-<commit>` tag and an OCI source revision label. The runtime
+Compose file references those tags explicitly. API, worker and beat share the
+same backend image; only web uses the new frontend image. Admin, space and live
+retain their original images. The main DEV checkout remains on its original
+`preview` revision; consult the running image labels for feature provenance.
+
+The first rollout backup is in `releases/79296727d8/dev-before.dump`, alongside
+`compose.before.yaml`. To roll the feature back, restore that Compose file into
+`/opt/pathbuilder-dev/runtime/compose.yaml`, then run
+`docker compose up -d --no-deps --pull never api worker beat web` there. Keep the
+additive office tables so no office data is lost. Do not restore an old database
+over newer Sync writes. The old images remain tagged locally. Do not run the
+generic DEV `launch.sh` when intending to retain the feature release.
