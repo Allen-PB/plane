@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { departmentAreas, deskLocation, fitOfficeCamera, zoomOfficeCamera } from "./isometric-layout";
+import {
+  departmentAreas,
+  departmentLabelLocation,
+  deskLocation,
+  fitOfficeCamera,
+  zoomOfficeCamera,
+} from "./isometric-layout";
 import { IsometricOfficeScene } from "./isometric-scene";
 import type { OfficeState } from "../../services/virtual-office.service";
 const member = {
@@ -29,6 +35,44 @@ const office: OfficeState = {
   ),
 };
 describe("aligned office artwork", () => {
+  it("renders and inspects all 44 occupied desks without moving their reservations", () => {
+    const people = office.desks.map((desk, index) => ({
+      ...member,
+      id: `member-${desk.id}`,
+      user_id: `user-${desk.id}`,
+      name: `Occupant ${desk.id}`,
+      department_id: desk.department_id,
+      avatar_style: index % 2 ? ("female" as const) : ("male" as const),
+    }));
+    const busy: OfficeState = {
+      ...office,
+      me: people[0],
+      members: people,
+      desks: office.desks.map((desk, index) => ({ ...desk, member_id: people[index].id })),
+    };
+    const onSelect = vi.fn();
+    const { container } = render(
+      <IsometricOfficeScene
+        office={busy}
+        selectedId={null}
+        departmentId={null}
+        onSelect={onSelect}
+        onDepartment={vi.fn()}
+      />
+    );
+    expect(container.querySelectorAll(".vo-seated-sprite")).toHaveLength(44);
+    expect(container.querySelectorAll(".vo-seated-nameplate")).toHaveLength(44);
+    const seats = container.querySelectorAll(".vo-art-seat");
+    seats.forEach((seat) => fireEvent.click(seat));
+    expect(onSelect.mock.calls.map(([desk]) => desk.id)).toEqual(busy.desks.map((desk) => desk.id));
+    expect(container.querySelectorAll(".vo-seated-sprite")).toHaveLength(44);
+    for (const model of container.querySelectorAll(".vo-seated-sprite"))
+      expect(model.closest("button")?.getAttribute("aria-label")).toContain("reserved by Occupant");
+  });
+  it("keeps the Leadership badge clear of the Makarius wall emblem", () => {
+    const point = departmentLabelLocation(6)!;
+    expect(point.x - 80).toBeGreaterThan(730);
+  });
   it("maps all expanded desks to distinct visible workstations", () => {
     const points = departmentAreas.flatMap((a, i) =>
       Array.from({ length: a.count }, (_, j) => deskLocation(i, j + 1)!)

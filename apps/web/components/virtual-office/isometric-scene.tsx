@@ -3,6 +3,7 @@ import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import type { OfficeDesk, OfficeState } from "../../services/virtual-office.service";
 import {
   departmentAreas,
+  departmentLabelLocation,
   deskLocation,
   workstationPlacement,
   fitOfficeCamera,
@@ -165,8 +166,8 @@ export function IsometricOfficeScene({
       const area = departmentAreas[d.order];
       if (!area) return [];
       const width = Math.max(80, d.name.length * 8 + 28),
-        x = area.x + 25,
-        y = area.y - 105;
+        x = departmentLabelLocation(d.order)!.x,
+        y = departmentLabelLocation(d.order)!.y;
       return [{ left: x - width / 2, right: x + width / 2, top: y - 27, bottom: y + 27 }];
     })
   );
@@ -206,7 +207,13 @@ export function IsometricOfficeScene({
               <button
                 key={d.id}
                 className={`vo-art-zone ${departmentId !== null && departmentId !== d.id ? "dimmed" : ""}`}
-                style={{ left: area.x + 25, top: area.y - 105, "--vo-department": d.color } as CSSProperties}
+                style={
+                  {
+                    left: departmentLabelLocation(d.order)!.x,
+                    top: departmentLabelLocation(d.order)!.y,
+                    "--vo-department": d.color,
+                  } as CSSProperties
+                }
                 onClick={() => onDepartment(d.id)}
               >
                 <strong>{d.name}</strong>

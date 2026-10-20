@@ -34,9 +34,9 @@ export const bankSeats: readonly (readonly [number, number])[][] = [
     [500, 615],
   ],
   [
-    [535, 760],
-    [615, 805],
-    [695, 850],
+    [541, 742],
+    [612, 791],
+    [684, 836],
   ],
   [
     [805, 630],
@@ -70,6 +70,7 @@ type DepartmentArea = {
   x: number;
   y: number;
   avatarAnchor?: AvatarAnchor;
+  labelPosition?: { x: number; y: number };
   chairRows?: { first: number; stride: number; count: number; avatarAnchor: AvatarAnchor }[];
 };
 export const departmentAreas: DepartmentArea[] = [
@@ -81,6 +82,7 @@ export const departmentAreas: DepartmentArea[] = [
   { code: "AM", count: 6, cols: 3, x: 1310, y: 705, avatarAnchor: chairAnchors.northWest },
   {
     code: "LEAD",
+    labelPosition: { x: 850, y: 60 },
     count: 4,
     cols: 2,
     x: 720,
@@ -138,4 +140,9 @@ export function departmentRug(order: number) {
   ]
     .map((p) => p.join(","))
     .join(" ");
+}
+
+export function departmentLabelLocation(order: number) {
+  const area = departmentAreas[order];
+  return area ? (area.labelPosition ?? { x: area.x + 25, y: area.y - 105 }) : null;
 }
