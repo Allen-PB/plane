@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import type { OfficeDesk, OfficeState } from "../../services/virtual-office.service";
-import { departmentAreas, deskLocation, fitOfficeCamera, zoomOfficeCamera } from "./isometric-layout";
+import { avatarFacing, departmentAreas, deskLocation, fitOfficeCamera, zoomOfficeCamera } from "./isometric-layout";
 import type { OfficeCamera } from "./isometric-layout";
 
 export function IsometricOfficeScene({
@@ -213,12 +213,8 @@ export function IsometricOfficeScene({
               >
                 {member?.online && (
                   <img
-                    className="vo-art-person"
-                    src={
-                      member.avatar_style === "female"
-                        ? "/virtual-office/art-v1/seated-avatar-female.png"
-                        : "/virtual-office/art-v1/seated-avatar.png"
-                    }
+                    className={`vo-art-person vo-person-${avatarFacing(department.order)}`}
+                    src={`/virtual-office/art-v1/seated-avatar${member.avatar_style === "female" ? "-female" : ""}${avatarFacing(department.order) === "front" ? "-front" : ""}.png`}
                     alt=""
                     draggable={false}
                   />

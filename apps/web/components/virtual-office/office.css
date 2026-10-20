@@ -1503,3 +1503,16 @@
 .vo-art-zone {
   transform: translate(-50%, -50%);
 }
+.vo-art-person {
+  left: 47px;
+  top: 17px;
+}
+.vo-person-right {
+  left: -12px;
+  top: 12px;
+  transform: scaleX(-1);
+}
+.vo-person-front {
+  left: 48px;
+  top: -28px;
+}
