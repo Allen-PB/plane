@@ -40,11 +40,14 @@ export type OfficeAction = {
   color?: string;
 };
 class VirtualOfficeService extends APIService {
+  private csrfToken: string | null = null;
   constructor() {
     super(API_BASE_URL);
   }
   async status(): Promise<{ allowed: boolean; member: OfficeMember | null }> {
-    return (await this.get("/api/virtual-office/status/")).data;
+    const data = (await this.get("/api/virtual-office/status/")).data;
+    this.csrfToken = data.csrf_token;
+    return data;
   }
   async state(): Promise<OfficeState> {
     return (await this.get("/api/virtual-office/")).data;
@@ -53,7 +56,8 @@ class VirtualOfficeService extends APIService {
     return (await this.get("/api/virtual-office/admin/", { params: { q } })).data;
   }
   async action(data: OfficeAction): Promise<void> {
-    await this.post("/api/virtual-office/", data);
+    if (!this.csrfToken) await this.status();
+    await this.post("/api/virtual-office/", data, { headers: { "X-CSRFToken": this.csrfToken } });
   }
 }
 export const virtualOfficeService = new VirtualOfficeService();

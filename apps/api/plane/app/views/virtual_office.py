@@ -1,9 +1,11 @@
 from datetime import timedelta
 
 from django.db import transaction
+from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
@@ -60,10 +62,18 @@ def person(member):
 class OfficeStatusView(BaseAPIView):
     def get(self, request):
         member = OfficeMember.objects.select_related("user").filter(user=request.user, active=True).first()
-        return Response({"allowed": member is not None, "member": person(member) if member else None})
+        return Response(
+            {
+                "allowed": member is not None,
+                "member": person(member) if member else None,
+                "csrf_token": get_token(request),
+            }
+        )
 
 
 class OfficeView(BaseAPIView):
+    authentication_classes = [SessionAuthentication]
+
     def get(self, request):
         member = office_member(request.user)
         members = OfficeMember.objects.select_related("user").filter(active=True)

@@ -582,3 +582,76 @@
     font-size: 23px;
   }
 }
+.vo-webgl-scene {
+  position: relative;
+  background: #e8eef0;
+}
+.vo-webgl-host {
+  width: 100%;
+  height: 650px;
+  touch-action: none;
+}
+.vo-webgl-host[hidden] {
+  display: none;
+}
+.vo-webgl-host canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.vo-camera-controls {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  background: #ffffffdf;
+  color: #526878;
+  font-size: 11px;
+  pointer-events: none;
+}
+.vo-camera-controls button {
+  pointer-events: auto;
+  white-space: nowrap;
+  color: #3266af;
+  font-weight: 600;
+}
+.vo-keyboard-desks {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.vo-keyboard-desks:focus-within {
+  left: 18px;
+  top: 18px;
+  width: 240px;
+  height: auto;
+  max-height: 300px;
+  overflow: auto;
+  clip-path: none;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  gap: 5px;
+}
+.vo-keyboard-desks button:focus-visible {
+  outline: 2px solid #4775e7;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .vo-webgl-host {
+    height: 520px;
+  }
+  .vo-camera-controls {
+    align-items: flex-start;
+    font-size: 10px;
+  }
+}

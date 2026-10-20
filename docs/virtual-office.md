@@ -37,10 +37,19 @@ disconnected browser therefore loses its avatar, but retains its reservation.
 An expired lease requires an explicit time-in. Time-out ends presence across all
 tabs. This is office presence, not a payroll attendance system.
 
-The scene uses CSS 3D transforms and keyboard-accessible desk buttons, with a
+The scene adapts the supplied prototype's floor layout into a lazy-loaded Three.js
+WebGL renderer with orbit, pan, pinch/scroll zoom, and reset controls. Names,
+presence and reservations come exclusively from the office API. Camera movement
+does not reset on presence polling. Graphics resources and event listeners are
+released on unmount. No external models, fonts or texture URLs are loaded.
+
+An isometric fallback and keyboard-accessible desk buttons remain available, with a
 table view for smaller screens and assistive technology. No browser storage
 authorizes access or stores reservations. The existing Sync auth wrapper handles
 session expiry. The header building icon opens `/virtual-office`.
+Office mutations use Django's CSRF-enforcing session authentication. The status
+endpoint supplies a masked CSRF token for the client header while retaining the
+existing HttpOnly cookie policy. Missing tokens and untrusted origins are denied.
 
 ## Validation
 
@@ -61,7 +70,7 @@ changes, presence expiry, uniqueness and real concurrent desk claims.
 
 | Resource | DEV | Production (read-only inspection) |
 | --- | --- | --- |
-| Host | `152.42.166.16`, `dev-plane-sync-sgp1` | `178.128.26.53`, `plane-sync-sgp1` |
+| Host | `dev-plane-sync-sgp1` | `plane-sync-sgp1` |
 | Compose project | `pathbuilder-dev` | `plane-app` |
 | Database endpoint / name | `db:5432/pathbuilder` | `plane-db/plane` |
 | PostgreSQL volume | `pathbuilder-dev_pgdata` | `plane-app_pgdata` |
@@ -79,9 +88,10 @@ DEV is reached through the existing SSH tunnel in `tools/connect-dev.ps1`, then
 `http://localhost:8080/virtual-office`. Production must not be changed without
 explicit approval. No production data or credentials are copied for this feature.
 
-The handoff ZIP was not available in the supplied attachments. The implementation
-uses the written requirements; visual comparison against that prototype remains
-pending if the ZIP is supplied later.
+The supplied `pathbuilder-sync-virtual-office-dev-handoff.zip` was reviewed after
+the initial rollout. Only the visual reference informed the scene update; its
+placeholder routes, invitation flow, simulated presence, and localStorage logic
+were not imported. Existing PathBuilder SVG branding remains in use.
 
 ## DEV rollout and rollback
 

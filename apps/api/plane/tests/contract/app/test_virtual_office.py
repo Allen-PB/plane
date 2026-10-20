@@ -171,6 +171,24 @@ def test_database_prevents_multiple_reservations(office):
         OfficeDesk.objects.filter(pk=desks[1].pk).update(member=member)
 
 
+def test_session_mutations_require_csrf_and_trusted_origin(office):
+    member = new_member("super_admin")
+    api = APIClient(enforce_csrf_checks=True)
+    api.force_login(member.user)
+    response = api.get(URL + "status/")
+    assert response.data["allowed"] is True
+    assert post(api, "settings", name="Rejected").status_code == 403
+    token = response.data["csrf_token"]
+    payload = {"action": "settings", "name": "Office"}
+    assert (
+        api.post(
+            URL, payload, format="json", HTTP_X_CSRFTOKEN=token, HTTP_ORIGIN="https://untrusted.example"
+        ).status_code
+        == 403
+    )
+    assert api.post(URL, payload, format="json", HTTP_X_CSRFTOKEN=token).status_code == 200
+
+
 @pytest.mark.django_db(transaction=True)
 def test_simultaneous_claims_have_one_winner(office):
     members = [new_member(), new_member()]

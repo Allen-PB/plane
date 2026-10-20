@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from "react";
 import type { OfficeState, OfficeDesk, OfficeDepartment } from "../../services/virtual-office.service";
+import type { OfficeRenderer } from "./webgl-office";
 
 const zones = [
   [70, 50],
@@ -15,7 +17,7 @@ export function deskPosition(department: OfficeDepartment, desk: OfficeDesk) {
   return { x: x + ((desk.number - 1) % columns) * 88, y: y + Math.floor((desk.number - 1) / columns) * 68 };
 }
 
-export function OfficeScene({
+export function OfficeFallback({
   office,
   selectedId,
   onSelect,
@@ -114,6 +116,87 @@ export function OfficeScene({
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+export function OfficeScene(props: {
+  office: OfficeState;
+  selectedId: number | null;
+  onSelect: (desk: OfficeDesk) => void;
+}) {
+  const host = useRef<HTMLDivElement>(null);
+  const renderer = useRef<OfficeRenderer | null>(null);
+  const latest = useRef(props);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    latest.current = props;
+    renderer.current?.update(props.office, props.selectedId);
+  }, [props]);
+  useEffect(() => {
+    if (!host.current || typeof WebGL2RenderingContext === "undefined") return;
+    let active = true;
+    void import("./webgl-office")
+      .then(({ createOfficeRenderer }) => {
+        if (!active || !host.current) return;
+        renderer.current = createOfficeRenderer(
+          host.current,
+          (id) => {
+            const desk = latest.current.office.desks.find((d) => d.id === id);
+            if (desk) latest.current.onSelect(desk);
+          },
+          () => {
+            renderer.current?.dispose();
+            renderer.current = null;
+            if (active) setReady(false);
+          }
+        );
+        renderer.current.update(latest.current.office, latest.current.selectedId);
+        setReady(true);
+        return undefined;
+      })
+      .catch((error: unknown) => {
+        renderer.current?.dispose();
+        renderer.current = null;
+        console.warn("Virtual Office 3D renderer unavailable; using the accessible floor.", error);
+        if (active) setReady(false);
+      });
+    return () => {
+      active = false;
+      renderer.current?.dispose();
+      renderer.current = null;
+    };
+  }, []);
+  return (
+    <div className="vo-webgl-scene">
+      <div
+        ref={host}
+        className="vo-webgl-host"
+        hidden={!ready}
+        role="img"
+        aria-label="3D office floor with 39 workstations"
+      />
+      {ready ? (
+        <>
+          <div className="vo-camera-controls">
+            <span>Drag to rotate · Scroll or pinch to zoom · Two fingers to pan</span>
+            <button onClick={() => renderer.current?.reset()}>Reset view</button>
+          </div>
+          <div className="vo-keyboard-desks" aria-label="Choose a workstation with your keyboard">
+            {props.office.desks.map((desk) => {
+              const member = props.office.members.find((m) => m.id === desk.member_id);
+              return (
+                <button key={desk.id} onClick={() => props.onSelect(desk)} aria-pressed={desk.id === props.selectedId}>
+                  {props.office.departments.find((d) => d.id === desk.department_id)?.name} desk {desk.number}
+                  {`, ${member?.name ?? "available"}${member?.online ? ", online" : ""}`}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <OfficeFallback {...props} />
+      )}
     </div>
   );
 }
