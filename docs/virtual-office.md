@@ -161,7 +161,3 @@ The avatar is parented to the workstation's local origin. A dedicated child appl
 Selecting a desk still inspects it. The live avatar follows the server-confirmed reservation; an unsuccessful claim cannot move it. Time Out removes the avatar while preserving the reservation. No backend model, permission or attendance changes are required for anchor placement.
 
 Validation includes all visible chair anchors, opposing Leadership rows, repeated reservation switches, male/female poses, nameplate overlap avoidance, and stable orientation through selection/pan/zoom. Free camera rotation cannot be validated against this fixed-view artwork; a future orbiting renderer must use actual 3D workstations and skeletal avatar poses.
-
-## Modular rendering review (not deployed)
-
-The local modular revision retains the original mapped department-bank composition rather than introducing department cards. A single vector architectural floor replaces the baked furniture plate; workstation furniture and seated male/female figures share local geometry. Leadership faces opposite to the other banks. Existing seat identifiers, API service, permission checks, attendance and CSV export remain unchanged. Growth appends aligned bank extensions and expands the same floor canvas without moving original seat positions. This is a simplified isometric illustration and has no continuous render loop. Visual review and a Linux release build are required before deployment.

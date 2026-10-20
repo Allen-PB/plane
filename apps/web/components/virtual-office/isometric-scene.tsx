@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import type { OfficeDesk, OfficeState } from "../../services/virtual-office.service";
-import { zoomOfficeCamera } from "./isometric-layout";
+import {
+  departmentAreas,
+  deskLocation,
+  workstationPlacement,
+  fitOfficeCamera,
+  zoomOfficeCamera,
+} from "./isometric-layout";
 import type { OfficeCamera } from "./isometric-layout";
-import { arrangeNameplates } from "./avatar-anchors";
-import { modularFloorLayout, fitModularCamera, departmentCodes } from "./modular-layout";
-import { ModularWorkstation, ModularAmenities } from "./modular-furniture";
+import { SeatedAvatar, AvatarNameplate } from "./seated-avatar";
+import { arrangeNameplates, seatedAvatarModel } from "./avatar-anchors";
 
 export function IsometricOfficeScene({
   office,
@@ -31,56 +36,42 @@ export function IsometricOfficeScene({
   const [zoom, setZoom] = useState(100),
     [labels, setLabels] = useState(false),
     [failed, setFailed] = useState(false);
-  const layout = useMemo(
-    () => modularFloorLayout({ departments: office.departments, desks: office.desks }),
-    [office.departments, office.desks]
-  );
-  const layoutRef = useRef(layout);
-  layoutRef.current = layout;
   const focusedOrder = office.departments.find((d) => d.id === departmentId)?.order;
   const focus = useRef(focusedOrder);
   focus.current = focusedOrder;
-  const paint = useCallback((next: OfficeCamera) => {
+  function paint(next: OfficeCamera) {
     camera.current = next;
     if (world.current) world.current.style.transform = `translate(${next.x}px,${next.y}px) scale(${next.scale})`;
     setZoom(Math.round((next.scale / fitScale.current) * 100));
-  }, []);
-  const reset = useCallback(
-    (order?: number) => {
-      const host = viewport.current;
-      if (!host) return;
-      const current = layoutRef.current;
-      const next = fitModularCamera(host.clientWidth, host.clientHeight, current);
-      fitScale.current = next.scale;
-      const area = current.areas.find((a) => a.department.order === order);
-      if (area) {
-        next.scale = Math.min(
-          next.scale * 3.5,
-          host.clientWidth / (area.width + 130),
-          host.clientHeight / (area.height + 100)
-        );
-        next.x = host.clientWidth / 2 - (area.x + area.width / 2) * next.scale;
-        next.y = host.clientHeight / 2 - (area.y + area.height / 2) * next.scale;
-      }
-      paint(next);
-    },
-    [paint]
-  );
-  const changeZoom = useCallback(
-    (factor: number, point?: { x: number; y: number }) => {
-      const host = viewport.current;
-      if (!host) return;
-      paint(
-        zoomOfficeCamera(
-          camera.current,
-          factor,
-          point ?? { x: host.clientWidth / 2, y: host.clientHeight / 2 },
-          fitScale.current
-        )
-      );
-    },
-    [paint]
-  );
+  }
+  function reset(order?: number) {
+    const host = viewport.current;
+    if (!host) return;
+    const next = fitOfficeCamera(host.clientWidth, host.clientHeight);
+    fitScale.current = next.scale;
+    const area = order === undefined ? undefined : departmentAreas[order];
+    if (area) {
+      const points = Array.from({ length: area.count }, (_, i) => deskLocation(order!, i + 1)!);
+      const x = points.reduce((sum, p) => sum + p.x, 0) / points.length,
+        y = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+      next.scale *= 1.7;
+      next.x = host.clientWidth / 2 - x * next.scale;
+      next.y = host.clientHeight / 2 - (y - 35) * next.scale;
+    }
+    paint(next);
+  }
+  function changeZoom(factor: number, point?: { x: number; y: number }) {
+    const host = viewport.current;
+    if (!host) return;
+    paint(
+      zoomOfficeCamera(
+        camera.current,
+        factor,
+        point ?? { x: host.clientWidth / 2, y: host.clientHeight / 2 },
+        fitScale.current
+      )
+    );
+  }
   useEffect(() => {
     const host = viewport.current;
     if (!host) return;
@@ -101,10 +92,10 @@ export function IsometricOfficeScene({
       observer?.disconnect();
       host.removeEventListener("wheel", wheel);
     };
-  }, [layout.width, layout.height, reset, changeZoom]);
+  }, []);
   useEffect(() => {
     reset(focusedOrder);
-  }, [focusedOrder, resetKey, layout.width, layout.height, reset]);
+  }, [focusedOrder, resetKey]);
   function pointerDown(event: PointerEvent<HTMLDivElement>) {
     if ((event.target as HTMLElement).closest("button") || (event.pointerType === "mouse" && event.button !== 0))
       return;
@@ -157,23 +148,27 @@ export function IsometricOfficeScene({
       reset();
     }
   }
-  const occupants = layout.desks.flatMap((workstation) => {
-    const member = office.members.find((m) => m.id === workstation.desk.member_id);
-    return member?.online ? [{ member, workstation }] : [];
+  const occupants = office.desks.flatMap((desk) => {
+    const member = office.members.find((m) => m.id === desk.member_id),
+      department = office.departments.find((d) => d.id === desk.department_id);
+    const workstation = department ? workstationPlacement(department.order, desk.number) : null;
+    return member?.online && workstation ? [{ member, workstation }] : [];
   });
   const nameplates = arrangeNameplates(
-    occupants.map(({ member, workstation: w }) => ({
+    occupants.map(({ member, workstation: { position, avatarAnchor } }) => ({
       id: member.id,
-      x: w.x + (w.reverse ? 16 : -16),
-      y: w.y - 50,
+      x: position.x + avatarAnchor.x,
+      y: position.y + avatarAnchor.y + seatedAvatarModel(avatarAnchor, member.avatar_style).nameplateY,
       width: Math.min(190, member.name.length * 6.5 + 28),
     })),
-    layout.areas.map((a) => ({
-      left: a.labelX - 100,
-      right: a.labelX + 100,
-      top: a.labelY - 25,
-      bottom: a.labelY + 25,
-    }))
+    office.departments.flatMap((d) => {
+      const area = departmentAreas[d.order];
+      if (!area) return [];
+      const width = Math.max(80, d.name.length * 8 + 28),
+        x = area.x + 25,
+        y = area.y - 105;
+      return [{ left: x - width / 2, right: x + width / 2, top: y - 27, bottom: y + 27 }];
+    })
   );
   return (
     <div className="vo-art-scene">
@@ -190,53 +185,60 @@ export function IsometricOfficeScene({
         onLostPointerCapture={pointerEnd}
         onKeyDown={keyboard}
       >
-        <div
-          ref={world}
-          className={`vo-art-world vo-modular-world ${labels ? "" : "vo-hide-art-labels"}`}
-          style={{ width: layout.width, height: layout.height }}
-        >
-          <ModularAmenities height={layout.height} />
-          {layout.areas.map((area) => (
-            <button
-              key={area.department.id}
-              className={`vo-art-zone ${departmentId !== null && departmentId !== area.department.id ? "dimmed" : ""}`}
-              style={
-                {
-                  left: area.labelX,
-                  top: area.labelY,
-                  "--vo-department": area.department.color,
-                } as CSSProperties
-              }
-              onClick={() => onDepartment(area.department.id)}
-            >
-              <strong>{area.department.name}</strong>
-              <small>{area.desks.length} desks</small>
-            </button>
-          ))}
-          {layout.desks.map((w) => {
-            const member = office.members.find((m) => m.id === w.desk.member_id);
-            const label = `${departmentCodes[w.department.order] ?? "DESK"}-${String(w.desk.number).padStart(2, "0")}`;
+        <div ref={world} className={`vo-art-world ${labels ? "" : "vo-hide-art-labels"}`}>
+          <img
+            className="vo-art-environment"
+            src="/virtual-office/art-v1/office-environment.png"
+            alt="Office with glass walls, plants and flowers, meeting room, lounge and reception"
+            draggable={false}
+            onError={() => setFailed(true)}
+          />
+
+          <img
+            className="vo-art-wall-logo"
+            src="/virtual-office/art-v1/pathbuilder-only.svg"
+            alt="PathBuilder logo"
+            draggable={false}
+          />
+          {office.departments.map((d) => {
+            const area = departmentAreas[d.order];
+            return area ? (
+              <button
+                key={d.id}
+                className={`vo-art-zone ${departmentId !== null && departmentId !== d.id ? "dimmed" : ""}`}
+                style={{ left: area.x + 25, top: area.y - 105, "--vo-department": d.color } as CSSProperties}
+                onClick={() => onDepartment(d.id)}
+              >
+                <strong>{d.name}</strong>
+                <small>{office.desks.filter((desk) => desk.department_id === d.id).length} desks</small>
+              </button>
+            ) : null;
+          })}
+          {office.desks.map((desk) => {
+            const department = office.departments.find((d) => d.id === desk.department_id);
+            if (!department) return null;
+            const workstation = workstationPlacement(department.order, desk.number);
+            if (!workstation) return null;
+            const point = workstation.position;
+            const member = office.members.find((m) => m.id === desk.member_id);
+            const label = `${departmentAreas[department.order].code}-${String(desk.number).padStart(2, "0")}`;
             return (
               <button
-                key={w.desk.id}
-                className={`vo-art-seat vo-modular-seat ${selectedId === w.desk.id ? "selected" : ""} ${departmentId !== null && departmentId !== w.department.id ? "dimmed" : ""}`}
+                key={desk.id}
+                className={`vo-art-seat ${selectedId === desk.id ? "selected" : ""} ${departmentId !== null && departmentId !== department.id ? "dimmed" : ""}`}
                 style={
                   {
-                    left: w.x,
-                    top: w.y,
-                    zIndex: Math.round(w.y),
-                    "--vo-department": w.department.color,
+                    left: point.x,
+                    top: point.y,
+                    zIndex: Math.round(point.y),
+                    "--vo-department": department.color,
                   } as CSSProperties
                 }
                 aria-label={`${label}, ${member ? `reserved by ${member.name}, ${member.online ? "online" : "offline"}` : "available"}`}
-                aria-pressed={selectedId === w.desk.id}
-                onClick={() => onSelect(w.desk)}
+                aria-pressed={selectedId === desk.id}
+                onClick={() => onSelect(desk)}
               >
-                <ModularWorkstation
-                  occupied={Boolean(member?.online)}
-                  female={member?.avatar_style === "female"}
-                  reverse={w.reverse}
-                />
+                {member?.online && <SeatedAvatar member={member} anchor={workstation.avatarAnchor} position={point} />}
                 <span className="vo-art-seat-label">
                   <i className={`vo-art-dot ${member?.online ? "online" : member ? "reserved" : "available"}`} />
                   {label}
@@ -245,16 +247,21 @@ export function IsometricOfficeScene({
             );
           })}
           <div className="vo-art-nameplate-layer" aria-label="Online employees">
-            {nameplates.map((p) => (
-              <span
-                key={p.id}
-                className="vo-seated-nameplate"
-                style={{ left: p.x, top: p.y }}
-                title={office.members.find((m) => m.id === p.id)?.name}
-              >
-                <i className="vo-art-dot online" />
-                {office.members.find((m) => m.id === p.id)?.name}
-              </span>
+            <svg className="vo-nameplate-connectors" viewBox="0 0 1536 1024" aria-hidden="true">
+              {nameplates
+                .filter((p) => p.y !== p.naturalY)
+                .map((p) => (
+                  <line key={p.id} x1={p.x} y1={p.y} x2={p.x} y2={p.naturalY + 6} />
+                ))}
+            </svg>
+            {occupants.map(({ member, workstation }) => (
+              <AvatarNameplate
+                key={member.id}
+                member={member}
+                anchor={workstation.avatarAnchor}
+                position={workstation.position}
+                labelPosition={nameplates.find((p) => p.id === member.id)}
+              />
             ))}
           </div>
         </div>
