@@ -1,21 +1,22 @@
 import { chairAnchors } from "./avatar-anchors";
 import type { AvatarAnchor } from "./avatar-anchors";
 export const officeArtwork = { width: 1536, height: 1024 };
-// Desk centers are mapped to the cohesive architectural bank artwork.
+// Desk targets are calibrated to the keyboard areas in the architectural bank artwork.
+// Development and Leadership targets also place the local avatar anchor on each chair cushion.
 export const bankSeats: readonly (readonly [number, number])[][] = [
   [
-    [390, 230],
-    [455, 275],
-    [520, 320],
-    [320, 270],
-    [385, 315],
-    [450, 360],
-    [240, 310],
-    [305, 355],
-    [370, 400],
-    [150, 350],
-    [215, 395],
-    [280, 440],
+    [401, 221],
+    [462, 264],
+    [530, 305],
+    [326, 257],
+    [392, 299],
+    [458, 340],
+    [240, 290],
+    [306, 329],
+    [371, 369],
+    [144, 322],
+    [194, 361],
+    [248, 400],
   ],
   [
     [810, 350],
@@ -56,10 +57,10 @@ export const bankSeats: readonly (readonly [number, number])[][] = [
     [1430, 770],
   ],
   [
-    [640, 200],
-    [720, 155],
-    [710, 245],
-    [790, 200],
+    [654, 187],
+    [749, 155],
+    [728, 232],
+    [825, 200],
   ],
 ];
 type DepartmentArea = {
