@@ -38,9 +38,10 @@ describe("aligned office artwork", () => {
     for (let i = 0; i < 7; i++) {
       const a = deskLocation(i, 1)!,
         b = deskLocation(i, 2)!;
-      expect([b.x - a.x, b.y - a.y]).toEqual([70, 35]);
+      expect([b.x - a.x, b.y - a.y]).toEqual([70, -28]);
     }
-    expect(deskLocation(0, 11)).toBeNull();
+    expect(deskLocation(0, 11, 20)).not.toBeNull();
+    expect(deskLocation(0, 0)).toBeNull();
   });
   it("anchors zoom at the pointer and limits magnification", () => {
     const camera = fitOfficeCamera(1000, 700),

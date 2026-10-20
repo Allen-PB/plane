@@ -19,6 +19,8 @@ export function OfficeFloor({
   busy: boolean;
   act: (action: OfficeAction) => Promise<void>;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [overviewKey, setOverviewKey] = useState(0);
   const [filter, setFilter] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [assignMember, setAssignMember] = useState("");
@@ -34,6 +36,43 @@ export function OfficeFloor({
   const needDepartment = office.me.department_id === null;
   return (
     <div className="vo-office-layout">
+      <nav className="vo-floor-nav" aria-label="Office departments">
+        <button
+          onClick={() => {
+            setDetailsOpen(false);
+            setListView(false);
+            setFilter("");
+            setOverviewKey((k) => k + 1);
+          }}
+        >
+          ? Office
+        </button>
+        <button onClick={() => setDetailsOpen(true)}>? Directory</button>
+        <strong>Floor 1</strong>
+        <button
+          onClick={() => {
+            setFilter("");
+            setOverviewKey((k) => k + 1);
+          }}
+        >
+          All departments <small>{office.desks.length}</small>
+        </button>
+        {office.departments.map((d) => (
+          <button
+            key={d.id}
+            aria-pressed={filter === String(d.id)}
+            onClick={() => {
+              setFilter(String(d.id));
+              setDetailsOpen(false);
+              setListView(false);
+            }}
+          >
+            <i style={{ background: d.color }} />
+            <span>{d.name}</span>
+            <small>{office.desks.filter((desk) => desk.department_id === d.id).length}</small>
+          </button>
+        ))}
+      </nav>
       <section className="vo-office-canvas" aria-label="Office floor">
         {listView ? (
           <div className="vo-office-table" role="region" aria-label="Workstation list" tabIndex={0}>
@@ -71,13 +110,20 @@ export function OfficeFloor({
             selectedId={selected?.id ?? null}
             departmentId={filter ? Number(filter) : null}
             onDepartment={(id) => setFilter(String(id))}
-            onSelect={(desk) => setSelectedId(desk.id)}
+            resetKey={overviewKey}
+            onSelect={(desk) => {
+              setSelectedId(desk.id);
+              setDetailsOpen(true);
+            }}
           />
         )}
       </section>
-      <aside className="vo-office-directory" aria-label="Office directory" tabIndex={0}>
+      <aside hidden={!detailsOpen} className="vo-office-directory" aria-label="Office directory" tabIndex={0}>
         <div className="vo-directory-heading">
           <h2>Office directory</h2>
+          <button aria-label="Close directory" onClick={() => setDetailsOpen(false)}>
+            ?
+          </button>
           <button onClick={() => setListView(!listView)}>{listView ? "Office view" : "List view"}</button>
         </div>
         <p>Select a workstation to see its reservation. Time In and Time Out control your own avatar.</p>

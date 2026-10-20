@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import type { OfficeDesk, OfficeState } from "../../services/virtual-office.service";
-import { departmentAreas, departmentRug, deskLocation, fitOfficeCamera, zoomOfficeCamera } from "./isometric-layout";
+import { departmentAreas, deskLocation, fitOfficeCamera, zoomOfficeCamera } from "./isometric-layout";
 import type { OfficeCamera } from "./isometric-layout";
 
 export function IsometricOfficeScene({
@@ -10,7 +10,9 @@ export function IsometricOfficeScene({
   departmentId,
   onSelect,
   onDepartment,
+  resetKey = 0,
 }: {
+  resetKey?: number;
   office: OfficeState;
   selectedId: number | null;
   departmentId: number | null;
@@ -85,7 +87,7 @@ export function IsometricOfficeScene({
   }, []);
   useEffect(() => {
     reset(focusedOrder);
-  }, [focusedOrder]);
+  }, [focusedOrder, resetKey]);
   function pointerDown(event: PointerEvent<HTMLDivElement>) {
     if ((event.target as HTMLElement).closest("button") || (event.pointerType === "mouse" && event.button !== 0))
       return;
@@ -161,31 +163,14 @@ export function IsometricOfficeScene({
             draggable={false}
             onError={() => setFailed(true)}
           />
-          <svg className="vo-art-rugs" viewBox="0 0 1536 1024" aria-hidden="true">
-            {office.departments.map((d) => (
-              <polygon
-                key={d.id}
-                points={departmentRug(d.order)}
-                fill={d.color}
-                fillOpacity=".12"
-                stroke={d.color}
-                strokeOpacity=".28"
-              />
-            ))}
-          </svg>
-          <img
-            className="vo-art-wall-logo"
-            src="/virtual-office/art-v1/pathbuilder-only.svg"
-            alt="PathBuilder logo on reception wall"
-            draggable={false}
-          />
+
           {office.departments.map((d) => {
             const area = departmentAreas[d.order];
             return area ? (
               <button
                 key={d.id}
                 className={`vo-art-zone ${departmentId !== null && departmentId !== d.id ? "dimmed" : ""}`}
-                style={{ left: area.x + 25, top: area.y - 115, "--vo-department": d.color } as CSSProperties}
+                style={{ left: area.x + 25, top: area.y - 105, "--vo-department": d.color } as CSSProperties}
                 onClick={() => onDepartment(d.id)}
               >
                 <strong>{d.name}</strong>
@@ -196,7 +181,11 @@ export function IsometricOfficeScene({
           {office.desks.map((desk) => {
             const department = office.departments.find((d) => d.id === desk.department_id);
             if (!department) return null;
-            const point = deskLocation(department.order, desk.number);
+            const point = deskLocation(
+              department.order,
+              desk.number,
+              office.desks.filter((d) => d.department_id === department.id).length
+            );
             if (!point) return null;
             const member = office.members.find((m) => m.id === desk.member_id);
             const label = `${departmentAreas[department.order].code}-${String(desk.number).padStart(2, "0")}`;

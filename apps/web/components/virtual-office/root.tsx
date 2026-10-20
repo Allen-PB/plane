@@ -77,7 +77,7 @@ function OfficeContent() {
   const myDesk = office?.desks.find((d) => d.member_id === office.me.id);
 
   return (
-    <div className={`vo-app ${adminPage ? "" : "vo-prototype vo-art-app"}`}>
+    <div className={`vo-app ${adminPage ? "vo-management-app" : "vo-prototype vo-art-app"}`}>
       <header className="vo-header">
         <Link to="/virtual-office" className="vo-brand">
           <img className="vo-office-lockup" src="/virtual-office/art-v1/pathbuilder-only.svg" alt="PathBuilder" />
