@@ -35,6 +35,38 @@ const office: OfficeState = {
   ),
 };
 describe("aligned office artwork", () => {
+  it("pans with wheel and Page Down while retaining Ctrl-wheel zoom and releases the wheel handler on exit", () => {
+    const { container, unmount } = render(
+      <IsometricOfficeScene
+        office={office}
+        selectedId={null}
+        departmentId={null}
+        onSelect={vi.fn()}
+        onDepartment={vi.fn()}
+      />
+    );
+    const viewport = screen.getByRole("region", { name: /Drag to move/ });
+    const world = container.querySelector(".vo-art-world") as HTMLElement;
+    const scale = () => world.style.transform.match(/scale\(([^)]+)\)/)?.[1];
+    const initial = world.style.transform,
+      initialScale = scale();
+    fireEvent.wheel(viewport, { deltaY: 120 });
+    expect(world.style.transform).not.toBe(initial);
+    expect(scale()).toBe(initialScale);
+    const vertical = world.style.transform;
+    fireEvent.wheel(viewport, { deltaY: 100, shiftKey: true });
+    expect(world.style.transform).not.toBe(vertical);
+    expect(scale()).toBe(initialScale);
+    fireEvent.wheel(viewport, { deltaY: -60, ctrlKey: true });
+    expect(scale()).not.toBe(initialScale);
+    const beforePage = world.style.transform;
+    fireEvent.keyDown(viewport, { key: "PageDown" });
+    expect(world.style.transform).not.toBe(beforePage);
+    unmount();
+    const event = new WheelEvent("wheel", { deltaY: 100, cancelable: true });
+    viewport.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
   it("renders and inspects all 44 occupied desks without moving their reservations", () => {
     const people = office.desks.map((desk, index) => ({
       ...member,

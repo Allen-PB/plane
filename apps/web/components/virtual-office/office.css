@@ -1324,10 +1324,16 @@
   transform: scaleX(-1);
 }
 .vo-management-app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
   background: #f5f7fb;
   color: #25364b;
 }
 .vo-management-app .vo-header {
+  flex-shrink: 0;
   background: white;
   border-bottom: 1px solid #e1e7ef;
   color: #23364c;
@@ -1339,6 +1345,22 @@
 }
 .vo-management-app .vo-nav {
   color: #49617b;
+  flex-wrap: wrap;
+}
+.vo-management-app > .vo-main {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0 auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+.vo-management-app > .vo-main:focus-visible {
+  outline: 2px solid #3086c7;
+  outline-offset: -2px;
 }
 .vo-management-app .vo-card {
   background: white;

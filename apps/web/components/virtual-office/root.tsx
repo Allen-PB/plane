@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { Link, useLocation } from "react-router";
 import useSWR from "swr";
@@ -27,6 +27,10 @@ function OfficeContent() {
   const { pathname } = useLocation();
   const adminPage = pathname.includes("/admin");
   const settingsPage = /\/settings\/?$/.test(pathname);
+  const content = useRef<HTMLElement>(null);
+  useEffect(() => {
+    content.current?.scrollTo({ top: 0, left: 0 });
+  }, [pathname]);
   const { data: status, error: statusError } = useSWR("virtual-office-status", () => service.status(), {
     refreshInterval: 15000,
   });
@@ -133,7 +137,12 @@ function OfficeContent() {
       ) : !office ? (
         <p className="vo-empty">Opening the office…</p>
       ) : (
-        <main className="vo-main">
+        <main
+          ref={content}
+          className="vo-main"
+          tabIndex={adminPage ? 0 : undefined}
+          aria-label={adminPage ? "Office management content" : undefined}
+        >
           {adminPage && (
             <div className="vo-intro">
               <div>

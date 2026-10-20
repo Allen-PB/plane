@@ -8,6 +8,7 @@ import {
   workstationPlacement,
   fitOfficeCamera,
   zoomOfficeCamera,
+  officeArtwork,
 } from "./isometric-layout";
 import type { OfficeCamera } from "./isometric-layout";
 import { SeatedAvatar, AvatarNameplate } from "./seated-avatar";
@@ -61,6 +62,18 @@ export function IsometricOfficeScene({
     }
     paint(next);
   }
+  function pan(dx: number, dy: number) {
+    const host = viewport.current;
+    if (!host) return;
+    const current = camera.current;
+    const clamp = (value: number, remaining: number) =>
+      Math.max(Math.min(80, remaining - 80), Math.min(Math.max(-80, remaining + 80), value));
+    paint({
+      ...current,
+      x: clamp(current.x + dx, host.clientWidth - officeArtwork.width * current.scale),
+      y: clamp(current.y + dy, host.clientHeight - officeArtwork.height * current.scale),
+    });
+  }
   function changeZoom(factor: number, point?: { x: number; y: number }) {
     const host = viewport.current;
     if (!host) return;
@@ -83,10 +96,17 @@ export function IsometricOfficeScene({
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
       const rect = host.getBoundingClientRect();
-      changeZoom(Math.exp(-Math.max(-100, Math.min(100, event.deltaY)) * 0.002), {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      });
+      if (event.ctrlKey || event.metaKey) {
+        changeZoom(Math.exp(-Math.max(-100, Math.min(100, event.deltaY)) * 0.002), {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        });
+      } else {
+        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? host.clientHeight : 1;
+        const dx = (event.shiftKey && !event.deltaX ? event.deltaY : event.deltaX) * unit;
+        const dy = (event.shiftKey && !event.deltaX ? 0 : event.deltaY) * unit;
+        pan(-dx, -dy);
+      }
     };
     host.addEventListener("wheel", wheel, { passive: false });
     return () => {
@@ -115,12 +135,7 @@ export function IsometricOfficeScene({
       if (pinchDistance.current)
         changeZoom(distance / pinchDistance.current, { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top });
       pinchDistance.current = distance;
-    } else
-      paint({
-        ...camera.current,
-        x: camera.current.x + event.clientX - old.x,
-        y: camera.current.y + event.clientY - old.y,
-      });
+    } else pan(event.clientX - old.x, event.clientY - old.y);
   }
   function pointerEnd(event: PointerEvent<HTMLDivElement>) {
     pointers.current.delete(event.pointerId);
@@ -133,11 +148,13 @@ export function IsometricOfficeScene({
       ArrowRight: [-36, 0],
       ArrowUp: [0, 36],
       ArrowDown: [0, -36],
+      PageUp: [0, (viewport.current?.clientHeight || 400) * 0.8],
+      PageDown: [0, -(viewport.current?.clientHeight || 400) * 0.8],
     };
     if (moves[event.key]) {
       event.preventDefault();
       const [x, y] = moves[event.key];
-      paint({ ...camera.current, x: camera.current.x + x, y: camera.current.y + y });
+      pan(x, y);
     } else if (event.key === "+" || event.key === "=") {
       event.preventDefault();
       changeZoom(1.2);
@@ -177,7 +194,7 @@ export function IsometricOfficeScene({
         ref={viewport}
         className="vo-art-viewport"
         role="region"
-        aria-label="PathBuilder office floor. Drag to move, scroll to zoom, or use arrow keys."
+        aria-label="PathBuilder office floor. Drag to move, scroll to pan, Ctrl or pinch to zoom, or use arrow and Page Up/Down keys."
         tabIndex={0}
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
