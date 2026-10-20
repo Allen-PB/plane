@@ -139,7 +139,9 @@ function OfficeContent() {
               <div>
                 <span className="vo-eyebrow">One team. Endless possibilities.</span>
                 <h1>Office management</h1>
-                <p className="vo-muted">{office.name} · 39 desks · 7 departments</p>
+                <p className="vo-muted">
+                  {office.name} · {office.desks.length} desks · {office.departments.length} departments
+                </p>
               </div>
               <div className="vo-actions">
                 <span className="vo-pill">{office.members.filter((m) => m.online).length} in the office</span>
@@ -207,7 +209,7 @@ function OfficeContent() {
                     <section className="vo-card vo-panel">
                       <h2>Departments</h2>
                       <p className="vo-info">
-                        Manage department names and colors. The seven sections retain their fixed 39-desk capacity.
+                        Manage department names and colors. Desk totals reflect the current office layout.
                       </p>
                       {office.departments.map((d) => (
                         <form
