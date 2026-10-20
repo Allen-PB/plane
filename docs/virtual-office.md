@@ -134,3 +134,18 @@ The renderer skips GPU draws while the scene is unchanged, disables live shadow
 maps and caps pixel density at 1.25. Camera damping and server-driven changes
 invalidate the scene. Office management shows account emails beside employee
 names; selecting an existing account loads its saved role and department.
+
+## Downloadable Time In/Out records
+
+Office administrators can choose **Download Time In/Out CSV** in office management.
+`GET /api/virtual-office/records.csv` exports all explicit Time In and Time Out audit
+events, ordered by timestamp and event ID, independent of the 100-row audit preview.
+Employees and revoked office members cannot download this report.
+
+The UTF-8 CSV includes an Excel BOM, quoted cells, employee ID/name/email,
+department, position, desk, event, and ISO timestamps in Asia/Manila and UTC.
+New events snapshot profile details so later name/department changes do not alter
+history. Older events are marked `Current profile (legacy event)` and leave the
+historical desk blank. Lease expiry and administrator releases are separate audit
+events, not explicit Time Out button events. Spreadsheet formula cells are escaped.
+The download is streamed and marked `Cache-Control: no-store`.

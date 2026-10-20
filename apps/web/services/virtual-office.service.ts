@@ -40,6 +40,7 @@ export type OfficeAction = {
   color?: string;
 };
 class VirtualOfficeService extends APIService {
+  readonly recordsUrl = `${API_BASE_URL}/api/virtual-office/records.csv`;
   private csrfToken: string | null = null;
   constructor() {
     super(API_BASE_URL);

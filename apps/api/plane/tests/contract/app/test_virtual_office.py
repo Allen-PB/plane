@@ -209,3 +209,65 @@ def test_simultaneous_claims_have_one_winner(office):
         results = list(pool.map(claim, [m.pk for m in members]))
     assert sorted(results) == [200, 409]
     assert OfficeDesk.objects.get(pk=desk.pk).member_id in [m.pk for m in members]
+
+
+def read_presence_csv(response):
+    import csv
+    import io
+
+    body = b"".join(response.streaming_content).decode("utf-8-sig")
+    return list(csv.DictReader(io.StringIO(body, newline="")))
+
+
+def test_presence_csv_permissions_and_empty_header(office):
+    employee, admin = new_member(), new_member("admin")
+    url = URL + "records.csv"
+    assert APIClient().get(url).status_code in (401, 403)
+    assert client(employee).get(url).status_code == 403
+    response = client(admin).get(url)
+    assert response.status_code == 200
+    assert response["Content-Type"] == "text/csv; charset=utf-8"
+    assert 'attachment; filename="virtual-office-time-in-out.csv"' == response["Content-Disposition"]
+    assert response["Cache-Control"] == "no-store"
+    assert read_presence_csv(response) == []
+
+
+def test_presence_csv_snapshots_quoting_timezone_and_formula_safety(office):
+    employee, admin = new_member(), new_member("admin")
+    employee.user.display_name = '=HYPERLINK("evil"), Team\nName'
+    employee.user.save()
+    api = client(employee)
+    desk = OfficeDesk.objects.filter(department=employee.department).first()
+    post(api, "reserve", desk_id=desk.pk)
+    post(api, "time_in")
+    post(api, "time_out")
+    saved_department = employee.department.name
+    employee.user.display_name = "Changed later"
+    employee.user.save()
+    employee.department = OfficeDepartment.objects.exclude(pk=employee.department_id).first()
+    employee.save()
+    rows = read_presence_csv(client(admin).get(URL + "records.csv"))
+    assert [row["Event"] for row in rows] == ["Time In", "Time Out"]
+    assert rows[0]["Employee name"] == '\'=HYPERLINK("evil"), Team\nName'
+    assert rows[0]["Email"] == employee.user.email
+    assert rows[0]["Department"] == saved_department
+    assert rows[0]["Desk"] == f"{saved_department} {desk.number:02d}"
+    assert rows[0]["Profile source"] == "Recorded at event"
+    assert rows[0]["Timestamp (Asia/Manila)"].endswith("+08:00")
+    assert rows[0]["Timestamp (UTC)"].endswith("+00:00")
+    assert rows[0]["Timestamp (Asia/Manila)"][:10]
+    assert len(rows) == 2  # Reservation and other audit events are excluded.
+
+
+def test_presence_csv_legacy_events_and_more_than_audit_preview_limit(office):
+    employee, admin = new_member(), new_member("admin")
+    OfficeAudit.objects.bulk_create(
+        [OfficeAudit(office_id=1, actor=employee.user, action="time_in") for _ in range(105)]
+    )
+    rows = read_presence_csv(client(admin).get(URL + "records.csv"))
+    assert len(rows) == 105
+    assert rows[0]["Profile source"] == "Current profile (legacy event)"
+    assert rows[0]["Desk"] == ""
+    assert rows[0]["Email"] == employee.user.email
+    OfficeMember.objects.filter(pk=admin.pk).update(active=False)
+    assert client(admin).get(URL + "records.csv").status_code == 403

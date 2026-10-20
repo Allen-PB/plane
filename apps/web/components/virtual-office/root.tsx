@@ -173,6 +173,9 @@ function OfficeContent() {
                 <nav className="vo-nav" style={{ marginBottom: 20 }}>
                   <Link to="/virtual-office/admin/access">People & access</Link>
                   <Link to="/virtual-office/admin/settings">Office settings</Link>
+                  <a href={service.recordsUrl} download="virtual-office-time-in-out.csv">
+                    Download Time In/Out CSV
+                  </a>
                   <Link to="/virtual-office">Desk assignments ↗</Link>
                 </nav>
                 {settingsPage ? (

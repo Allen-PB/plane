@@ -1,6 +1,10 @@
-from datetime import timedelta
+import csv
+import io
+from datetime import timedelta, timezone as datetime_timezone
+from zoneinfo import ZoneInfo
 
 from django.db import transaction
+from django.http import StreamingHttpResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -38,6 +42,18 @@ def office_member(user):
 
 def audit(actor, action, **details):
     OfficeAudit.objects.create(office_id=1, actor=actor, action=action, details=details)
+
+
+def presence_details(member):
+    desk = OfficeDesk.objects.select_related("department").filter(member=member).first()
+    return {
+        "employee_id": str(member.user_id),
+        "employee_name": member.user.display_name or member.user.first_name or "Colleague",
+        "email": member.user.email or "",
+        "department": member.department.name if member.department else "",
+        "position": member.position,
+        "desk": f"{desk.department.name} {desk.number:02d}" if desk else "",
+    }
 
 
 def person(member):
@@ -148,11 +164,11 @@ class OfficeView(BaseAPIView):
                     actor.timed_in_at = timezone.now()
                     actor.last_seen_at = timezone.now()
                     actor.save(update_fields=["timed_in_at", "last_seen_at"])
-                    audit(request.user, action)
+                    audit(request.user, action, **presence_details(actor))
                 elif action == "time_out":
                     actor.timed_in_at = actor.last_seen_at = None
                     actor.save(update_fields=["timed_in_at", "last_seen_at"])
-                    audit(request.user, action)
+                    audit(request.user, action, **presence_details(actor))
                 elif action == "heartbeat":
                     # Expired leases require an explicit time-in, preventing a
                     # sleeping tab from silently restoring a stale attendance.
@@ -217,3 +233,87 @@ class OfficeAdminView(BaseAPIView):
                 "audit": list(OfficeAudit.objects.values("id", "actor_id", "action", "details", "created_at")[:100]),
             }
         )
+
+
+class OfficePresenceExportView(BaseAPIView):
+    def get(self, request):
+        actor = office_member(request.user)
+        if actor.role not in ("admin", "super_admin"):
+            raise PermissionDenied("Office administrator access required.")
+        # Historical events predate profile snapshots. Mark current-profile
+        # fallbacks explicitly rather than presenting them as historical facts.
+        members = {
+            member.user_id: member
+            for member in OfficeMember.objects.select_related("user", "department").filter(office_id=1)
+        }
+
+        def safe_cell(value):
+            value = str(value or "")
+            return (
+                "'" + value
+                if value.lstrip().startswith(("=", "+", "-", "@")) or value.startswith(("\t", "\r", "\n"))
+                else value
+            )
+
+        def rows():
+            buffer = io.StringIO(newline="")
+            writer = csv.writer(buffer)
+
+            def row(values):
+                buffer.seek(0)
+                buffer.truncate(0)
+                writer.writerow([safe_cell(value) for value in values])
+                return buffer.getvalue()
+
+            yield "\ufeff"
+            yield row(
+                [
+                    "Event ID",
+                    "Employee ID",
+                    "Employee name",
+                    "Email",
+                    "Department",
+                    "Job position",
+                    "Desk",
+                    "Event",
+                    "Timestamp (Asia/Manila)",
+                    "Timestamp (UTC)",
+                    "Profile source",
+                ]
+            )
+            events = (
+                OfficeAudit.objects.filter(office_id=1, action__in=["time_in", "time_out"])
+                .select_related("actor")
+                .order_by("created_at", "id")
+            )
+            for event in events.iterator(chunk_size=1000):
+                details = event.details
+                member = members.get(event.actor_id)
+                snapshot = "employee_id" in details
+                fallback = {
+                    "employee_id": str(event.actor_id or ""),
+                    "employee_name": (event.actor.display_name or event.actor.first_name) if event.actor else "",
+                    "email": event.actor.email if event.actor else "",
+                    "department": member.department.name if member and member.department else "",
+                    "position": member.position if member else "",
+                    "desk": "",
+                }
+                profile = details if snapshot else fallback
+                yield row(
+                    [
+                        event.id,
+                        *[
+                            profile.get(key, "")
+                            for key in ("employee_id", "employee_name", "email", "department", "position", "desk")
+                        ],
+                        "Time In" if event.action == "time_in" else "Time Out",
+                        event.created_at.astimezone(ZoneInfo("Asia/Manila")).isoformat(timespec="seconds"),
+                        event.created_at.astimezone(datetime_timezone.utc).isoformat(timespec="seconds"),
+                        "Recorded at event" if snapshot else "Current profile (legacy event)",
+                    ]
+                )
+
+        response = StreamingHttpResponse(rows(), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="virtual-office-time-in-out.csv"'
+        response["Cache-Control"] = "no-store"
+        return response
