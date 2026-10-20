@@ -122,7 +122,7 @@ export function OfficeFloor({
         <div className="vo-directory-heading">
           <h2>Office directory</h2>
           <button aria-label="Close directory" onClick={() => setDetailsOpen(false)}>
-            ?
+            x
           </button>
           <button onClick={() => setListView(!listView)}>{listView ? "Office view" : "List view"}</button>
         </div>

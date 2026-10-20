@@ -1472,6 +1472,11 @@
 .vo-art-app .vo-brand img {
   filter: none;
 }
+.vo-art-app .vo-brand .vo-office-lockup {
+  width: 220px;
+  height: 44px;
+  filter: none;
+}
 .vo-art-seat {
   width: 94px;
   height: 80px;
