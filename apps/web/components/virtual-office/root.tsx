@@ -26,7 +26,7 @@ function errorMessage(error: unknown) {
 function OfficeContent() {
   const { pathname } = useLocation();
   const adminPage = pathname.includes("/admin");
-  const settingsPage = pathname.endsWith("/settings");
+  const settingsPage = /\/settings\/?$/.test(pathname);
   const { data: status, error: statusError } = useSWR("virtual-office-status", () => service.status(), {
     refreshInterval: 15000,
   });
