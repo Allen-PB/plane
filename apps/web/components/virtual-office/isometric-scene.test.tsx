@@ -64,7 +64,7 @@ describe("aligned office artwork", () => {
     );
     expect(container.querySelectorAll(".vo-art-seat")).toHaveLength(44);
     const desk = screen.getByRole("button", { name: "DEV-01, reserved by Test Developer, online" });
-    expect(desk.querySelector("img")?.getAttribute("src")).toContain("seated-avatar");
+    expect(desk.querySelector("svg")?.getAttribute("data-occupied")).toBe("true");
     fireEvent.click(desk);
     expect(select).toHaveBeenCalledWith(office.desks[0]);
     fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
@@ -81,9 +81,9 @@ describe("aligned office artwork", () => {
     expect(
       screen
         .getByRole("button", { name: "DEV-01, reserved by Test Developer, offline" })
-        .querySelector("img")
-        ?.getAttribute("src")
-    ).toBeUndefined();
+        .querySelector("svg")
+        ?.getAttribute("data-occupied")
+    ).toBe("false");
     expect(container.querySelector(".vo-art-avatar")).toBeNull();
     expect(container.querySelector(".vo-art-world")?.getAttribute("style")).toBe(transform);
   });

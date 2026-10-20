@@ -86,51 +86,47 @@ describe("workstation-owned seated avatars", () => {
   });
   it("updates position and direction together on repeated reservation switches", () => {
     const { container, rerender } = render(scene(3));
-    for (const [id, direction, rotation] of [
-      [4, "south-west", "270"],
-      [1, "north-east", "90"],
-      [2, "north-west", "0"],
-      [3, "north-east", "90"],
-      [4, "south-west", "270"],
+    for (const [id, direction] of [
+      [4, "reverse"],
+      [1, "forward"],
+      [2, "forward"],
+      [3, "reverse"],
+      [4, "reverse"],
     ] as const) {
       rerender(scene(id));
-      const anchor = container.querySelector(".vo-chair-anchor")!;
-      expect(anchor.getAttribute("data-facing")).toBe(direction);
-      expect(anchor.getAttribute("data-rotation")).toBe(rotation);
-      expect(container.querySelectorAll(".vo-seated-sprite")).toHaveLength(1);
-      expect(anchor.closest("button")?.getAttribute("aria-label")).toContain("reserved by Alex Office");
+      const model = container.querySelector('svg[data-occupied="true"]')!;
+      expect(model.getAttribute("data-facing")).toBe(direction);
+      expect(container.querySelectorAll('svg[data-occupied="true"]')).toHaveLength(1);
+      expect(model.closest("button")?.getAttribute("aria-label")).toContain("reserved by Alex Office");
       expect(container.querySelectorAll(".vo-seated-nameplate")).toHaveLength(1);
-      expect(
-        container
-          .querySelector(".vo-seated-model-correction")
-          ?.contains(container.querySelector(".vo-seated-nameplate"))
-      ).toBe(false);
     }
   });
   it("does not move the live avatar when inspecting a different desk, panning, or zooming", () => {
     const { container, rerender } = render(scene(3));
-    const anchor = container.querySelector(".vo-chair-anchor")!.getAttribute("style");
+    const original = container.querySelector('svg[data-occupied="true"]')!.innerHTML;
     fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
     fireEvent.keyDown(screen.getByRole("region", { name: /Drag to move/ }), { key: "ArrowRight" });
     const camera = container.querySelector(".vo-art-world")!.getAttribute("style");
     rerender(scene(3, true, 4));
-    expect(container.querySelector(".vo-chair-anchor")!.getAttribute("style")).toBe(anchor);
+    expect(container.querySelector('svg[data-occupied="true"]')!.innerHTML).toBe(original);
     expect(container.querySelector(".vo-art-world")!.getAttribute("style")).toBe(camera);
-    expect(container.querySelector(".vo-chair-anchor")?.closest("button")?.getAttribute("aria-label")).toContain(
-      "LEAD-01"
-    );
+    expect(
+      container.querySelector('svg[data-occupied="true"]')!.closest("button")?.getAttribute("aria-label")
+    ).toContain("LEAD-01");
   });
-  it("uses the female seated view at the same chair and removes only presence on time out", () => {
-    const { container, rerender } = render(scene(4, true, null, true));
-    expect(container.querySelector(".vo-seated-sprite")?.getAttribute("src")).toContain(
-      "seated-avatar-female-front.png"
-    );
-    expect(container.querySelector(".vo-chair-foreground")).not.toBeNull();
+  it("switches to a female model at the same chair and removes only presence on time out", () => {
+    const { container, rerender } = render(scene(4, true, null, false));
+    const male = container.querySelector('svg[data-occupied="true"]')!.innerHTML;
+    rerender(scene(4, true, null, true));
+    expect(container.querySelector('svg[data-occupied="true"]')!.innerHTML).not.toBe(male);
     rerender(scene(4, false, null, true));
-    expect(container.querySelector(".vo-seated-sprite")).toBeNull();
+    expect(container.querySelector('svg[data-occupied="true"]')).toBeNull();
     expect(container.querySelector(".vo-seated-nameplate")).toBeNull();
-    expect(screen.getByRole("button", { name: "LEAD-02, reserved by Alex Office, offline" })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "LEAD-02, reserved by Alex Office, offline" }).querySelector("svg")
+    ).not.toBeNull();
   });
+
   it("keeps adjacent names readable above their own avatars and out of department badges", () => {
     const labels = arrangeNameplates(
       [
