@@ -17,6 +17,7 @@ import { useTranslation } from "@plane/i18n";
 import type { TFileSignedURLResponse, TIssueComment } from "@plane/types";
 // components
 import { CommentCreate } from "@/components/comments/comment-create";
+import { StructuredUpdateComposer } from "@/components/structured-updates/composer";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 // local imports
@@ -77,15 +78,20 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   const project = getProjectById(projectId);
   const renderCommentCreationBox = useMemo(
     () => (
-      <CommentCreate
-        workspaceSlug={workspaceSlug}
-        entityId={issueId}
-        activityOperations={activityOperations}
-        showToolbarInitially
-        projectId={projectId}
-      />
+      <>
+        {!isIntakeIssue && (
+          <StructuredUpdateComposer workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
+        )}
+        <CommentCreate
+          workspaceSlug={workspaceSlug}
+          entityId={issueId}
+          activityOperations={activityOperations}
+          showToolbarInitially
+          projectId={projectId}
+        />
+      </>
     ),
-    [workspaceSlug, issueId, activityOperations, projectId]
+    [workspaceSlug, issueId, activityOperations, projectId, isIntakeIssue]
   );
   if (!project) return <></>;
 

@@ -344,6 +344,10 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/workflow",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/workflow/page.tsx"
             ),
+            route(
+              ":workspaceSlug/settings/projects/:projectId/structured-updates",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/structured-updates/page.tsx"
+            ),
             // Project States
             route(
               ":workspaceSlug/settings/projects/:projectId/states",

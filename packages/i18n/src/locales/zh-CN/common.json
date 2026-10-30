@@ -420,6 +420,7 @@
     }
   },
   "common": {
+    "structured_updates": "结构化更新",
     "all": "全部",
     "no_items_in_this_group": "此组中没有项目",
     "drop_here_to_move": "拖放到此处以移动",

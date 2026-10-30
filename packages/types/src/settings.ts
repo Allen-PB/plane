@@ -28,6 +28,7 @@ export type TProjectSettingsTabs =
   | "features_pages"
   | "features_intake"
   | "workflow"
+  | "structured_updates"
   | "states"
   | "labels"
   | "estimates"

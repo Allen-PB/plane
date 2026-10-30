@@ -216,6 +216,10 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       "label_id",
       "start_date",
       "target_date",
+      "qa_result",
+      "ba_result",
+      "root_cause_category",
+      "qa_round",
     ],
     layoutOptions: {
       list: {

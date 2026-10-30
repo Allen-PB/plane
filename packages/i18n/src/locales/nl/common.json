@@ -420,6 +420,7 @@
     }
   },
   "common": {
+    "structured_updates": "Gestructureerde updates",
     "all": "Alle",
     "no_items_in_this_group": "Geen items in deze groep",
     "drop_here_to_move": "Sleep hierheen om te verplaatsen",

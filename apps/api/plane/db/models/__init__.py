@@ -94,3 +94,16 @@ from .csv_import import CSVImport
 from .virtual_office import VirtualOffice, OfficeDepartment, OfficeMember, OfficeDesk, OfficeAudit
 
 from .workflow import Workflow
+
+from .structured_update import (
+    FunctionalRole,
+    RootCauseCategory,
+    QAResult,
+    BAResult,
+    ProjectStructuredUpdateSetting,
+    ProjectMemberFunctionalRole,
+    StructuredUpdate,
+    StructuredUpdateRevision,
+    StructuredUpdateLink,
+    IssueStructuredSummary,
+)

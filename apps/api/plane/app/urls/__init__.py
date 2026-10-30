@@ -26,9 +26,11 @@ from .virtual_office import urlpatterns as virtual_office_urls
 
 from .workflow import urlpatterns as workflow_urls
 from .bulk_update import urlpatterns as bulk_update_urls
+from .structured_update import urlpatterns as structured_update_urls
 
 urlpatterns = [
     *bulk_update_urls,
+    *structured_update_urls,
     *workflow_urls,
     *virtual_office_urls,
     *analytic_urls,

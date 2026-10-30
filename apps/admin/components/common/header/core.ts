@@ -10,6 +10,7 @@ export const CORE_HEADER_SEGMENT_LABELS: Record<string, string> = {
   email: "Email",
   authentication: "Authentication",
   image: "Image",
+  features: "Feature flags",
   google: "Google",
   github: "GitHub",
   gitlab: "GitLab",
