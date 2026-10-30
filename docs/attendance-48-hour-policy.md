@@ -1,0 +1,13 @@
+# Attendance and online presence
+
+Dev-only release `attendance-48h-20261021-01` separates attendance from online presence. A browser heartbeat controls online status and avatars, with the existing 90-second presence lease. Losing that lease does not end attendance or enable a second Time In. Heartbeats can resume online presence while the same attendance session is open. Manual Time Out remains available while offline; duplicate Time In returns 409, and repeated Time Out is idempotent.
+
+A session is capped at 48 continuous hours from its stored Time In. A Celery task checks once per minute, independent of open browsers. Office API requests and exports also reconcile overdue sessions. The audit timestamp is exactly Time In plus 48 hours, even if processing runs later. The record snapshots employee details, records processing time in audit details, and adds `Automatic—48 hr limit` in the CSV's new `Time Out reason` column. The initial 11 CSV columns are retained. Manual and administrative session closures have their own reasons. Desk reservations remain after automatic timeout, so another Time In is available.
+
+No employee submission, correction, review flag, or approval flow is added. No database schema migration is required. Historical missing Time Out events are not reconstructed from browser activity; any currently open session older than 48 hours closes using its stored Time In.
+
+Automated verification: 26 Virtual Office API tests and 9 UI tests passed, web type checking passed, frontend/backend lint passed, and the Linux frontend build/locale check passed. Tests cover stale presence without attendance loss, heartbeat recovery, duplicate prevention, exact expiry boundaries, background task execution, concurrent expiry checks, CSV marker, preserved reservations, and new Time In after timeout.
+
+Dev images: `pathbuilder-dev-backend:attendance-48h-20261021-02` and `pathbuilder-dev-web:attendance-48h-20261021-01`. The worker task is registered through Django's namespaced `CELERY_IMPORTS`, and the minute schedule is registered in `plane/celery.py`. Backup and rollout scripts are under `/opt/pathbuilder-dev/attendance-48h`. Promoted to production after expanded regression testing on 2026-10-21; see attendance-production-verification.md.
+
+Live dev verification passed: the worker advertises the task, the periodic schedule is enabled, and the API/CSV scenario passed using rolled-back QA data. A separate queued task processed an overdue temporary QA session through the actual Celery worker, recording the exact cutoff and reason; that QA data was deleted afterward. The dev API returned 200. No new browser visual walkthrough was performed.

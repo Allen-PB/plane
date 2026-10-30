@@ -91,3 +91,4 @@ from .sticky import Sticky
 
 from .description import Description, DescriptionVersion
 from .csv_import import CSVImport
+from .virtual_office import VirtualOffice, OfficeDepartment, OfficeMember, OfficeDesk, OfficeAudit
