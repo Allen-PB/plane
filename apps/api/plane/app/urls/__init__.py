@@ -24,7 +24,10 @@ from .timezone import urlpatterns as timezone_urls
 from .exporter import urlpatterns as exporter_urls
 from .virtual_office import urlpatterns as virtual_office_urls
 
+from .workflow import urlpatterns as workflow_urls
+
 urlpatterns = [
+    *workflow_urls,
     *virtual_office_urls,
     *analytic_urls,
     *asset_urls,

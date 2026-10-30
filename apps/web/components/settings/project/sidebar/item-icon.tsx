@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import type { LucideIcon } from "lucide-react";
+import { GitBranch, type LucideIcon } from "lucide-react";
 import {
   CyclesOutline,
   EstimateOutline,
@@ -24,6 +24,7 @@ import type { TProjectSettingsTabs } from "@plane/types";
 import { SettingIcon } from "@/components/icons/attachment";
 
 export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | React.FC<ISvgIcons>> = {
+  workflow: GitBranch,
   general: SettingIcon,
   members: MembersOutline,
   features_cycles: CyclesOutline,
