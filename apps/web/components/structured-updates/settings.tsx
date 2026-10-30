@@ -51,6 +51,14 @@ export const StructuredUpdateSettings = observer(function StructuredUpdateSettin
 
   if (error) return <p className="text-body-sm-regular text-danger-primary">{workflowError(error)}</p>;
   if (!setting) return <p role="status">Loading...</p>;
+  // God Mode switch off: no controls, only an explanation (the sidebar entry is hidden too).
+  if (setting.instance_enabled === false)
+    return (
+      <p role="status" className="rounded-md bg-layer-2 p-3 text-body-sm-regular text-secondary">
+        Structured updates are turned off for this instance in God Mode, so they are hidden in every project. Your
+        settings and existing updates are kept and come back when the instance admin turns the feature on again.
+      </p>
+    );
 
   const save = async (data: Partial<TStructuredUpdateSetting>) => {
     setSaving(true);
@@ -83,12 +91,6 @@ export const StructuredUpdateSettings = observer(function StructuredUpdateSettin
 
   return (
     <div className="flex flex-col gap-6">
-      {setting.instance_enabled === false && (
-        <p role="status" className="rounded-md bg-layer-2 p-3 text-body-sm-regular text-secondary">
-          Structured updates are turned off for this instance in God Mode, so they are hidden in every project. Your
-          settings and existing updates are kept and come back when the instance admin turns the feature on again.
-        </p>
-      )}
       <section className="flex flex-col divide-y divide-subtle">
         <SettingsControlItem
           title="Enable structured updates"

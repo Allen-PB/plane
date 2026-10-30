@@ -17,6 +17,7 @@ import {
 import { useTranslation } from "@plane/i18n";
 // components
 import { SettingsSidebarItem } from "@/components/settings/sidebar/item";
+import { useStructuredUpdateSetting } from "@/components/structured-updates/use-structured-updates";
 // hooks
 import { useUserPermissions } from "@/hooks/store/user";
 // local imports
@@ -37,13 +38,19 @@ export const ProjectSettingsSidebarItemCategories = observer(function ProjectSet
   const { allowPermissions } = useUserPermissions();
   // translation
   const { t } = useTranslation();
+  // Structured updates is hidden while the God Mode switch is off (shown once known to be on).
+  const { data: structuredUpdateSetting } = useStructuredUpdateSetting(workspaceSlug, projectId);
+  const isItemAvailable = (key: string) =>
+    key !== "structured_updates" || structuredUpdateSetting?.instance_enabled === true;
 
   return (
     <div className="mt-3 flex flex-col divide-y divide-subtle px-3">
       {PROJECT_SETTINGS_CATEGORIES.map((category) => {
         const categoryItems = GROUPED_PROJECT_SETTINGS[category];
-        const accessibleItems = categoryItems.filter((item) =>
-          allowPermissions(item.access, EUserPermissionsLevel.PROJECT, workspaceSlug, projectId)
+        const accessibleItems = categoryItems.filter(
+          (item) =>
+            isItemAvailable(item.key) &&
+            allowPermissions(item.access, EUserPermissionsLevel.PROJECT, workspaceSlug, projectId)
         );
 
         if (accessibleItems.length === 0) return null;
