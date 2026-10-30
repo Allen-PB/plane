@@ -7,9 +7,12 @@ from django.urls import path
 
 from plane.app.views import UnsplashEndpoint
 from plane.app.views import GPTIntegrationEndpoint, WorkspaceGPTIntegrationEndpoint
+from plane.app.views.workspace.csv_import import CSVImportEndpoint
 
 
 urlpatterns = [
+    path("workspaces/<str:slug>/csv-imports/", CSVImportEndpoint.as_view(), name="csv-imports"),
+    path("workspaces/<str:slug>/csv-imports/<uuid:pk>/", CSVImportEndpoint.as_view(), name="csv-import-detail"),
     path("unsplash/", UnsplashEndpoint.as_view(), name="unsplash"),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/ai-assistant/",
