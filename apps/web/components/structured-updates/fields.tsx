@@ -4,9 +4,9 @@
  * See the LICENSE file for details.
  */
 
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { Button } from "@makeplane/propel/components/button";
-import { TextArea } from "@makeplane/propel/components/text-area";
+import { TextArea, TextAreaGroup } from "@makeplane/propel/components/text-area";
 import { WorkflowInput } from "@/components/workflows/fields";
 import { EVIDENCE_ACCEPT, EVIDENCE_MAX_BYTES, NOTE_MAX_LENGTH, isHttpUrl } from "./constants";
 
@@ -30,17 +30,20 @@ export function NoteField({
         {label}
         {required && <span className="text-danger-primary"> *</span>}
       </label>
-      <TextArea
-        id={id}
-        size="md"
-        surface="field"
-        autoResize
-        maxRows={10}
-        maxLength={NOTE_MAX_LENGTH}
-        value={value}
-        aria-invalid={!!error || undefined}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      {/* The group draws the field border; without it the textarea blends into the card. */}
+      <TextAreaGroup resize="none" data-invalid={!!error || undefined}>
+        <TextArea
+          id={id}
+          size="md"
+          surface="field"
+          autoResize
+          maxRows={10}
+          maxLength={NOTE_MAX_LENGTH}
+          value={value}
+          aria-invalid={!!error || undefined}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </TextAreaGroup>
       {error && <span className="text-caption-md text-danger-primary">{error}</span>}
     </div>
   );
@@ -136,17 +139,22 @@ export function EvidenceFileField({
   onError: (message: string) => void;
 }) {
   const id = useId();
+  const input = useRef<HTMLInputElement>(null);
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-body-sm-medium">
+      <span id={`${id}-label`} className="text-body-sm-medium">
         Evidence files <span className="text-caption-md text-tertiary">(images or videos, up to 50 MB each)</span>
-      </label>
+      </span>
+      {/* The native picker is hidden; the themed button below opens it, like the CSV importer. */}
       <input
+        ref={input}
         id={id}
         type="file"
         multiple
         accept={EVIDENCE_ACCEPT}
-        className="text-body-sm"
+        className="sr-only"
+        tabIndex={-1}
+        aria-labelledby={`${id}-label`}
         onChange={(event) => {
           const picked = Array.from(event.target.files ?? []);
           const errors = picked.map(evidenceFileError).filter(Boolean);
@@ -155,6 +163,19 @@ export function EvidenceFileField({
           event.target.value = "";
         }}
       />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          stretch="auto"
+          variant="secondary"
+          size="sm"
+          onClick={() => input.current?.click()}
+          aria-describedby={`${id}-label`}
+          label="Choose files"
+        />
+        <span className="text-caption-md-regular text-tertiary" aria-live="polite">
+          {files.length === 0 ? "No file chosen" : `${files.length} file${files.length === 1 ? "" : "s"} selected`}
+        </span>
+      </div>
       {files.length > 0 && (
         <ul className="flex flex-col gap-1">
           {files.map((file, index) => (

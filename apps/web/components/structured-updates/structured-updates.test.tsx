@@ -227,3 +227,31 @@ describe("isStructuredUpdatesOn", () => {
     expect(isStructuredUpdatesOn(undefined)).toBe(false);
   });
 });
+
+describe("NoteField", () => {
+  it("renders the textarea inside a bordered field group", async () => {
+    const { NoteField } = await import("./fields");
+    render(<NoteField label="Root cause" required value="" onChange={vi.fn()} />);
+    const textarea = screen.getByLabelText(/Root cause/);
+    expect(textarea.tagName).toBe("TEXTAREA");
+    expect(textarea.parentElement?.className).toMatch(/border/);
+  });
+});
+
+describe("EvidenceFileField", () => {
+  it("opens the hidden picker from a themed button and shows the selection", async () => {
+    const { EvidenceFileField } = await import("./fields");
+    const onChange = vi.fn();
+    const { rerender, container } = render(<EvidenceFileField files={[]} onChange={onChange} onError={vi.fn()} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input.className).toContain("sr-only");
+    const click = vi.spyOn(input, "click");
+    screen.getByRole("button", { name: /Choose files/ }).click();
+    expect(click).toHaveBeenCalled();
+    expect(screen.getByText("No file chosen")).toBeTruthy();
+    const file = new File(["x"], "shot.png", { type: "image/png" });
+    rerender(<EvidenceFileField files={[file]} onChange={onChange} onError={vi.fn()} />);
+    expect(screen.getByText("1 file selected")).toBeTruthy();
+    expect(screen.getByText("shot.png")).toBeTruthy();
+  });
+});
