@@ -11,7 +11,7 @@ import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view
 import { PageHead } from "@/components/core/page-title";
 import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 import { SettingsHeading } from "@/components/settings/heading";
-import { SettingsPageHeader } from "@/components/settings/page-header";
+import { WorkflowWorkspaceSettingsHeader } from "./header";
 import { WorkflowRoot } from "@/components/workflows/root";
 import { useUserPermissions } from "@/hooks/store/user";
 
@@ -29,7 +29,7 @@ export default observer(function WorkflowPage() {
   )
     return <NotAuthorizedView section="settings" className="h-auto" />;
   return (
-    <SettingsContentWrapper header={<SettingsPageHeader leftItem={<span>Workflow</span>} />}>
+    <SettingsContentWrapper header={<WorkflowWorkspaceSettingsHeader />}>
       <PageHead title="Workflow" />
       <div className="flex flex-col gap-6">
         <SettingsHeading

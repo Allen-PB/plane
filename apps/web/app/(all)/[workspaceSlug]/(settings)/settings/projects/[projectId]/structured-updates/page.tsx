@@ -11,7 +11,7 @@ import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view
 import { PageHead } from "@/components/core/page-title";
 import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 import { SettingsHeading } from "@/components/settings/heading";
-import { SettingsPageHeader } from "@/components/settings/page-header";
+import { StructuredUpdatesProjectSettingsHeader } from "./header";
 import { StructuredUpdateSettings } from "@/components/structured-updates/settings";
 import { useUserPermissions } from "@/hooks/store/user";
 
@@ -22,7 +22,7 @@ export default observer(function StructuredUpdatesSettingsPage() {
   if (!allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId))
     return <NotAuthorizedView section="settings" className="h-auto" />;
   return (
-    <SettingsContentWrapper header={<SettingsPageHeader leftItem={<span>Structured updates</span>} />}>
+    <SettingsContentWrapper header={<StructuredUpdatesProjectSettingsHeader />}>
       <PageHead title="Structured updates" />
       <div className="flex flex-col gap-6">
         <SettingsHeading
