@@ -17,7 +17,7 @@ import { setToast } from "@plane/blocks/toast";
 import type { TIssue } from "@plane/types";
 import { EFileAssetType } from "@plane/types";
 import { Loader } from "@plane/blocks/skeleton";
-import { getDescriptionPlaceholderI18n, getTabIndex } from "@plane/utils";
+import { getDescriptionPlaceholderI18n, getTabIndex, isEditorEmpty } from "@plane/utils";
 // components
 import { GptAssistantPopover } from "@/components/core/modals/gpt-assistant-popover";
 import { RichTextEditor } from "@/components/editor/rich-text";
@@ -36,6 +36,7 @@ const workspaceService = new WorkspaceService();
 const aiService = new AIService();
 
 type TIssueDescriptionEditorProps = {
+  guidanceOpen: boolean;
   control: Control<TIssue>;
   isDraft: boolean;
   issueName: string;
@@ -57,6 +58,7 @@ type TIssueDescriptionEditorProps = {
 export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(props: TIssueDescriptionEditorProps) {
   const {
     control,
+    guidanceOpen,
     isDraft,
     issueName,
     issueId,
@@ -73,7 +75,6 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
     onAssetUpload,
     onClose,
   } = props;
-  // i18n
   const { t } = useTranslation();
   // states
   const [iAmFeelingLucky, setIAmFeelingLucky] = useState(false);
@@ -93,6 +94,7 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
   }, [descriptionHtmlData]);
 
   const handleKeyDown = (event: KeyboardEvent) => {
+    if (guidanceOpen || event.defaultPrevented) return;
     if (editorRef.current?.isEditorReadyToDiscard()) {
       onClose();
     } else {
@@ -196,7 +198,11 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
                 onEnterKeyPress={() => submitBtnRef?.current?.click()}
                 ref={editorRef}
                 tabIndex={getIndex("description_html")}
-                placeholder={(isFocused, description) => t(getDescriptionPlaceholderI18n(isFocused, description))}
+                placeholder={(isFocused, description) =>
+                  isEditorEmpty(description)
+                    ? "Describe the issue or request"
+                    : t(getDescriptionPlaceholderI18n(isFocused, description))
+                }
                 searchMentionCallback={async (payload) =>
                   await workspaceService.searchEntity(workspaceSlug?.toString() ?? "", {
                     ...payload,
