@@ -25,8 +25,10 @@ from .exporter import urlpatterns as exporter_urls
 from .virtual_office import urlpatterns as virtual_office_urls
 
 from .workflow import urlpatterns as workflow_urls
+from .bulk_update import urlpatterns as bulk_update_urls
 
 urlpatterns = [
+    *bulk_update_urls,
     *workflow_urls,
     *virtual_office_urls,
     *analytic_urls,
