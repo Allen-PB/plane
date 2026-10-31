@@ -1,0 +1,21 @@
+# Read-only security review — 22 October 2026, Asia/Manila
+
+Scope: production 178.128.26.53 and dev 152.42.166.16 host/container inventory; production network reachability from the operator connection, SSH configuration/log summaries, Django deployment checks, process names and persistence filenames. No exploit payloads, configuration changes, restarts, key rotation, or application writes were performed. Temporary diagnostic scripts were copied to /tmp. This is an initial configuration review, not a penetration test, forensic clearance, or complete dependency/CVE scan.
+
+PHP2Shell: PHP's 21 October advisory identifies CVE-2026-109618/109619 in PHP web request handling. No PHP runtime was found in the standard executable/config locations of the running containers on either droplet; no PHP serving process was observed. Production host has no standard PHP executable; php-crypt-gpg was reported not installed. phpstat/phpflow/phpcalls-bpfcc are tracing tool names, not evidence of a PHP web server. Current Plane services use Python/Django and Node. No applicable PHP web runtime was identified; this does not assess other company systems, appliances, or stopped images.
+
+Production positive findings: SSH public-key authentication enabled, passwords and keyboard-interactive authentication disabled. Only deployment-source public-key logins appeared in successful SSH summaries since October 20. Database/cache/object-store/queue services have no published host ports. No containers are privileged; inspected mount metadata showed no /var/run/docker.sock mount. DEBUG is false; session and CSRF cookies have Secure and HttpOnly enabled; nosniff and DENY framing settings are enabled. Django 5.2.17 and Node v24.22.0 were observed; version collection does not certify all dependencies patched.
+
+Findings:
+
+- UFW inactive on both droplets and host INPUT defaults to ACCEPT. Production proxy publishes 8080 and 8443 on all IPv4/IPv6 interfaces. From the operator connection, only port 22 connected; 80/443/8080/8443/5432/6379/9000/15672 did not connect within the test timeout. An upstream firewall may account for this; DigitalOcean firewall/account configuration and IPv6 reachability were not independently verified. Cloudflared is active and connects to local proxy port 8080. Prefer loopback-only proxy binds where tunnel/operational requirements allow, plus verified cloud firewall rules and restricted administrative SSH sources. Do not enable UFW blindly: Docker forwarding and SSH/tunnel access need deliberate rules.
+- Direct root SSH is allowed with keys in production; dev also allows root with password authentication disabled. Prefer a named sudo administrator after testing access and recovery.
+- Containers default to root and writable root filesystems. API Gunicorn process user should be considered for a tested non-root image change; this increases potential impact of a separate application exploit but does not establish an exploit or host escape.
+- ALLOWED_HOSTS includes wildcard. Restrict to actual hostnames after checking proxy and health-check Host values.
+- Django HSTS is zero and SECURE_SSL_REDIRECT is false. TLS is terminated upstream; Cloudflare edge redirect/HSTS policy was not verified. Django warnings do not by themselves establish public HTTP availability.
+- Django SECRET_KEY raises security.W009 because its length is 48, below Django's 50-character heuristic; distinct-character count is 15, and it does not use the django-insecure prefix. Its value was not printed. This warning alone does not prove the key is predictable. Verify cryptographic generation or plan coordinated strong-key rotation; rotation can invalidate signed state and requires a rollback/session plan.
+- Both hosts have a reboot-required marker. Schedule host patch/reboot maintenance rather than restarting production during a read-only audit.
+
+No positive compromise indicator was identified in this limited review. Zero PHP-related lines in the sampled proxy logs is not proof of no attacks; comprehensive access/WAF logs, file integrity baselines, complete persistence inspection, cloud account audit, and dependency/image vulnerability scans remain outside this review.
+
+Primary references: https://www.php.net/archive/2026.php#2026-10-21-1 and https://github.com/NCSC-NL/php2shell .
