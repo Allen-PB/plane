@@ -5,14 +5,14 @@
   gap: 16px;
   min-width: 0;
   margin: 0;
-  border: 1px solid var(--vo-border, #dce4ed);
+  border: 1px solid var(--vo-border, var(--border-subtle, #dce4ed));
   border-radius: 12px;
   padding: 16px;
   font-family: inherit;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--vo-ink, #263850);
-  background: var(--vo-surface, #fff);
+  color: inherit;
+  background: var(--vo-surface, var(--bg-layer-2, #fff));
 }
 .vo-schedule-heading {
   display: flex;
@@ -34,8 +34,8 @@
 .vo-schedule-timezone {
   padding: 2px 8px;
   border-radius: 6px;
-  background: var(--vo-field-bg, #f8fafc);
-  color: var(--vo-muted, #6c7c91);
+  background: var(--vo-field-bg, var(--bg-layer-1, #f8fafc));
+  color: var(--vo-muted, var(--txt-secondary, #6c7c91));
   font-size: 11px;
   font-weight: 500;
 }
@@ -43,7 +43,7 @@
   margin: 0;
   font-size: 12px;
   line-height: 1.6;
-  color: var(--vo-muted, #6c7c91);
+  color: var(--vo-muted, var(--txt-secondary, #6c7c91));
 }
 .vo-schedule-mode {
   display: flex;
@@ -88,16 +88,16 @@
 .vo-schedule-fields .vo-schedule-day-toggle {
   min-height: 36px;
   padding: 8px;
-  border: 1px solid var(--vo-border, #dce4ed);
+  border: 1px solid var(--vo-border, var(--border-subtle, #dce4ed));
   border-radius: 8px;
-  background: var(--vo-field-bg, #f8fafc);
+  background: var(--vo-field-bg, var(--bg-layer-1, #f8fafc));
 }
 .vo-schedule-day-toggle[data-selected="true"] {
   border-color: var(--vo-accent, var(--bg-accent-primary, #4775e7));
 }
 .vo-schedule-day,
 .vo-schedule-shared {
-  border-top: 1px solid var(--vo-border, #dce4ed);
+  border-top: 1px solid var(--vo-border, var(--border-subtle, #dce4ed));
   padding-top: 16px;
 }
 .vo-schedule-times {
@@ -122,10 +122,10 @@
   width: 100%;
   min-width: 0;
   min-height: 36px;
-  border: 1px solid var(--vo-border, #dce4ed);
+  border: 1px solid var(--vo-border, var(--border-subtle, #dce4ed));
   border-radius: 8px;
   padding: 8px 10px;
-  background: var(--vo-field-bg, #f8fafc);
+  background: var(--vo-field-bg, var(--bg-layer-1, #f8fafc));
   font: inherit;
   color: inherit;
 }
@@ -145,14 +145,14 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border: 1px solid var(--vo-border, #dce4ed);
+  border: 1px solid var(--vo-border, var(--border-subtle, #dce4ed));
   border-radius: 12px;
   font: inherit;
 }
 .vo-schedule-review textarea {
   width: 100%;
   min-height: 80px;
-  border: 1px solid var(--vo-border, #dce4ed);
+  border: 1px solid var(--vo-border, var(--border-subtle, #dce4ed));
   border-radius: 8px;
   padding: 8px 10px;
   font: inherit;
