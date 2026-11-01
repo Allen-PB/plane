@@ -395,3 +395,46 @@ describe("Bulk Update wizard", () => {
     expect(screen.getByRole("button", { name: "Next" })).toHaveProperty("disabled", true);
   });
 });
+
+it("blocks Update and Move for triage while keeping Archive available", async () => {
+  service.items.mockResolvedValue({
+    results: [{ ...item, state: "Triage", state_group: "triage" }],
+    count: 1,
+    metadata: {},
+  });
+  await start();
+  expect(screen.getByText(/Update and Move are unavailable while triage/)).toBeTruthy();
+  for (const name of [/^Update/, /^Move/]) {
+    const radio = screen.getByRole("radio", { name });
+    expect(radio.hasAttribute("disabled") || radio.getAttribute("aria-disabled") === "true").toBe(true);
+  }
+  expect(screen.getByRole("button", { name: "Next" })).toHaveProperty("disabled", true);
+  fireEvent.click(screen.getByRole("radio", { name: /^Archive/ }));
+  expect(screen.getByRole("button", { name: "Next" })).toHaveProperty("disabled", false);
+  details();
+  details();
+  await screen.findByRole("button", { name: "Confirm and Apply" });
+  expect(service.preview).toHaveBeenCalledWith("sync", expect.objectContaining({ operation: "archive" }));
+});
+
+it("reenables Update and Move after triage is removed from the selection", async () => {
+  service.items.mockResolvedValue({
+    results: [
+      { ...item, state_group: "triage" },
+      { ...item, id: "i2", key: "SRC-2" },
+    ],
+    count: 2,
+    metadata: {},
+  });
+  await start();
+  fireEvent.click(screen.getByRole("button", { name: "Back" }));
+  fireEvent.click(screen.getByLabelText("Select SRC-1"));
+  fireEvent.click(screen.getByLabelText("Select SRC-2"));
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  expect(screen.queryByText(/Update and Move are unavailable while triage/)).toBeNull();
+  for (const name of [/^Update/, /^Move/]) {
+    const radio = screen.getByRole("radio", { name });
+    expect(radio.hasAttribute("disabled") || radio.getAttribute("aria-disabled") === "true").toBe(false);
+  }
+  expect(screen.getByRole("button", { name: "Next" })).toHaveProperty("disabled", false);
+});

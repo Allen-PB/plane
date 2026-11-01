@@ -7,6 +7,7 @@ export type BulkWorkItem = {
   name: string;
   key: string;
   state: string;
+  state_group?: string;
   priority: string;
   assignees: string[];
   labels: string[];

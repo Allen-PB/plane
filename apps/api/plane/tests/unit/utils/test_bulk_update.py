@@ -143,6 +143,7 @@ def test_archive_continues_after_failure_and_reports_skips():
             updated_at="v1",
             archived_at=None,
             is_draft=False,
+            type=None,
             save=Mock(),
         )
         for i in range(4)
@@ -154,7 +155,9 @@ def test_archive_continues_after_failure_and_reports_skips():
         patch("plane.app.views.workspace.bulk_update.transaction.atomic", side_effect=lambda: nullcontext()),
         patch("plane.app.views.workspace.bulk_update.log_exception"),
     ):
-        manager.select_for_update.return_value.filter.return_value.order_by.return_value = items
+        manager.select_for_update.return_value.select_related.return_value.filter.return_value.order_by.return_value = (
+            items
+        )
         preview = archive_operation(request, source, data)
         assert all(item.archived_at is None for item in items)
         assert all(not item.save.called for item in items)

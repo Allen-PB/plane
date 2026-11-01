@@ -92,3 +92,25 @@ Evidence in the local evidence directory above:
 - `locale-corrected-build.log`: successful build including the restored locale symlink.
 
 Removed all four PBS-11 browser/build containers and their private network after collecting evidence. Closed only the dedicated walkthrough tunnel and temporary browser tab. The disposable database was discarded. PBS-9, the shared dev application and production were not modified. No commit, push, merge or deployment was performed.
+
+
+## Review fixes and latest-preview integration (2 November 2026)
+
+Resolved both P2 review findings without changing PBS-9 or the existing project Archives workflow:
+
+- The selection response includes `state_group`. With any triage ticket selected, the wizard explains that Update/Move are unavailable, disables those choices and blocks Next until Archive is selected. Removing triage tickets re-enables existing operations. Server-side Update/Move restrictions are preserved; Archive still accepts every state group.
+- Epic-type items are explicitly reported as skipped and left unchanged because the current project Archives view cannot display them. Preview warns about this limitation. Supported tickets continue and only successful archives count. Type eligibility is rechecked before writing. The type join locks only issue rows to avoid PostgreSQL's nullable-join locking restriction.
+
+New coverage includes the triage UI restriction/recovery path, triage Archive eligibility, mixed epic/regular batches, an all-skipped batch, and a type change between preview and apply.
+
+Tested the working fixes over a temporary combined snapshot of PR head `118b372dec` and latest `preview` `2ce8bea124e85175e4c636e3bdee5aff9d577f7e`. No branch was rebased or merged. Git archive preserved the locale symlink, and only PBS-11 working changes were overlaid. Application-source hashes are retained with evidence.
+
+- Isolated PostgreSQL integration/unit regressions: **135 passed** (135 selected; no failures). Includes Bulk Update, Archive/Restore, workflows, CSV import, cycles, project/workspace APIs and active-membership authorization.
+- Combined frontend suite: **130 passed across 26 files**.
+- Local focused checks: **20 backend unit tests and 23 Bulk Update frontend tests passed**; Ruff, OxLint, oxfmt and whitespace checks passed.
+- Nine dependency builds, full React Router type generation/TypeScript checking, production frontend build and all **28 English namespace checks passed**.
+- React Doctor's monorepo scan again encountered its known baseline React-detection error. The optional focused retry stalled and was interrupted; no new health score or completed Doctor regression result is claimed. Focused OxLint and full integration checks are the applicable recorded validation.
+
+Evidence is outside the repository at `C:\Users\ASUS\.codex\visualizations\2026\11\01\01a198f8-71c6-7741-afc3-b6c78e2947d4\pbs11-review-fixes`, including source snapshots, source hashes and test/build logs. Remote task-only evidence is at `/tmp/pbs11-fixes-20261102/`. The disposable stack uses its own PostgreSQL/Valkey/RabbitMQ containers, private network, synthetic credentials, no published ports and no shared data volumes. No dependency installation or shared-service change was required.
+
+All five disposable review-fix containers, their owned anonymous volumes and the private network were removed after validation. No merge, deployment, dependency installation or shared-service change was performed.

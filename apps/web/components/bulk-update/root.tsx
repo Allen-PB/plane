@@ -78,6 +78,8 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
       else next[item.id] = item;
       return next;
     });
+  const hasTriage = selectedItems.some((item) => item.state_group === "triage");
+  const operationAllowed = !hasTriage || operation === "archive";
   const hasSelection = selectedItems.length > 0 && selectedItems.length <= 100;
   const validDetails =
     operation === "archive" ||
@@ -90,6 +92,7 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
     busy ||
     loading ||
     (Boolean(shownError) && step < 2) ||
+    (step >= 2 && !operationAllowed) ||
     (step === 0 ? !projectId : step === 1 ? !hasSelection : step === 3 ? !validDetails : false);
   const next = async () => {
     setError("");
@@ -244,30 +247,39 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
             />
           )}
           {step === 2 && (
-            <RadioGroup<BulkRequest["operation"]>
-              density="comfortable"
-              aria-label="Operation"
-              value={operation}
-              onValueChange={(value) => {
-                setOperation(value);
-                setPreview(undefined);
-              }}
-            >
-              {operations.map(({ value, label, description, icon: Icon }) => (
-                <label
-                  key={value}
-                  htmlFor={`bulk-operation-${value}`}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors ${operation === value ? "border-strong bg-layer-transparent-selected" : "border-subtle hover:bg-layer-transparent-hover"}`}
-                >
-                  <Radio id={`bulk-operation-${value}`} value={value} />
-                  <Icon className="mt-0.5 size-5 text-secondary" aria-hidden="true" />
-                  <span>
-                    <span className="block text-body-sm-medium">{label}</span>
-                    <span className="mt-1 block text-body-sm-regular text-secondary">{description}</span>
-                  </span>
-                </label>
-              ))}
-            </RadioGroup>
+            <>
+              {hasTriage && (
+                <p id="bulk-triage-guidance" className="text-body-sm-regular text-secondary">
+                  Update and Move are unavailable while triage work items are selected. Choose Archive, or go back and
+                  change your selection.
+                </p>
+              )}
+              <RadioGroup<BulkRequest["operation"]>
+                density="comfortable"
+                aria-label="Operation"
+                aria-describedby={hasTriage ? "bulk-triage-guidance" : undefined}
+                value={operation}
+                onValueChange={(value) => {
+                  setOperation(value);
+                  setPreview(undefined);
+                }}
+              >
+                {operations.map(({ value, label, description, icon: Icon }) => (
+                  <label
+                    key={value}
+                    htmlFor={`bulk-operation-${value}`}
+                    className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${hasTriage && value !== "archive" ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${operation === value && operationAllowed ? "border-strong bg-layer-transparent-selected" : "border-subtle hover:bg-layer-transparent-hover"}`}
+                  >
+                    <Radio id={`bulk-operation-${value}`} value={value} disabled={hasTriage && value !== "archive"} />
+                    <Icon className="mt-0.5 size-5 text-secondary" aria-hidden="true" />
+                    <span>
+                      <span className="block text-body-sm-medium">{label}</span>
+                      <span className="mt-1 block text-body-sm-regular text-secondary">{description}</span>
+                    </span>
+                  </label>
+                ))}
+              </RadioGroup>
+            </>
           )}
           {step === 3 && operation === "update" && (
             <UpdateFields

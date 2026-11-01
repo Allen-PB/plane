@@ -927,3 +927,74 @@ def test_archive_rechecks_admin_access_after_preview(session_client, workspace, 
     assert response.status_code == 403
     item.refresh_from_db()
     assert item.archived_at is None
+
+
+@pytest.mark.parametrize("operation", ["update", "move"])
+def test_triage_selection_exposes_group_and_preserves_existing_operation_restrictions(
+    session_client, workspace, bulk_project, operation
+):
+    state = State.objects.create(project=bulk_project, name="Triage", group="triage", color="#60646C")
+    item = Issue.objects.create(project=bulk_project, state=state, name="Triage selection")
+    endpoint = url(workspace, bulk_project)
+    listing = session_client.get(endpoint, {"project_id": str(bulk_project.id)})
+    row = next(row for row in listing.data["results"] if str(row["id"]) == str(item.id))
+    assert row["state_group"] == "triage"
+    denied = session_client.post(endpoint, payload(bulk_project, [item], operation=operation), format="json")
+    assert denied.status_code == 400
+    item.refresh_from_db()
+    assert item.priority == "none"
+    assert item.archived_at is None
+    archived = apply(session_client, endpoint, payload(bulk_project, [item], operation="archive", changes={}))
+    assert archived.data["count"] == 1
+    assert archived.data["results"][0]["status"] == "archived"
+
+
+def test_archive_skips_epics_and_continues_with_supported_tickets(session_client, workspace, bulk_project):
+    epic_type = IssueType.objects.create(workspace=workspace, name="Epic", is_epic=True)
+    ProjectIssueType.objects.create(project=bulk_project, issue_type=epic_type)
+    epic = Issue.objects.create(project=bulk_project, name="Keep epic visible", type=epic_type)
+    normal = Issue.objects.create(project=bulk_project, name="Archive regular ticket")
+    endpoint = url(workspace, bulk_project)
+    data = payload(bulk_project, [epic, normal], operation="archive", changes={})
+    preview = session_client.post(endpoint, data, format="json")
+    assert preview.status_code == 200
+    assert any("Epic" in line for line in preview.data["summary"])
+    response = session_client.post(endpoint, {**data, "action": "apply", "token": preview.data["token"]}, format="json")
+    assert response.data["count"] == 1
+    assert [row["status"] for row in response.data["results"]] == ["skipped", "archived"]
+    assert "Epic" in response.data["results"][0]["reason"]
+    epic.refresh_from_db()
+    assert epic.archived_at is None
+    assert epic.deleted_at is None
+    assert not IssueActivity.objects.filter(issue=epic, field="archived_at").exists()
+    assert Issue.issue_objects.filter(pk=epic.pk).exists()
+    archived = session_client.get(f"/api/workspaces/{workspace.slug}/projects/{bulk_project.id}/archived-issues/")
+    assert archived.status_code == 200
+    assert str(normal.id) in json.dumps(archived.data, default=str)
+
+
+def test_archive_all_epics_reports_zero_successes(session_client, workspace, bulk_project):
+    epic_type = IssueType.objects.create(workspace=workspace, name="Epic", is_epic=True)
+    item = Issue.objects.create(project=bulk_project, name="Epic", type=epic_type)
+    response = apply(
+        session_client, url(workspace, bulk_project), payload(bulk_project, [item], operation="archive", changes={})
+    )
+    assert response.data["count"] == 0
+    assert response.data["results"][0]["status"] == "skipped"
+    item.refresh_from_db()
+    assert item.archived_at is None
+
+
+def test_archive_rechecks_type_before_writing(session_client, workspace, bulk_project):
+    item = Issue.objects.create(project=bulk_project, name="Changed to epic")
+    endpoint = url(workspace, bulk_project)
+    data = payload(bulk_project, [item], operation="archive", changes={})
+    preview = session_client.post(endpoint, data, format="json")
+    epic_type = IssueType.objects.create(workspace=workspace, name="Epic", is_epic=True)
+    Issue.objects.filter(pk=item.pk).update(type=epic_type)
+    response = session_client.post(endpoint, {**data, "action": "apply", "token": preview.data["token"]}, format="json")
+    assert response.data["count"] == 0
+    assert response.data["results"][0]["status"] == "skipped"
+    assert "Epic" in response.data["results"][0]["reason"]
+    item.refresh_from_db()
+    assert item.archived_at is None

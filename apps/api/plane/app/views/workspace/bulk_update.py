@@ -185,6 +185,7 @@ class BulkUpdateEndpoint(BaseAPIView):
                         "key": f"{project.identifier}-{item.sequence_id}",
                         "name": item.name,
                         "state": item.state.name if item.state else "",
+                        "state_group": item.state.group if item.state else "",
                         "priority": item.priority,
                         "assignees": [member_name(row.assignee) for row in item.issue_assignee.all()],
                         "labels": [row.label.name for row in item.label_issue.all()],
@@ -346,7 +347,12 @@ def archive_operation(request, source, data):
     selected_ids = [str(value) for value in data["issue_ids"]]
     items = {
         str(item.id): item
-        for item in Issue.objects.select_for_update().filter(project=source, id__in=selected_ids).order_by("id")
+        for item in (
+            Issue.objects.select_for_update(of=("self",))
+            .select_related("type")
+            .filter(project=source, id__in=selected_ids)
+            .order_by("id")
+        )
     }
     if data["action"] == "preview":
         reviewed = [
@@ -372,7 +378,12 @@ def archive_operation(request, source, data):
                 "items": reviewed,
                 "summary": [
                     f"Archive {len(reviewed)} selected work items. Restore them later from project Archives.",
-                    "Unavailable or changed work items will be skipped and identified in the results.",
+                    "Unavailable, unsupported, or changed work items will be skipped and identified in the results.",
+                    *(
+                        ["Epic work items are not supported by project Archives and will be skipped."]
+                        if any(item.type and item.type.is_epic for item in items.values())
+                        else []
+                    ),
                 ],
             }
         )
@@ -393,6 +404,15 @@ def archive_operation(request, source, data):
         result = {"id": row["id"], "key": row["key"], "name": row["name"]}
         if item is None or item.is_draft or item.archived_at is not None or row["version"] is None:
             results.append({**result, "status": "skipped", "reason": "Work item is unavailable or already archived."})
+            continue
+        if item.type and item.type.is_epic:
+            results.append(
+                {
+                    **result,
+                    "status": "skipped",
+                    "reason": "Epic work items cannot appear in project Archives and were left unchanged.",
+                }
+            )
             continue
         if str(item.updated_at) != row["version"]:
             results.append(
