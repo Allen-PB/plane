@@ -20,6 +20,9 @@
   align-items: center;
   gap: 8px;
 }
+.vo-form > .vo-schedule-fields {
+  margin-top: 16px;
+}
 .vo-schedule-fields .vo-schedule-heading h3,
 .vo-schedule-fields .vo-schedule-day h4 {
   margin: 0;
@@ -154,6 +157,12 @@
   padding: 8px 10px;
   font: inherit;
   color: inherit;
+}
+.vo-schedule-review h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 @container (max-width: 280px) {
   .vo-schedule-times {

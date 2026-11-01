@@ -471,7 +471,7 @@
 }
 .vo-admin-grid {
   display: grid;
-  grid-template-columns: 350px minmax(0, 1fr);
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
   gap: 22px;
 }
 .vo-form label {
