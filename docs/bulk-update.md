@@ -4,7 +4,7 @@ Workspace settings → Administration → Bulk Update, directly below CSV Import
 
 1. Choose Project — always starts with an empty selection, regardless of the settings URL.
 2. Choose Work Items — search by title or key, and filter Jira-style by State, Priority, Assignee (including Unassigned), Label (including No labels), Parent (including No parent), and Start/Due Date ranges. Choices within one filter match any; different filters must all match. Selections are kept across filters and pages. The table shows Labels, Start Date, Due Date, and Parent.
-3. Choose Operation — Update, Move, or Delete.
+3. Choose Operation — Update, Move, or Archive.
 4. Operation Details — enable fields to update or choose a destination project per work item.
 5. Confirmation — review the server-validated selection and operation before applying.
 
@@ -16,9 +16,9 @@ Typography, spacing, selected backgrounds, hover states, and field controls foll
 
 Moves stay within the current workspace. They preserve the work item UUID while assigning a new destination project key. Matching states (name and group), labels, cycles, modules, estimate values, enabled types, and eligible assignees are required. Incompatible assignments block the entire batch instead of silently discarding data. Parents and children must move together to the same destination. Project-scoped resources follow the work item.
 
-Delete requires both the review step and a separate confirmation modal. Canceling does not write anything. Existing soft-deletion and related-resource cleanup are used. Include all children before deleting a parent.
+Archive replaces Delete in this wizard and endpoint. Other Delete actions are unchanged. It uses the same review and Confirm and Apply flow as Update and Move, with no extra modal. Tickets in every status are eligible. Only selected tickets are archived; unselected children are unchanged. Archived tickets remain in their project Archives and can be restored. Each result identifies the ticket as archived, skipped, or failed. Changed, unavailable, draft, or already archived tickets are skipped; a failure rolls back that ticket and its history while other tickets continue.
 
-The first version supports up to 100 selected work items per operation, with 25 rows per selection page. A signed review expires after 15 minutes; changes to reviewed work items require a fresh review. Operations are validated before writing and applied in one database transaction.
+The first version supports up to 100 selected work items per operation, with 25 rows per selection page. A signed review expires after 15 minutes; Update and Move require a fresh review if work items change, and remain atomic. Archive skips changed tickets and uses a savepoint for each ticket within the request transaction. A database or request-level failure can still roll back the request.
 
 ## Verification
 
@@ -28,7 +28,7 @@ pnpm --filter web check:types
 docker compose -f docker-compose-test.yml run --rm --build api-tests pytest plane/tests/unit/utils/test_bulk_update.py plane/tests/contract/app/test_bulk_update.py
 ```
 
-The database contract tests cover Admin permissions and project membership, explicit selection, search and pagination, multi-field updates, unavailable choices, stale, expired, forged and replayed reviews, unassignment, history, deletion and cleanup, per-item destinations, every move incompatibility, and batch rejection. No database migrations are required for this feature.
+The database contract tests cover Admin permissions and project membership, explicit selection, search and pagination, multi-field updates, unavailable choices, stale, expired, forged and replayed reviews, unassignment, history, archive outcomes and Bulk Delete rejection, per-item destinations, every move incompatibility, and batch rejection. No database migrations are required for this feature.
 
 Verified and deployed to dev on 2026-10-26: 159 backend regression tests and 67 web component tests passed, along with TypeScript, targeted lint, the release web build, and translation packaging. Transactional smoke checks passed both in the isolated test environment and against the deployed dev backend, including normal work-item API reads after updating, clearing, and moving. All disposable smoke records were rolled back. No migration ran. Production was not changed.
 

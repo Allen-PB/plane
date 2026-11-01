@@ -184,20 +184,36 @@ describe("Bulk Update wizard", () => {
     await screen.findByText("Bulk operation complete");
     expect(service.apply).toHaveBeenCalledWith("sync", expect.anything(), "review-token");
   });
-  it("does not delete on modal cancel, and deletes only after explicit confirmation", async () => {
+  it("replaces Delete with Archive and uses the existing confirmation", async () => {
     await start();
-    fireEvent.click(screen.getByRole("radio", { name: /Delete/ }));
+    expect(screen.queryByRole("radio", { name: /Delete/ })).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: /Archive/ }));
     details();
     details();
-    fireEvent.click(await screen.findByRole("button", { name: "Delete Work Items" }));
-    expect(screen.getByRole("dialog")).toBeTruthy();
+    await screen.findByRole("button", { name: "Confirm and Apply" });
     expect(service.apply).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Cancel deletion" }));
-    expect(service.apply).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Delete Work Items" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirm Delete" }));
-    await screen.findByText("Bulk operation complete");
+    expect(service.preview).toHaveBeenCalledWith("sync", expect.objectContaining({ operation: "archive" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm and Apply" }));
+    await screen.findByText("1 work items archived.");
     expect(service.apply).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+  it("identifies failures and skips without counting them as archived", async () => {
+    service.apply.mockResolvedValue({
+      count: 0,
+      results: [
+        { id: "i1", key: "SRC-1", name: "First work item", status: "failed", reason: "Unable to archive." },
+        { id: "i2", key: "SRC-2", name: "Changed", status: "skipped", reason: "Review again." },
+      ],
+    });
+    await start();
+    fireEvent.click(screen.getByRole("radio", { name: /Archive/ }));
+    details();
+    details();
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm and Apply" }));
+    await screen.findByText("0 work items archived.");
+    expect(screen.getByText(/SRC-1.*failed.*Unable to archive/)).toBeTruthy();
+    expect(screen.getByText(/SRC-2.*skipped.*Review again/)).toBeTruthy();
   });
   it("supports dates, cycle, multiple modules and a searched parent in one review", async () => {
     await start();

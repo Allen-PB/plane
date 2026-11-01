@@ -20,7 +20,7 @@ export default observer(function BulkUpdatePage() {
       <PageHead title="Bulk Update" />
       <SettingsHeading
         title="Bulk Update"
-        description="Update, move, or delete multiple work items in a guided operation."
+        description="Update, move, or archive multiple work items in a guided operation."
       />
       <BulkUpdateRoot key={workspaceSlug} workspaceSlug={workspaceSlug} />
     </SettingsContentWrapper>
