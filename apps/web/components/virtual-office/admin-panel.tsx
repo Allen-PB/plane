@@ -36,6 +36,7 @@ export function AdminPanel({
   const [active, setActive] = useState(true);
   const [arrangement, setArrangement] = useState<WorkArrangement | "">("");
   const [schedule, setSchedule] = useState<WorkingDay[]>([]);
+  const [policyId, setPolicyId] = useState<number | null>(null);
   const [reviewMessage, setReviewMessage] = useState("");
   const selectedMember = admin.members.find((member) => member.user_id === userId);
   const pendingRequest = selectedMember
@@ -53,6 +54,7 @@ export function AdminPanel({
     setActive(member.active);
     setArrangement(admin.work?.[member.id]?.arrangement ?? "");
     setSchedule(admin.work?.[member.id]?.schedule ?? []);
+    setPolicyId(admin.work?.[member.id]?.policy_id ?? null);
   }
   return (
     <div className="vo-admin-grid">
@@ -70,7 +72,7 @@ export function AdminPanel({
             ...(arrangement
               ? {
                   arrangement,
-                  policy_id: selectedMember ? (admin.work?.[selectedMember.id]?.policy_id ?? null) : null,
+                  policy_id: policyId,
                   schedule: arrangement === "scheduled" ? schedule : [],
                 }
               : {}),
@@ -107,6 +109,7 @@ export function AdminPanel({
               setActive(true);
               setArrangement("");
               setSchedule([]);
+              setPolicyId(null);
             }
           }}
         >
@@ -183,6 +186,7 @@ export function AdminPanel({
               setActive(true);
               setArrangement("");
               setSchedule([]);
+              setPolicyId(null);
               setReviewMessage("Schedule decision saved. Select the account again to review its latest settings.");
               return refresh();
             }}

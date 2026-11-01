@@ -123,6 +123,26 @@ it("loads saved employee fields when selecting an account and resets them for a 
   expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("");
 });
 
+it("submits the policy version actually loaded into the editor after a background refresh", async () => {
+  const act = vi.fn();
+  const schedule = [{ day: 0, start: "09:00", end: "18:00", ends_next_day: false }];
+  const initial: OfficeAdminState = {
+    ...admin,
+    work: { employee: { ...admin.work!.employee, arrangement: "scheduled", schedule } },
+  };
+  const { rerender } = render(
+    <AdminPanel office={office} admin={initial} query="" setQuery={vi.fn()} act={act} busy={false} />
+  );
+  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  const refreshed: OfficeAdminState = {
+    ...initial,
+    work: { employee: { ...initial.work!.employee, policy_id: 2, schedule: [{ ...schedule[0], end: "19:00" }] } },
+  };
+  rerender(<AdminPanel office={office} admin={refreshed} query="" setQuery={vi.fn()} act={act} busy={false} />);
+  await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
+  expect(act).toHaveBeenCalledWith(expect.objectContaining({ policy_id: 1, schedule }));
+});
+
 it("loads a new account's saved Profile identity without granting a permission role", async () => {
   render(
     <AdminPanel
