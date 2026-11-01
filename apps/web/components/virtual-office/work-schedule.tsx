@@ -7,14 +7,17 @@ import { virtualOfficeService as service } from "../../services/virtual-office.s
 import "./work-schedule.css";
 
 export const workingDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-export function officeError(error: unknown): string {
+export function officeError(
+  error: unknown,
+  fallback = "Could not save. Check the working hours and try again."
+): string {
   if (isAxiosError(error)) {
     const data: unknown = error.response?.data;
     if (typeof data === "object" && data !== null && "detail" in data && typeof data.detail === "string")
       return data.detail;
     if (Array.isArray(data)) return data.map(String).join(" ");
   }
-  return "Could not save. Check the working hours and try again.";
+  return fallback;
 }
 
 export function ScheduleFields({

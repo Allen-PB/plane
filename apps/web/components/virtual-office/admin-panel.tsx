@@ -145,7 +145,7 @@ export function AdminPanel({
         <select
           id="office-arrangement"
           value={arrangement}
-          required={active}
+          required={active && (!selectedMember || !selectedMember.active)}
           disabled={busy}
           onChange={(event) => setArrangement(event.target.value as WorkArrangement | "")}
         >

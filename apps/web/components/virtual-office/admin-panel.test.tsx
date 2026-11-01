@@ -41,6 +41,16 @@ const admin: OfficeAdminState = {
     },
   },
 };
+it("allows identity edits for an existing active employee whose arrangement is still unconfigured", async () => {
+  const act = vi.fn();
+  render(
+    <AdminPanel office={office} admin={{ ...admin, work: {} }} query="" setQuery={vi.fn()} act={act} busy={false} />
+  );
+  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
+  expect(act).toHaveBeenCalledWith(expect.objectContaining({ action: "member", user_id: "test-user" }));
+  expect(act.mock.calls[0][0]).not.toHaveProperty("arrangement");
+});
 it("loads saved employee fields when selecting an account and resets them for a new account", async () => {
   const act = vi.fn();
   render(<AdminPanel office={office} admin={admin} query="" setQuery={vi.fn()} act={act} busy={false} />);

@@ -56,6 +56,11 @@ export type OfficeMember = {
 export type OfficeDepartment = { id: number; name: string; color: string; order: number };
 export type OfficeDesk = { id: number; department_id: number; number: number; member_id: string | null };
 export type OfficeState = {
+  attendance?: {
+    session: AttendanceSession | null;
+    choices: { date: string; expected_start: string; expected_end: string }[];
+    suggested_date: string | null;
+  };
   work?: OfficeWorkState;
   appearance_mode?: OfficeAppearanceMode;
   appearance?: "day" | "night";
@@ -76,6 +81,9 @@ export type OfficeAdminState = {
   audit: { id: number; action: string; created_at: string; details: Record<string, unknown> }[];
 };
 export type OfficeAction = {
+  shift_date?: string;
+  confirmed?: boolean;
+  employee_reason?: string;
   action:
     | "reserve"
     | "release"
@@ -103,6 +111,40 @@ export type OfficeAction = {
   schedule?: WorkingDay[];
   name?: string;
   color?: string;
+};
+export type AttendanceSession = {
+  id: number;
+  time_in: string | null;
+  time_out: string | null;
+  attendance_date: string;
+  arrangement: string;
+  expected_start: string | null;
+  expected_end: string | null;
+  arrival: string;
+  departure: string;
+  needs_review: boolean;
+  reason: string;
+  employee_reason: string;
+  legacy: boolean;
+  duration_seconds: number | null;
+  in_progress: boolean;
+};
+export type AttendanceFilters = { start_date: string; end_date: string; member_id?: string; department_id?: number };
+export type AttendanceRow = AttendanceSession & {
+  employee_name: string;
+  email: string;
+  department: string;
+  position: string;
+  desk: string;
+};
+export type AttendanceReport = {
+  id: string;
+  filters: AttendanceFilters;
+  rows: AttendanceRow[];
+  generated_at: string;
+  expires_at: string;
+  timezone: string;
+  columns: [keyof AttendanceRow, string][];
 };
 class VirtualOfficeService extends APIService {
   readonly recordsUrl = `${API_BASE_URL}/api/virtual-office/records.csv`;
@@ -162,6 +204,20 @@ class VirtualOfficeService extends APIService {
   async action(data: OfficeAction): Promise<void> {
     if (!this.csrfToken) await this.status();
     await this.post("/api/virtual-office/", data, { headers: { "X-CSRFToken": this.csrfToken } });
+  }
+  async createAttendanceReport(filters: AttendanceFilters): Promise<AttendanceReport> {
+    if (!this.csrfToken) await this.status();
+    return (
+      await this.post("/api/virtual-office/attendance/reports/", filters, {
+        headers: { "X-CSRFToken": this.csrfToken },
+      })
+    ).data;
+  }
+  async attendanceReport(id: string): Promise<AttendanceReport> {
+    return (await this.get(`/api/virtual-office/attendance/reports/${id}/`)).data;
+  }
+  attendanceCSV(id: string): string {
+    return `${API_BASE_URL}/api/virtual-office/attendance/reports/${id}/export.csv`;
   }
 }
 export const virtualOfficeService = new VirtualOfficeService();

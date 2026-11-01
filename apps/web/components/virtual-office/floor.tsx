@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Button } from "@makeplane/propel/components/button";
 import type { OfficeAction, OfficeDesk, OfficeState } from "../../services/virtual-office.service";
 import { IsometricOfficeScene } from "./isometric-scene";
+import { AttendanceControls } from "./attendance-controls";
 
 const codes = ["DEV", "QA", "PM", "UIUX", "BIZ", "AM", "LEAD"];
 export function workstationLabel(office: OfficeState, desk: OfficeDesk) {
@@ -52,6 +53,7 @@ export function OfficeFloor({
           Office
         </button>
         <button onClick={() => setDetailsOpen(true)}>Directory</button>
+        {admin && <Link to="/virtual-office/directory/attendance">Attendance</Link>}
         <strong>Floor 1</strong>
         <button
           onClick={() => {
@@ -261,31 +263,7 @@ export function OfficeFloor({
             ) : (
               <p>Contact your Virtual Office administrator to complete your setup.</p>
             ))}
-          <div className="vo-presence-buttons">
-            <Button
-              size="lg"
-              stretch="full"
-              variant="primary"
-              label="Time In"
-              disabled={
-                busy ||
-                (!myDesk && !noDeskAvailable) ||
-                needDepartment ||
-                needJobRole ||
-                !!office.me.timed_in_at ||
-                !!office.me.identity_pending
-              }
-              onClick={() => void act({ action: "time_in" })}
-            />
-            <Button
-              size="lg"
-              stretch="full"
-              variant="secondary"
-              label="Time Out"
-              disabled={busy || !office.me.timed_in_at}
-              onClick={() => void act({ action: "time_out" })}
-            />
-          </div>
+          <AttendanceControls office={office} busy={busy} act={act} />
         </section>
         <footer>
           Your reservation stays yours when you time out. Attendance automatically times out after 48 hours.
