@@ -249,6 +249,8 @@ class OfficeView(BaseAPIView):
                 raise ValidationError("The office must retain an active Super Admin.")
         profile = Profile.objects.filter(user=user).first()
         department_id = data.get("department_id", profile.office_department_id if profile else None)
+        if active and role == "employee" and department_id is None:
+            raise ValidationError("Employees require a department and job role.")
         if active and department_id is not None:
             get_object_or_404(OfficeDepartment, pk=department_id, office_id=1)
         if "position" in data:
