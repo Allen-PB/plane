@@ -6,4 +6,6 @@ The API serializes mutations using the existing office lock. Requests require th
 
 Validation at this checkpoint: 73 backend tests passed on isolated PostgreSQL; 46 existing Virtual Office UI tests and three new schedule-form tests passed; new backend and schedule-component lint passed. Full Linux build, migration rehearsal and dev browser validation remain release gates.
 
+Follow-up validation: the TypeScript compatibility correction is checkpointed separately. Linux UI tests (49), type checking, web build and locale-bundle checks passed. Migration 0132 passed a restored-dev rehearsal with existing row counts preserved. The phase is deployed to dev; health/system/migration checks passed and the schedule controls were verified in the browser.
+
 Migration 0132 is additive. Roll back application images while retaining its tables and recorded requests; do not reverse migrations or restore a database over newer employee writes. Deployment backups and image references are kept in private operational records.
