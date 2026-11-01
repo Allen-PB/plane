@@ -5,7 +5,7 @@ Read this guide before adding or changing product UI. Extend the existing design
 ## Typography and color
 
 - Inherit the application's Inter font stack on inputs, selects, buttons and textareas. Never rely on a browser's default form font.
-- Use the established hierarchy: page titles 28px, card headings 14px, form/section headings 13px semibold, field labels and helper text 12px. Use 1.5–1.6 line height for readable wrapping. Avoid oversized nested headings.
+- Follow the owning surface's established hierarchy and shared semantic typography classes. Virtual Office uses 13px body text, 28px page titles, 14px card headings, 13px semibold form/section headings, and 12px field labels/helper text. Use 1.5–1.6 line height for readable wrapping. Avoid oversized nested headings or unstyled paragraphs falling back to a different font size.
 - Use the owning surface's semantic tokens. Virtual Office uses `--vo-ink` for primary text, `--vo-muted` for supporting text, `--vo-border`, `--vo-surface`, `--vo-field-bg` and `--vo-accent`. Define palette values at the surface, rather than inventing feature-specific blue/gray shades.
 - Virtual Office's accent inherits the shared design system's `--bg-accent-primary`, keeping links, selected days, focus and Propel radio/button accents aligned.
 - Reserve accent color for selected states, links, focus and primary actions. Convey errors and status with text/icons as well as color. Do not change the office scene's day/night appearance setting to style management forms.
