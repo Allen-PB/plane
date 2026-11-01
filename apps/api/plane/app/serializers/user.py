@@ -202,7 +202,7 @@ class ProfileSerializer(BaseSerializer):
     class Meta:
         model = Profile
         fields = "__all__"
-        read_only_fields = ["user"]
+        read_only_fields = ["user", "role", "office_department", "office_job_role"]
 
 
 class AccountSerializer(BaseSerializer):

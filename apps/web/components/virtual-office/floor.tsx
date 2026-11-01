@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Button } from "@makeplane/propel/components/button";
 import type { OfficeAction, OfficeDesk, OfficeState } from "../../services/virtual-office.service";
 import { IsometricOfficeScene } from "./isometric-scene";
+import { AttendanceControls } from "./attendance-controls";
 
 const codes = ["DEV", "QA", "PM", "UIUX", "BIZ", "AM", "LEAD"];
 export function workstationLabel(office: OfficeState, desk: OfficeDesk) {
@@ -34,6 +35,10 @@ export function OfficeFloor({
   const canClaim = selected && !selected.member_id && selected.department_id === office.me.department_id;
   const selectedName = selected ? workstationLabel(office, selected) : "Select a workstation";
   const needDepartment = office.me.department_id === null;
+  const needJobRole = office.me.job_role_id === null;
+  const noDeskAvailable = !office.desks.some(
+    (desk) => desk.department_id === office.me.department_id && !desk.member_id
+  );
   return (
     <div className="vo-office-layout">
       <nav className="vo-floor-nav" aria-label="Office departments">
@@ -48,6 +53,7 @@ export function OfficeFloor({
           Office
         </button>
         <button onClick={() => setDetailsOpen(true)}>Directory</button>
+        {admin && <Link to="/virtual-office/directory/attendance">Attendance</Link>}
         <strong>Floor 1</strong>
         <button
           onClick={() => {
@@ -207,6 +213,28 @@ export function OfficeFloor({
           )}
         </section>
         <section className="vo-directory-presence" aria-label="Your office presence">
+          {office.me.identity_pending && (
+            <div role="status">
+              <p>
+                Your department or job Role will change at your next Time In. Your current session keeps its original
+                details.
+              </p>
+              {!office.me.timed_in_at && (
+                <Button
+                  size="lg"
+                  variant="primary"
+                  stretch="full"
+                  label="Apply changes and choose a desk"
+                  disabled={busy}
+                  onClick={() => void act({ action: "prepare_time_in" })}
+                />
+              )}
+            </div>
+          )}
+          {!myDesk && !needDepartment && noDeskAvailable && (
+            <p>No workstation available. You can still record attendance and choose a desk later.</p>
+          )}
+          {needJobRole && <p>An office administrator must assign your job Role before you can Time In.</p>}
           <label htmlFor="office-avatar-style">Your avatar</label>
           <select
             id="office-avatar-style"
@@ -229,30 +257,13 @@ export function OfficeFloor({
                 ? "Your department and job position must be assigned before you can choose a desk and time in."
                 : "Choose an available desk in your department, then time in."}
           </p>
-          {needDepartment &&
+          {(needDepartment || needJobRole) &&
             (admin ? (
               <Link to="/virtual-office/admin/access">Set your department and position →</Link>
             ) : (
               <p>Contact your Virtual Office administrator to complete your setup.</p>
             ))}
-          <div className="vo-presence-buttons">
-            <Button
-              size="lg"
-              stretch="full"
-              variant="primary"
-              label="Time In"
-              disabled={busy || !myDesk || !!office.me.timed_in_at}
-              onClick={() => void act({ action: "time_in" })}
-            />
-            <Button
-              size="lg"
-              stretch="full"
-              variant="secondary"
-              label="Time Out"
-              disabled={busy || !office.me.timed_in_at}
-              onClick={() => void act({ action: "time_out" })}
-            />
-          </div>
+          <AttendanceControls office={office} busy={busy} act={act} />
         </section>
         <footer>
           Your reservation stays yours when you time out. Attendance automatically times out after 48 hours.

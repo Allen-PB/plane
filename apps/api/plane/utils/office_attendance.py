@@ -21,7 +21,7 @@ def presence_details(member):
     }
 
 
-def close_attendance(member, reason, ended_at=None):
+def close_attendance(member, reason, ended_at=None, employee_reason=""):
     """Caller holds the singleton office lock, shared by all attendance mutations."""
     if member.timed_in_at is None:
         return False
@@ -36,10 +36,14 @@ def close_attendance(member, reason, ended_at=None):
             "reason": reason,
             "timed_in_at": member.timed_in_at.isoformat(),
             "recorded_at": recorded_at.isoformat(),
+            "employee_reason": employee_reason,
         },
     )
     # The event time is the actual 48-hour cutoff, even after delayed processing.
     OfficeAudit.objects.filter(pk=event.pk).update(created_at=ended_at)
+    from plane.utils.office_sessions import finish_session
+
+    finish_session(member, event, ended_at, reason, employee_reason)
     member.timed_in_at = member.last_seen_at = None
     member.save(update_fields=["timed_in_at", "last_seen_at"])
     return True

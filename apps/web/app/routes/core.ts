@@ -52,6 +52,7 @@ export const coreRoutes: RouteConfigEntry[] = [
     route("virtual-office/admin", "./(all)/virtual-office/admin.tsx"),
     route("virtual-office/admin/access", "./(all)/virtual-office/access.tsx"),
     route("virtual-office/admin/settings", "./(all)/virtual-office/settings.tsx"),
+    route("virtual-office/directory/attendance", "./(all)/virtual-office/attendance.tsx"),
     // ======================================================================
     // WORKSPACE-SCOPED ROUTES
     // ======================================================================

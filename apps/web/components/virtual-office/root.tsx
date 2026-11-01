@@ -10,6 +10,11 @@ import { OfficeFloor } from "./floor";
 import { AdminPanel } from "./admin-panel";
 import { PresenceExport } from "./presence-export";
 import { OfficeThemeSwitch } from "./office-theme";
+import { JobRoleCatalog } from "./job-role-catalog";
+import { OfficeNotices } from "./profile-identity";
+import { AttendanceControls } from "./attendance-controls";
+import { AttendanceReportPanel } from "./attendance-report";
+import { officeTime } from "./office-format";
 // CSS is scoped under .vo-app to keep the rest of Sync unchanged.
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office.css";
@@ -30,8 +35,8 @@ function errorMessage(error: unknown) {
 function OfficeContent() {
   const { pathname } = useLocation();
   const currentPath = useRef(pathname);
-  currentPath.current = pathname;
-  const adminPage = pathname.includes("/admin");
+  const attendancePage = pathname.includes("/directory/attendance");
+  const adminPage = pathname.includes("/admin") || attendancePage;
   const settingsPage = /\/settings\/?$/.test(pathname);
   const { data: status, error: statusError } = useSWR("virtual-office-status", () => service.status(), {
     refreshInterval: 15000,
@@ -56,6 +61,7 @@ function OfficeContent() {
   const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
+    currentPath.current = pathname;
     setMessage("");
     setExportOpen(false);
   }, [pathname]);
@@ -92,8 +98,6 @@ function OfficeContent() {
       setBusy(false);
     }
   }
-
-  const myDesk = office?.desks.find((d) => d.member_id === office.me.id);
 
   return (
     <div className={`vo-app ${adminPage ? "vo-management-app" : "vo-prototype vo-art-app"}`}>
@@ -160,6 +164,7 @@ function OfficeContent() {
         <p className="vo-empty">Opening the office…</p>
       ) : (
         <main className="vo-main">
+          <OfficeNotices />
           {adminPage && (
             <div className="vo-intro">
               <div>
@@ -171,14 +176,7 @@ function OfficeContent() {
               </div>
               <div className="vo-actions">
                 <span className="vo-pill">{office.members.filter((m) => m.online).length} in the office</span>
-                <Button
-                  size="lg"
-                  stretch="auto"
-                  label={office.me.timed_in_at ? "Time Out" : "Time In"}
-                  variant={office.me.timed_in_at ? "secondary" : "primary"}
-                  disabled={busy || (!myDesk && !office.me.timed_in_at)}
-                  onClick={() => void act({ action: office.me.timed_in_at ? "time_out" : "time_in" })}
-                />
+                <AttendanceControls office={office} busy={busy} act={act} compact />
               </div>
             </div>
           )}
@@ -197,6 +195,7 @@ function OfficeContent() {
                 <nav className="vo-nav vo-management-sections" aria-label="Office management sections">
                   <Link to="/virtual-office/admin/access">People & access</Link>
                   <Link to="/virtual-office/admin/settings">Office settings</Link>
+                  <Link to="/virtual-office/directory/attendance">Attendance</Link>
                   <Link to="/virtual-office">Desk assignments ↗</Link>
                   <a
                     href="#presence-export"
@@ -211,7 +210,9 @@ function OfficeContent() {
                   </a>
                 </nav>
                 {exportOpen && <PresenceExport onClose={() => setExportOpen(false)} />}
-                {settingsPage ? (
+                {attendancePage ? (
+                  <AttendanceReportPanel office={office} members={admin?.members} />
+                ) : settingsPage ? (
                   <div className="vo-side">
                     {office.me.role === "super_admin" && (
                       <form
@@ -243,9 +244,7 @@ function OfficeContent() {
                     )}
                     <section className="vo-card vo-panel">
                       <h2>Departments</h2>
-                      <p className="vo-info">
-                        Manage department names and colors. Desk totals reflect the current office layout.
-                      </p>
+                      <p className="vo-info">Department names are fixed. Manage their colors below.</p>
                       {office.departments.map((d) => (
                         <form
                           key={`${d.id}-${d.name}-${d.color}`}
@@ -256,19 +255,11 @@ function OfficeContent() {
                             void act({
                               action: "department",
                               department_id: d.id,
-                              name: String(form.get("name")),
                               color: String(form.get("color")),
                             });
                           }}
                         >
-                          <label htmlFor={`department-name-${d.id}`}>Department {d.order + 1}</label>
-                          <input
-                            id={`department-name-${d.id}`}
-                            name="name"
-                            required
-                            maxLength={80}
-                            defaultValue={d.name}
-                          />
+                          <strong>{d.name}</strong>
                           <label htmlFor={`department-color-${d.id}`}>Section color</label>
                           <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
                           <Button
@@ -282,9 +273,24 @@ function OfficeContent() {
                         </form>
                       ))}
                     </section>
+                    {office.me.role === "super_admin" && admin && (
+                      <JobRoleCatalog
+                        departments={office.departments}
+                        roles={admin.job_roles ?? []}
+                        refresh={mutateAdmin}
+                      />
+                    )}
                   </div>
                 ) : admin ? (
-                  <AdminPanel office={office} admin={admin} query={query} setQuery={setQuery} act={act} busy={busy} />
+                  <AdminPanel
+                    office={office}
+                    admin={admin}
+                    query={query}
+                    setQuery={setQuery}
+                    act={act}
+                    busy={busy}
+                    refresh={() => Promise.all([mutateAdmin(), mutate()])}
+                  />
                 ) : (
                   <p>Loading office management…</p>
                 )}
@@ -293,7 +299,7 @@ function OfficeContent() {
                     <summary>Recent audit records ({admin.audit.length})</summary>
                     {admin.audit.map((entry) => (
                       <pre key={entry.id}>
-                        {new Date(entry.created_at).toLocaleString()} · {entry.action}
+                        {officeTime(entry.created_at)} · {entry.action}
                         {"\n"}
                         {JSON.stringify(entry.details)}
                       </pre>

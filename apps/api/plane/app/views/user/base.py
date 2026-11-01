@@ -9,6 +9,7 @@ import logging
 import secrets
 
 # Django imports
+from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, When
 from django.contrib.auth import logout
 from django.utils import timezone
@@ -49,6 +50,8 @@ from plane.utils.order_queryset import ACTIVITY_ORDER_BY_ALLOWLIST, sanitize_ord
 from plane.authentication.utils.host import user_ip
 from plane.bgtasks.user_deactivation_email_task import user_deactivation_email
 from plane.utils.host import base_host
+from plane.db.models.virtual_office import OfficeAudit, OfficeDesk, OfficeMember, VirtualOffice
+from plane.utils.office_attendance import close_attendance, expire_attendance
 from plane.bgtasks.user_email_update_task import send_email_update_magic_code, send_email_update_confirmation
 from plane.authentication.rate_limit import EmailVerificationThrottle
 
@@ -249,6 +252,7 @@ class UserEndpoint(BaseViewSet):
         serialized_data = UserMeSerializer(user).data
         return Response(serialized_data, status=status.HTTP_200_OK)
 
+    @transaction.atomic
     def deactivate(self, request):
         # Check all workspace user is active
         user = self.get_object()
@@ -262,6 +266,21 @@ class UserEndpoint(BaseViewSet):
 
         projects_to_deactivate = []
         workspaces_to_deactivate = []
+        office_member = None
+        if OfficeMember.objects.filter(user=user, active=True).exists():
+            VirtualOffice.objects.select_for_update().get(pk=1)
+            office_member = OfficeMember.objects.filter(user=user, active=True).first()
+            if (
+                office_member
+                and office_member.role == "super_admin"
+                and not OfficeMember.objects.filter(role="super_admin", active=True, user__is_active=True)
+                .exclude(pk=office_member.pk)
+                .exists()
+            ):
+                return Response(
+                    {"error": "Assign another active Virtual Office Super Admin before deactivating your account."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         projects = ProjectMember.objects.filter(member=request.user, is_active=True).annotate(
             other_admin_exists=Count(
@@ -304,6 +323,20 @@ class UserEndpoint(BaseViewSet):
                     {"error": "You cannot deactivate account as you are the only admin in some workspaces."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+        if office_member:
+            expire_attendance()
+            office_member.refresh_from_db()
+            close_attendance(office_member, "Account deactivated")
+            OfficeDesk.objects.filter(member=office_member).update(member=None)
+            office_member.active = False
+            office_member.save(update_fields=["active"])
+            OfficeAudit.objects.create(
+                office_id=1,
+                actor=user,
+                action="member",
+                details={"user_id": str(user.pk), "active": False, "reason": "Account deactivated"},
+            )
 
         ProjectMember.objects.bulk_update(projects_to_deactivate, ["is_active"], batch_size=100)
 
