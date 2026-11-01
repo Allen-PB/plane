@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from plane.app.views.base import BaseAPIView
 from plane.db.models.virtual_office import OfficeDepartment, OfficeJobRole, OfficeMember, OfficeNotice, VirtualOffice
 from plane.utils.office_identity import identity_data, save_identity, validated_job_role
+from plane.utils.office_schedules import work_data
 
 
 class IdentitySerializer(serializers.Serializer):
@@ -22,9 +23,11 @@ class OfficeIdentityView(BaseAPIView):
     authentication_classes = [SessionAuthentication]
 
     def get(self, request):
+        member = OfficeMember.objects.filter(user=request.user, active=True).first()
         response = Response(
             {
                 **identity_data(request.user),
+                "work": work_data(member) if member else None,
                 "departments": list(
                     OfficeDepartment.objects.filter(office_id=1).values("id", "name", "color", "order")
                 ),
@@ -36,7 +39,7 @@ class OfficeIdentityView(BaseAPIView):
                 "csrf_token": get_token(request),
                 "notices": list(
                     OfficeNotice.objects.filter(user=request.user, read_at__isnull=True).values(
-                        "id", "message", "created_at"
+                        "id", "message", "href", "created_at"
                     )[:50]
                 ),
             }

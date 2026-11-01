@@ -31,6 +31,7 @@ from plane.utils.office_identity import (
     save_identity,
     validated_job_role,
 )
+from plane.utils.office_schedules import latest_policy, publish_policy, validate_schedule, work_data
 
 
 class ActionSerializer(serializers.Serializer):
@@ -55,6 +56,8 @@ class ActionSerializer(serializers.Serializer):
     department_id = serializers.IntegerField(min_value=1, required=False, allow_null=True)
     position = serializers.CharField(max_length=120, required=False, allow_blank=True)
     job_role_id = serializers.IntegerField(min_value=1, required=False)
+    arrangement = serializers.ChoiceField(choices=["scheduled", "output_based"], required=False)
+    schedule = serializers.ListField(required=False)
     role = serializers.ChoiceField(choices=OfficeMember.Role.choices, required=False)
     active = serializers.BooleanField(required=False)
     name = serializers.CharField(max_length=120, required=False)
@@ -135,6 +138,7 @@ class OfficeView(BaseAPIView):
                 "appearance_timezone": "Asia/Manila",
                 "server_time": now.isoformat(),
                 "me": person(member),
+                "work": work_data(member),
                 "departments": list(OfficeDepartment.objects.values("id", "name", "color", "order")),
                 "desks": list(OfficeDesk.objects.values("id", "department_id", "number", "member_id")),
                 "members": [person(m) for m in members],
@@ -268,6 +272,13 @@ class OfficeView(BaseAPIView):
             OfficeDesk.objects.filter(member=target).update(member=None)
             target.timed_in_at = target.last_seen_at = None
         new_member = target._state.adding
+        previous_policy = latest_policy(target) if not new_member else None
+        arrangement = data.get("arrangement", previous_policy.arrangement if previous_policy else None)
+        schedule = data.get("schedule", previous_policy.schedule if previous_policy else [])
+        if active and (new_member or not target.active) and not arrangement:
+            raise ValidationError("Select an attendance arrangement before granting access.")
+        if active and arrangement == "scheduled":
+            validate_schedule(schedule)
         if job_role:
             save_identity(user, department_id, job_role, request.user, None if new_member else target)
         if new_member:
@@ -276,6 +287,8 @@ class OfficeView(BaseAPIView):
             target.position = job_role.name if job_role else ""
         target.role, target.active = role, active
         target.save()
+        if active and arrangement and ("arrangement" in data or "schedule" in data or new_member):
+            publish_policy(target, request.user, arrangement, schedule)
         audit(
             request.user,
             "member",
@@ -317,6 +330,7 @@ class OfficeAdminView(BaseAPIView):
                     for user in users[:50]
                 ],
                 "identities": {str(m.user_id): identity_data(m.user, m) for m in members},
+                "work": {str(m.pk): work_data(m) for m in members},
                 "job_roles": list(OfficeJobRole.objects.values("id", "department_id", "name", "archived")),
                 "audit": list(OfficeAudit.objects.values("id", "actor_id", "action", "details", "created_at")[:100]),
             }

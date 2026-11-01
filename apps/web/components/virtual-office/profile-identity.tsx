@@ -6,6 +6,7 @@ import { Button } from "@makeplane/propel/components/button";
 import type { OfficeProfileState } from "../../services/virtual-office.service";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
 import { IdentityFields } from "./identity-fields";
+import { ProfileWorkSchedule } from "./work-schedule";
 
 export function OfficeNotices() {
   const { data, mutate } = useSWR("office-profile", () => service.profile(), { refreshInterval: 15000 });
@@ -23,6 +24,7 @@ export function OfficeNotices() {
       {data?.notices.map((notice) => (
         <div role="status" key={notice.id}>
           <p>{notice.message}</p>
+          {notice.href && <a href={notice.href}>Review details</a>}
           <button type="button" onClick={() => void dismiss(notice.id)}>
             Dismiss notification
           </button>
@@ -111,6 +113,7 @@ export function ProfileOfficeIdentity() {
         <p>Loading employee profile…</p>
       )}
       <OfficeNotices />
+      <ProfileWorkSchedule work={data?.work} refresh={mutate} />
     </section>
   );
 }

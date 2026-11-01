@@ -102,9 +102,79 @@ class OfficeNotice(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     message = models.CharField(max_length=600)
+    href = models.CharField(max_length=255, default="/settings/profile/general/")
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "office_notices"
         ordering = ["-created_at", "-id"]
+
+
+class OfficeWorkPolicy(models.Model):
+    """Immutable approved arrangement/schedule versions; never edit past versions."""
+
+    member = models.ForeignKey(OfficeMember, on_delete=models.PROTECT, related_name="work_policies")
+    arrangement = models.CharField(
+        max_length=20, choices=[("scheduled", "Scheduled shift"), ("output_based", "Output-based")]
+    )
+    schedule = models.JSONField(default=list)
+    timezone = models.CharField(max_length=64, default="Asia/Manila")
+    effective_from = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        db_table = "office_work_policies"
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(arrangement__in=["scheduled", "output_based"]), name="vo_policy_arrangement"
+            )
+        ]
+
+
+class OfficeScheduleRequest(models.Model):
+    member = models.ForeignKey(OfficeMember, on_delete=models.PROTECT, related_name="schedule_requests")
+    schedule = models.JSONField(default=list)
+    revision = models.PositiveIntegerField(default=1)
+    status = models.CharField(
+        max_length=12,
+        default="pending",
+        choices=[
+            ("pending", "Pending"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+            ("superseded", "Superseded"),
+        ],
+    )
+    reason = models.CharField(max_length=500, blank=True)
+    decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    decided_at = models.DateTimeField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "office_schedule_requests"
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["member"], condition=models.Q(status="pending"), name="vo_one_pending_schedule"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=["pending", "approved", "rejected", "superseded"]),
+                name="vo_request_status",
+            ),
+        ]
+
+
+class OfficeScheduleRevision(models.Model):
+    request = models.ForeignKey(OfficeScheduleRequest, on_delete=models.PROTECT, related_name="revisions")
+    revision = models.PositiveIntegerField()
+    schedule = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "office_schedule_revisions"
+        ordering = ["revision"]
+        constraints = [models.UniqueConstraint(fields=["request", "revision"], name="vo_schedule_revision")]

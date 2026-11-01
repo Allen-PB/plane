@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
 import { IdentityFields } from "./identity-fields";
+import { ScheduleFields, ScheduleRequestReview } from "./work-schedule";
 import type {
   OfficeAction,
   OfficeAdminState,
   OfficeMember,
   OfficeRole,
   OfficeState,
+  WorkingDay,
+  WorkArrangement,
 } from "../../services/virtual-office.service";
 
 export function AdminPanel({
@@ -16,6 +19,7 @@ export function AdminPanel({
   setQuery,
   act,
   busy,
+  refresh = async () => undefined,
 }: {
   office: OfficeState;
   admin: OfficeAdminState;
@@ -23,12 +27,19 @@ export function AdminPanel({
   setQuery: (query: string) => void;
   act: (action: OfficeAction) => Promise<void>;
   busy: boolean;
+  refresh?: () => Promise<unknown>;
 }) {
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState<OfficeRole>("employee");
   const [departmentId, setDepartmentId] = useState("");
   const [jobRoleId, setJobRoleId] = useState("");
   const [active, setActive] = useState(true);
+  const [arrangement, setArrangement] = useState<WorkArrangement | "">("");
+  const [schedule, setSchedule] = useState<WorkingDay[]>([]);
+  const selectedMember = admin.members.find((member) => member.user_id === userId);
+  const pendingRequest = selectedMember
+    ? admin.work?.[selectedMember.id]?.requests.find((request) => request.status === "pending")
+    : undefined;
   const superAdmin = office.me.role === "super_admin";
   const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
   function edit(member: OfficeMember) {
@@ -38,6 +49,8 @@ export function AdminPanel({
     setDepartmentId(String(identity?.department_id ?? member.department_id ?? ""));
     setJobRoleId(String(identity?.job_role_id ?? member.job_role_id ?? ""));
     setActive(member.active);
+    setArrangement(admin.work?.[member.id]?.arrangement ?? "");
+    setSchedule(admin.work?.[member.id]?.schedule ?? []);
   }
   return (
     <div className="vo-admin-grid">
@@ -52,6 +65,7 @@ export function AdminPanel({
             department_id: departmentId ? Number(departmentId) : null,
             ...(jobRoleId ? { job_role_id: Number(jobRoleId) } : {}),
             active,
+            ...(arrangement ? { arrangement, schedule: arrangement === "scheduled" ? schedule : [] } : {}),
           });
         }}
       >
@@ -81,6 +95,8 @@ export function AdminPanel({
               setDepartmentId(String(identity?.department_id ?? ""));
               setJobRoleId(String(identity?.job_role_id ?? ""));
               setActive(true);
+              setArrangement("");
+              setSchedule([]);
             }
           }}
         >
@@ -125,11 +141,41 @@ export function AdminPanel({
           <option value="active">Active</option>
           <option value="revoked">Revoked</option>
         </select>
+        <label htmlFor="office-arrangement">Attendance arrangement</label>
+        <select
+          id="office-arrangement"
+          value={arrangement}
+          required={active}
+          disabled={busy}
+          onChange={(event) => setArrangement(event.target.value as WorkArrangement | "")}
+        >
+          <option value="">Arrangement not configured</option>
+          <option value="scheduled">Scheduled shift</option>
+          <option value="output_based">Output-based</option>
+        </select>
+        {arrangement === "scheduled" && (
+          <ScheduleFields prefix="admin-schedule" value={schedule} onChange={setSchedule} disabled={busy || !active} />
+        )}
+        <p>Schedule changes apply from the next shift. A direct change supersedes any pending schedule request.</p>
+        {pendingRequest && (
+          <ScheduleRequestReview
+            key={`${pendingRequest.id}-${pendingRequest.revision}`}
+            request={pendingRequest}
+            refresh={refresh}
+          />
+        )}
         <p className="vo-info">
           Department and job Role changes take effect at the next Time In. Revoking access ends attendance and releases
           the desk immediately.
         </p>
-        <Button size="lg" stretch="auto" variant="primary" label="Save employee access" type="submit" disabled={busy} />
+        <Button
+          size="lg"
+          stretch="auto"
+          variant="primary"
+          label="Save employee access"
+          type="submit"
+          disabled={busy || (active && arrangement === "scheduled" && schedule.length === 0)}
+        />
       </form>
       <section className="vo-card">
         <div className="vo-card-head">OFFICE DIRECTORY · {admin.members.length} PEOPLE</div>
@@ -156,6 +202,9 @@ export function AdminPanel({
                     <br />
                     <span className="vo-muted">{member.position}</span>
                     {member.identity_pending && <p>Change pending until next Time In</p>}
+                    {admin.work?.[member.id]?.requests.some((request) => request.status === "pending") && (
+                      <p className="vo-pill">Pending schedule request</p>
+                    )}
                   </td>
                   <td>
                     {member.role.replaceAll("_", " ")}

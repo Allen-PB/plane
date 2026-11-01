@@ -49,7 +49,7 @@ def test_initial_setup_is_shared_but_cannot_grant_access_or_permission(office):
     profile = Profile.objects.get(user=user)
     assert profile.office_job_role == role and profile.role == "Developer"
     admin = new_member("admin")
-    assert post(client(admin), "member", user_id=str(user.pk)).status_code == 200
+    assert post(client(admin), "member", user_id=str(user.pk), arrangement="output_based").status_code == 200
     assert OfficeMember.objects.get(user=user).job_role == role
     assert (
         api.patch(URL + "profile/", {"department_id": department.pk, "job_role_id": role.pk}, format="json").status_code

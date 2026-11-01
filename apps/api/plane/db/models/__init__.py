@@ -99,6 +99,9 @@ from .virtual_office import (
     OfficeAudit,
     OfficeJobRole,
     OfficeNotice,
+    OfficeWorkPolicy,
+    OfficeScheduleRequest,
+    OfficeScheduleRevision,
 )
 
 from .workflow import Workflow

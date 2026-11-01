@@ -32,6 +32,7 @@ import { useInstance } from "@/hooks/store/use-instance";
 import { useUser } from "@/hooks/store/user";
 // utils
 import { validatePersonName, validateDisplayName } from "@plane/utils";
+import { ProfileOfficeIdentity } from "@/components/virtual-office/profile-identity";
 
 type TUserProfileForm = {
   avatar_url: string;
@@ -408,6 +409,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
           </div>
         </div>
       </form>
+      <ProfileOfficeIdentity />
       <div className="mt-10">
         <SettingsBoxedControlItem
           title={t("deactivate_account")}

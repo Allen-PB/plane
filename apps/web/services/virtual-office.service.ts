@@ -11,11 +11,33 @@ export type OfficeIdentity = {
   locked: boolean;
   pending: boolean;
 };
-export type OfficeNotice = { id: number; message: string; created_at: string };
+export type WorkArrangement = "scheduled" | "output_based";
+export type WorkingDay = { day: number; start: string; end: string; ends_next_day: boolean };
+export type ScheduleRequest = {
+  id: number;
+  member_id: string;
+  schedule: WorkingDay[];
+  revision: number;
+  status: "pending" | "approved" | "rejected" | "superseded";
+  reason: string;
+  created_at: string;
+  decided_at: string | null;
+  revisions: { revision: number; schedule: WorkingDay[]; created_at: string }[];
+};
+export type OfficeWorkState = {
+  arrangement: WorkArrangement | null;
+  schedule: WorkingDay[];
+  policy_id: number | null;
+  effective_from: string | null;
+  timezone: string;
+  requests: ScheduleRequest[];
+};
+export type OfficeNotice = { id: number; message: string; href?: string; created_at: string };
 export type OfficeProfileState = OfficeIdentity & {
   departments: OfficeDepartment[];
   job_roles: OfficeJobRole[];
   notices: OfficeNotice[];
+  work?: OfficeWorkState | null;
 };
 export type OfficeMember = {
   id: string;
@@ -34,6 +56,7 @@ export type OfficeMember = {
 export type OfficeDepartment = { id: number; name: string; color: string; order: number };
 export type OfficeDesk = { id: number; department_id: number; number: number; member_id: string | null };
 export type OfficeState = {
+  work?: OfficeWorkState;
   appearance_mode?: OfficeAppearanceMode;
   appearance?: "day" | "night";
   appearance_timezone?: string;
@@ -49,6 +72,7 @@ export type OfficeAdminState = {
   users: { id: string; email: string; display_name: string; identity?: OfficeIdentity }[];
   identities?: Record<string, OfficeIdentity>;
   job_roles?: OfficeJobRole[];
+  work?: Record<string, OfficeWorkState>;
   audit: { id: number; action: string; created_at: string; details: Record<string, unknown> }[];
 };
 export type OfficeAction = {
@@ -75,6 +99,8 @@ export type OfficeAction = {
   position?: string;
   job_role_id?: number;
   active?: boolean;
+  arrangement?: WorkArrangement;
+  schedule?: WorkingDay[];
   name?: string;
   color?: string;
 };
@@ -116,6 +142,22 @@ class VirtualOfficeService extends APIService {
   async readNotice(id: number): Promise<void> {
     if (!this.csrfToken) await this.profile();
     await this.post(`/api/virtual-office/notices/${id}/read/`, {}, { headers: { "X-CSRFToken": this.csrfToken } });
+  }
+  async requestSchedule(schedule: WorkingDay[], revision: number): Promise<void> {
+    if (!this.csrfToken) await this.profile();
+    await this.post(
+      "/api/virtual-office/schedule/",
+      { schedule, revision },
+      { headers: { "X-CSRFToken": this.csrfToken } }
+    );
+  }
+  async decideSchedule(id: number, revision: number, decision: "approved" | "rejected", reason: string): Promise<void> {
+    if (!this.csrfToken) await this.status();
+    await this.post(
+      `/api/virtual-office/schedule-requests/${id}/decision/`,
+      { revision, decision, reason },
+      { headers: { "X-CSRFToken": this.csrfToken } }
+    );
   }
   async action(data: OfficeAction): Promise<void> {
     if (!this.csrfToken) await this.status();

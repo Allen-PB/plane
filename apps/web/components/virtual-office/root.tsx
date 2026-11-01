@@ -294,7 +294,15 @@ function OfficeContent() {
                     )}
                   </div>
                 ) : admin ? (
-                  <AdminPanel office={office} admin={admin} query={query} setQuery={setQuery} act={act} busy={busy} />
+                  <AdminPanel
+                    office={office}
+                    admin={admin}
+                    query={query}
+                    setQuery={setQuery}
+                    act={act}
+                    busy={busy}
+                    refresh={() => Promise.all([mutateAdmin(), mutate()])}
+                  />
                 ) : (
                   <p>Loading office management…</p>
                 )}

@@ -30,6 +30,16 @@ const admin: OfficeAdminState = {
   ],
   audit: [],
   job_roles: [{ id: 1, department_id: 1, name: "Engineer", archived: false }],
+  work: {
+    employee: {
+      arrangement: "output_based",
+      schedule: [],
+      policy_id: 1,
+      effective_from: null,
+      timezone: "Asia/Manila",
+      requests: [],
+    },
+  },
 };
 it("loads saved employee fields when selecting an account and resets them for a new account", async () => {
   const act = vi.fn();
@@ -46,6 +56,8 @@ it("loads saved employee fields when selecting an account and resets them for a 
     department_id: 1,
     job_role_id: 1,
     active: true,
+    arrangement: "output_based",
+    schedule: [],
   });
   await userEvent.selectOptions(screen.getByLabelText("Sync account"), "new-user");
   expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("");
