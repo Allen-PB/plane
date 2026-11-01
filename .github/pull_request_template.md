@@ -14,6 +14,11 @@
 <!-- Add screenshots to help explain your changes, ideally showcasing before and after -->
 
 ### Test Scenarios 
+<!-- For UI changes, review docs/UI_DESIGN_GUIDELINES.md before completing these checks. Mark N/A for changes without UI. -->
+- [ ] UI uses shared components, typography, colors and spacing tokens (or N/A)
+- [ ] Desktop, narrow-card and mobile layouts visually checked (or N/A)
+- [ ] Labels, keyboard focus, validation and disabled states checked (or N/A)
+
 <!-- Please describe the tests that you ran to verify your changes -->
 
 ### References
