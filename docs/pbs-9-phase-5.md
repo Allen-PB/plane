@@ -1,12 +1,12 @@
 # PBS-9 phase 5: release validation
 
-Status: final release candidate under dev acceptance validation. Production rollout is authorized by the user after the dev gates pass; production has not been changed by this release yet. Earlier specification documents retain their initial review-stage authorization language.
+Status: dev acceptance passed for application revision `2a6ac6e80ce2901d6f7f58f694aa2cb3e273775b`. Production rollout is authorized by the user after the dev gates pass; production has not been changed by this release yet. Earlier specification documents retain their initial review-stage authorization language.
 
 ## Automated and rehearsal evidence
 
 - Backend: 103 tests passed on isolated PostgreSQL, including existing Virtual Office regressions, schedule requests/decisions, attendance sessions, report/export permissions, lifecycle handling and concurrency checks. Migration/model consistency passed.
 - Integration regression: the combined PBS-9 and structured-updates backend run passed all 223 tests. The isolated runner supplies standard synthetic app URL/storage settings, independent of deployment secrets.
-- Frontend: 63 tests passed across 17 Virtual Office test files. Type checking and focused lint passed. The final environment-specific Linux build is a release gate.
+- Frontend: the final Linux image passed all 88 Virtual Office and structured-updates tests across 18 files, strict type checking, the production build and all 28 English locale namespace checks. Virtual Office contributes 64 tests across 17 files. Focused lint passed.
 - React Doctor: current scanner installed in an ignored, isolated tooling directory. The regression scan passed with zero errors. Telemetry and external scoring were disabled; no numeric score is claimed. Application dependencies and lockfiles were not changed for the scanner.
 - Restored-dev rehearsal: existing table counts and core data hashes were preserved; every Time In/Out audit was represented; no retrospective schedule classifications were added. Reconciliation was idempotent.
 - Rollback/roll-forward rehearsal: the prior phase image recorded an open and a closed session against the additive schema. The current importer recovered both exactly once, retaining audit links and actual timestamps.
@@ -71,6 +71,10 @@ The render-time ref mutation and repeated Intl formatter construction were corre
 
 ## Remaining release gates
 
-Complete the final Linux build, live-dev session/CSRF smoke with rollback of synthetic writes, desktop/narrow-screen browser checks, and actual CSV/PDF downloads. Record the final dev checkpoint before production preflight. Production needs a fresh private backup, isolated restore/migration verification, image/configuration rollback references and post-deployment health/auth/report checks. Never reverse the additive migrations or restore over newer attendance writes as an ordinary image rollback.
+The final Linux build and real dev session/CSRF smoke passed. The smoke exercised invite-first access, identity locking, multi-day and overnight schedules, revised approvals, stale-editor rejection, persistence across sign-in, early exit confirmation, prospective identity changes, output-based attendance, frozen report/CSV parity and employee download denial. Every synthetic write was rolled back.
+
+Chrome desktop and 390-pixel responsive report checks passed. The report remained within the viewport with an independently scrollable results table. Native date editing generated the requested historical range. Actual CSV and PDF downloads both contained all 22 displayed sessions; the PDF included the final record. The 53-row automated fixture separately verifies pagination and full exports. Browser evidence and downloaded employee data remain private.
+
+Production still needs a fresh private backup, isolated restore/migration verification, image/configuration rollback references and post-deployment health/auth/report checks. Never reverse the additive migrations or restore over newer attendance writes as an ordinary image rollback.
 
 Frontend builds must use their target environment's public origins. Dev images contain localhost links and are not suitable for direct production web promotion. Backend images must not contain application environment files; deployment secrets remain runtime configuration.
