@@ -183,7 +183,11 @@ def test_overdue_time_in_is_closed_before_new_time_in(office):
     desk = OfficeDesk.objects.filter(department=member.department).first()
     post(api, "reserve", desk_id=desk.pk)
     post(api, "time_in")
-    OfficeMember.objects.filter(pk=member.pk).update(timed_in_at=timezone.now() - timedelta(hours=49))
+    started = timezone.now() - timedelta(hours=49)
+    OfficeMember.objects.filter(pk=member.pk).update(timed_in_at=started)
+    # Rewind the canonical session as well as the presence projection. Production
+    # Time In writes both timestamps atomically; this fixture simulates elapsed time.
+    member.attendance_sessions.filter(is_open=True).update(time_in=started)
     assert post(api, "time_in").status_code == 200
     assert OfficeAudit.objects.filter(action="time_in").count() == 2
     assert OfficeAudit.objects.filter(action="time_out").count() == 1

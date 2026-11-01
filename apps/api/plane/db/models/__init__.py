@@ -102,6 +102,9 @@ from .virtual_office import (
     OfficeWorkPolicy,
     OfficeScheduleRequest,
     OfficeScheduleRevision,
+    OfficeShiftOccurrence,
+    OfficeAttendanceSession,
+    OfficeAttendanceReport,
 )
 
 from .workflow import Workflow

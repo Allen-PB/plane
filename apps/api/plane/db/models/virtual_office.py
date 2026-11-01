@@ -178,3 +178,65 @@ class OfficeScheduleRevision(models.Model):
         db_table = "office_schedule_revisions"
         ordering = ["revision"]
         constraints = [models.UniqueConstraint(fields=["request", "revision"], name="vo_schedule_revision")]
+
+
+class OfficeShiftOccurrence(models.Model):
+    """One frozen scheduled shift, shared by re-entry sessions."""
+
+    member = models.ForeignKey(OfficeMember, on_delete=models.PROTECT, related_name="shift_occurrences")
+    date = models.DateField()
+    policy = models.ForeignKey(OfficeWorkPolicy, on_delete=models.PROTECT)
+    expected_start = models.DateTimeField()
+    expected_end = models.DateTimeField()
+
+    class Meta:
+        db_table = "office_shift_occurrences"
+        constraints = [models.UniqueConstraint(fields=["member", "date"], name="vo_member_shift_date")]
+
+
+class OfficeAttendanceSession(models.Model):
+    member = models.ForeignKey(OfficeMember, null=True, on_delete=models.PROTECT, related_name="attendance_sessions")
+    shift = models.ForeignKey(OfficeShiftOccurrence, null=True, on_delete=models.PROTECT)
+    time_in_event = models.OneToOneField(OfficeAudit, null=True, on_delete=models.PROTECT, related_name="session_start")
+    time_out_event = models.OneToOneField(OfficeAudit, null=True, on_delete=models.PROTECT, related_name="session_end")
+    time_in = models.DateTimeField(null=True)
+    time_out = models.DateTimeField(null=True)
+    attendance_date = models.DateField(db_index=True)
+    arrangement = models.CharField(max_length=20)
+    identity = models.JSONField(default=dict)
+    arrival = models.CharField(max_length=40, blank=True)
+    departure = models.CharField(max_length=40, blank=True)
+    needs_review = models.BooleanField(default=False)
+    reason = models.CharField(max_length=500, blank=True)
+    employee_reason = models.CharField(max_length=500, blank=True)
+    legacy = models.BooleanField(default=False)
+    is_open = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "office_attendance_sessions"
+        ordering = ["attendance_date", "time_in", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["member"],
+                condition=models.Q(is_open=True),
+                name="vo_one_open_session",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(time_out__isnull=True)
+                | models.Q(time_in__isnull=True)
+                | models.Q(time_out__gte=models.F("time_in")),
+                name="vo_session_chronology",
+            ),
+        ]
+
+
+class OfficeAttendanceReport(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    filters = models.JSONField(default=dict)
+    rows = models.JSONField(default=list)
+    generated_at = models.DateTimeField()
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        db_table = "office_attendance_reports"

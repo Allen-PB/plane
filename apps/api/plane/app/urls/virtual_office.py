@@ -3,8 +3,12 @@ from django.urls import path
 from plane.app.views.virtual_office import OfficeAdminView, OfficePresenceExportView, OfficeStatusView, OfficeView
 from plane.app.views.office_identity import OfficeIdentityView, OfficeJobRoleView, OfficeNoticeReadView
 from plane.app.views.office_schedules import OfficeScheduleView, OfficeScheduleDecisionView
+from plane.app.views.office_reports import OfficeReportsView, OfficeReportView, OfficeReportCSVView
 
 urlpatterns = [
+    path("virtual-office/attendance/reports/", OfficeReportsView.as_view()),
+    path("virtual-office/attendance/reports/<uuid:pk>/", OfficeReportView.as_view()),
+    path("virtual-office/attendance/reports/<uuid:pk>/export.csv", OfficeReportCSVView.as_view()),
     path("virtual-office/schedule/", OfficeScheduleView.as_view()),
     path("virtual-office/schedule-requests/<int:pk>/decision/", OfficeScheduleDecisionView.as_view()),
     path("virtual-office/profile/", OfficeIdentityView.as_view()),

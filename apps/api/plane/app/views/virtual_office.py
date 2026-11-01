@@ -32,6 +32,7 @@ from plane.utils.office_identity import (
     validated_job_role,
 )
 from plane.utils.office_schedules import latest_policy, publish_policy, validate_schedule, work_data
+from plane.utils.office_sessions import attendance_data, current_session, start_session
 
 
 class ActionSerializer(serializers.Serializer):
@@ -58,6 +59,9 @@ class ActionSerializer(serializers.Serializer):
     job_role_id = serializers.IntegerField(min_value=1, required=False)
     arrangement = serializers.ChoiceField(choices=["scheduled", "output_based"], required=False)
     schedule = serializers.ListField(required=False)
+    shift_date = serializers.DateField(required=False)
+    confirmed = serializers.BooleanField(default=False)
+    employee_reason = serializers.CharField(max_length=500, allow_blank=True, required=False)
     role = serializers.ChoiceField(choices=OfficeMember.Role.choices, required=False)
     active = serializers.BooleanField(required=False)
     name = serializers.CharField(max_length=120, required=False)
@@ -76,7 +80,7 @@ def office_member(user):
 
 
 def audit(actor, action, **details):
-    OfficeAudit.objects.create(office_id=1, actor=actor, action=action, details=details)
+    return OfficeAudit.objects.create(office_id=1, actor=actor, action=action, details=details)
 
 
 def person(member):
@@ -139,6 +143,7 @@ class OfficeView(BaseAPIView):
                 "server_time": now.isoformat(),
                 "me": person(member),
                 "work": work_data(member),
+                "attendance": attendance_data(member),
                 "departments": list(OfficeDepartment.objects.values("id", "name", "color", "order")),
                 "desks": list(OfficeDesk.objects.values("id", "department_id", "number", "member_id")),
                 "members": [person(m) for m in members],
@@ -227,12 +232,33 @@ class OfficeView(BaseAPIView):
                     actor.timed_in_at = timezone.now()
                     actor.last_seen_at = timezone.now()
                     actor.save(update_fields=["timed_in_at", "last_seen_at"])
-                    audit(request.user, action, **presence_details(actor))
+                    details = presence_details(actor)
+                    event = audit(request.user, action, **details)
+                    OfficeAudit.objects.filter(pk=event.pk).update(created_at=actor.timed_in_at)
+                    start_session(
+                        actor, event, {**details, "department_id": actor.department_id}, data.get("shift_date")
+                    )
                 elif action == "prepare_time_in":
                     apply_identity(actor)
                     audit(request.user, action, member_id=str(actor.pk))
                 elif action == "time_out":
-                    close_attendance(actor, "Manual")
+                    session = current_session(actor)
+                    if (
+                        session
+                        and session.shift
+                        and timezone.now() < session.shift.expected_end
+                        and not data["confirmed"]
+                    ):
+                        return Response(
+                            {
+                                "detail": "You are leaving before your scheduled shift ends. "
+                                "Confirm Time Out to continue.",
+                                "expected_end": session.shift.expected_end,
+                                "confirmation_required": True,
+                            },
+                            status=409,
+                        )
+                    close_attendance(actor, "Manual", employee_reason=data.get("employee_reason", ""))
                 elif action == "heartbeat":
                     # Presence can resume without starting another attendance session.
                     if actor.timed_in_at:
