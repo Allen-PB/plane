@@ -14,7 +14,7 @@ from rest_framework.response import Response
 
 from plane.app.permissions import ROLE, allow_permission
 from plane.app.views.base import BaseAPIView
-from plane.bgtasks.deletion_task import soft_delete_related_objects
+from plane.utils.exception_logger import log_exception
 from plane.db.models import (
     Issue,
     IssueActivity,
@@ -54,11 +54,11 @@ class ChangesSerializer(serializers.Serializer):
 class OperationSerializer(serializers.Serializer):
     project_id = serializers.UUIDField()
     issue_ids = serializers.ListField(child=serializers.UUIDField(), min_length=1, max_length=100)
-    operation = serializers.ChoiceField(choices=["update", "move", "delete"])
+    operation = serializers.ChoiceField(choices=["update", "move", "archive"])
     action = serializers.ChoiceField(choices=["preview", "apply"])
     changes = ChangesSerializer(required=False, default=dict)
     destinations = serializers.DictField(child=serializers.UUIDField(), required=False, default=dict)
-    token = serializers.CharField(required=False, max_length=500)
+    token = serializers.CharField(required=False, max_length=200000)
 
     def validate_issue_ids(self, value):
         if len(value) != len(set(value)):
@@ -159,7 +159,9 @@ class BulkUpdateEndpoint(BaseAPIView):
         except (TypeError, ValueError):
             raise ValidationError({"page": "Choose a valid page."})
         items = (
-            filter_items(Issue.issue_objects.filter(project=project), request.query_params)
+            filter_items(
+                Issue.objects.filter(project=project, archived_at__isnull=True, is_draft=False), request.query_params
+            )
             .select_related("state", "parent")
             .prefetch_related(
                 Prefetch("issue_assignee", queryset=IssueAssignee.objects.select_related("assignee")),
@@ -183,6 +185,7 @@ class BulkUpdateEndpoint(BaseAPIView):
                         "key": f"{project.identifier}-{item.sequence_id}",
                         "name": item.name,
                         "state": item.state.name if item.state else "",
+                        "state_group": item.state.group if item.state else "",
                         "priority": item.priority,
                         "assignees": [member_name(row.assignee) for row in item.issue_assignee.all()],
                         "labels": [row.label.name for row in item.label_issue.all()],
@@ -233,6 +236,8 @@ class BulkUpdateEndpoint(BaseAPIView):
         data = serializer.validated_data
         projects = admin_projects(request.user, slug)
         source = get_object_or_404(projects.select_for_update(), pk=data["project_id"])
+        if data["operation"] == "archive":
+            return archive_operation(request, source, data)
         items = list(
             Issue.issue_objects.select_for_update(of=("self",))
             .filter(project=source, id__in=data["issue_ids"])
@@ -266,11 +271,6 @@ class BulkUpdateEndpoint(BaseAPIView):
                 "Work item keys change in destination projects. "
                 "Titles, descriptions and compatible assignments are preserved."
             )
-        else:
-            # Avoid implicitly deleting unselected descendants.
-            if Issue.objects.filter(parent_id__in=data["issue_ids"]).exclude(id__in=data["issue_ids"]).exists():
-                raise ValidationError("Include all child work items before deleting their parent.")
-            summary.append(f"Delete {len(items)} selected work items using Sync's existing soft-delete behavior.")
 
         snapshot = {
             "user": str(request.user.id),
@@ -339,12 +339,105 @@ class BulkUpdateEndpoint(BaseAPIView):
                 move_work_item(
                     item, destinations[data["destinations"][str(item.id)]], plans[str(item.id)], request.user
                 )
-            else:
-                IssueActivity.objects.create(
-                    issue=item, project=source, actor=request.user, verb="deleted", comment="Bulk Update: deleted"
-                )
-                Issue.objects.filter(pk=item.pk).update(
-                    deleted_at=timezone.now(), updated_at=timezone.now(), updated_by=request.user
-                )
-                transaction.on_commit(lambda item=item: soft_delete_related_objects.delay("db", "issue", item.pk))
         return Response({"count": len(items)})
+
+
+def archive_operation(request, source, data):
+    """Keep each reviewed ticket's archive and history inside its own savepoint."""
+    selected_ids = [str(value) for value in data["issue_ids"]]
+    items = {
+        str(item.id): item
+        for item in (
+            Issue.objects.select_for_update(of=("self",))
+            .select_related("type")
+            .filter(project=source, id__in=selected_ids)
+            .order_by("id")
+        )
+    }
+    if data["action"] == "preview":
+        reviewed = [
+            {
+                "id": value,
+                "key": f"{source.identifier}-{items[value].sequence_id}",
+                "name": items[value].name,
+                "version": str(items[value].updated_at),
+            }
+            if value in items and not items[value].is_draft and items[value].archived_at is None
+            else {"id": value, "key": value, "name": "Unavailable work item", "version": None}
+            for value in selected_ids
+        ]
+        token = signing.dumps(
+            {"user": str(request.user.id), "project": str(source.id), "operation": "archive", "items": reviewed},
+            salt="bulk-archive",
+            compress=True,
+        )
+        return Response(
+            {
+                "token": token,
+                "count": len(reviewed),
+                "items": reviewed,
+                "summary": [
+                    f"Archive {len(reviewed)} selected work items. Restore them later from project Archives.",
+                    "Unavailable, unsupported, or changed work items will be skipped and identified in the results.",
+                    *(
+                        ["Epic work items are not supported by project Archives and will be skipped."]
+                        if any(item.type and item.type.is_epic for item in items.values())
+                        else []
+                    ),
+                ],
+            }
+        )
+    try:
+        review = signing.loads(data.get("token", ""), salt="bulk-archive", max_age=900)
+    except signing.BadSignature:
+        return Response({"error": "Review expired. Go back and review the operation again."}, status=409)
+    if (
+        review["user"] != str(request.user.id)
+        or review["project"] != str(source.id)
+        or review["operation"] != "archive"
+        or [row["id"] for row in review["items"]] != selected_ids
+    ):
+        return Response({"error": "Selection changed. Go back and review again."}, status=409)
+    results = []
+    for row in review["items"]:
+        item = items.get(row["id"])
+        result = {"id": row["id"], "key": row["key"], "name": row["name"]}
+        if item is None or item.is_draft or item.archived_at is not None or row["version"] is None:
+            results.append({**result, "status": "skipped", "reason": "Work item is unavailable or already archived."})
+            continue
+        if item.type and item.type.is_epic:
+            results.append(
+                {
+                    **result,
+                    "status": "skipped",
+                    "reason": "Epic work items cannot appear in project Archives and were left unchanged.",
+                }
+            )
+            continue
+        if str(item.updated_at) != row["version"]:
+            results.append(
+                {**result, "status": "skipped", "reason": "Work item changed since review. Review it again."}
+            )
+            continue
+        try:
+            with transaction.atomic():
+                archived_at = timezone.now().date()
+                item.archived_at = archived_at
+                item.updated_by = request.user
+                item.save(update_fields=["archived_at", "updated_at", "updated_by"])
+                IssueActivity.objects.create(
+                    issue=item,
+                    project=source,
+                    actor=request.user,
+                    verb="updated",
+                    field="archived_at",
+                    old_value=None,
+                    new_value=str(archived_at),
+                    comment="Bulk Update: archived",
+                )
+        except Exception as exc:
+            log_exception(exc)
+            results.append({**result, "status": "failed", "reason": "Unable to archive this work item. Try again."})
+        else:
+            results.append({**result, "status": "archived", "reason": ""})
+    return Response({"count": sum(row["status"] == "archived" for row in results), "results": results})

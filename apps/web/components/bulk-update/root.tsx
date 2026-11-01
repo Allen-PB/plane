@@ -1,28 +1,15 @@
 import { useState } from "react";
-import { Check, ArrowRight, ListChecks, Pencil, ArrowRightLeft, Trash2 } from "lucide-react";
-
+import { Check, ArrowRight, ListChecks, Pencil, ArrowRightLeft, Archive } from "lucide-react";
 import { Radio, RadioGroup } from "@makeplane/propel/components/radio";
 import { Button } from "@makeplane/propel/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogBody,
-  DialogActions,
-} from "@makeplane/propel/components/dialog";
 import { WorkflowSelect, workflowError } from "@/components/workflows/fields";
 import { bulkUpdateService as service } from "@/services/bulk-update.service";
-import type { BulkFilters, BulkPreview, BulkRequest, BulkWorkItem } from "@/services/bulk-update.service";
-
+import type { BulkFilters, BulkOutcome, BulkPreview, BulkRequest, BulkWorkItem } from "@/services/bulk-update.service";
 import { emptyFilters, queryFilters } from "./filters";
 import { useBulkData } from "./use-data";
 import { WorkItemSelection } from "./selection";
 import { UpdateFields } from "./update-fields";
-
 const steps = ["Choose Project", "Choose Work Items", "Choose Operation", "Operation Details", "Confirmation"];
-
 const operations = [
   { value: "update", label: "Update", description: "Change fields across selected work items.", icon: Pencil },
   {
@@ -31,7 +18,12 @@ const operations = [
     description: "Choose a destination project for each work item.",
     icon: ArrowRightLeft,
   },
-  { value: "delete", label: "Delete", description: "Delete selected work items after confirmation.", icon: Trash2 },
+  {
+    value: "archive",
+    label: "Archive",
+    description: "Archive selected work items. Restore them later from project Archives.",
+    icon: Archive,
+  },
 ] as const;
 
 export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
@@ -49,7 +41,7 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState<number>();
   const [retry, setRetry] = useState(0);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [outcomes, setOutcomes] = useState<BulkOutcome[]>([]);
   const {
     projects,
     items,
@@ -86,9 +78,11 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
       else next[item.id] = item;
       return next;
     });
+  const hasTriage = selectedItems.some((item) => item.state_group === "triage");
+  const operationAllowed = !hasTriage || operation === "archive";
   const hasSelection = selectedItems.length > 0 && selectedItems.length <= 100;
   const validDetails =
-    operation === "delete" ||
+    operation === "archive" ||
     (operation === "update"
       ? Object.keys(changes).length > 0 &&
         (!Object.hasOwn(changes, "state_id") || Boolean(changes.state_id)) &&
@@ -98,6 +92,7 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
     busy ||
     loading ||
     (Boolean(shownError) && step < 2) ||
+    (step >= 2 && !operationAllowed) ||
     (step === 0 ? !projectId : step === 1 ? !hasSelection : step === 3 ? !validDetails : false);
   const next = async () => {
     setError("");
@@ -122,13 +117,13 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
     try {
       const result = await service.apply(workspaceSlug, request, preview.token);
       setCompleted(result.count);
+      setOutcomes(result.results ?? []);
       setPreview(undefined);
     } catch (e) {
       setError(workflowError(e));
       setPreview(undefined);
     } finally {
       setBusy(false);
-      setConfirmDelete(false);
     }
   };
 
@@ -138,8 +133,18 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
         <Check className="mb-3 size-7 text-accent-primary" aria-hidden="true" />
         <h2 className="text-h5-medium">Bulk operation complete</h2>
         <p className="my-3 text-body-sm-regular text-secondary">
-          {completed} work items {operation === "delete" ? "deleted" : operation === "move" ? "moved" : "updated"}.
+          {completed} work items {operation === "archive" ? "archived" : operation === "move" ? "moved" : "updated"}.
         </p>
+        {outcomes.length > 0 && (
+          <ul className="my-4 space-y-2 text-body-sm-regular" aria-label="Archive results">
+            {outcomes.map((item) => (
+              <li key={item.id}>
+                {item.key} · {item.name}: {item.status}
+                {item.reason ? ` — ${item.reason}` : ""}
+              </li>
+            ))}
+          </ul>
+        )}
         <Button
           stretch="auto"
           size="lg"
@@ -148,6 +153,7 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
           onClick={() => {
             changeProject("");
             setCompleted(undefined);
+            setOutcomes([]);
             setStep(0);
             setOperation("update");
             setRetry((v) => v + 1);
@@ -241,30 +247,39 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
             />
           )}
           {step === 2 && (
-            <RadioGroup<BulkRequest["operation"]>
-              density="comfortable"
-              aria-label="Operation"
-              value={operation}
-              onValueChange={(value) => {
-                setOperation(value);
-                setPreview(undefined);
-              }}
-            >
-              {operations.map(({ value, label, description, icon: Icon }) => (
-                <label
-                  key={value}
-                  htmlFor={`bulk-operation-${value}`}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors ${operation === value ? "border-strong bg-layer-transparent-selected" : "border-subtle hover:bg-layer-transparent-hover"}`}
-                >
-                  <Radio id={`bulk-operation-${value}`} value={value} />
-                  <Icon className="mt-0.5 size-5 text-secondary" aria-hidden="true" />
-                  <span>
-                    <span className="block text-body-sm-medium">{label}</span>
-                    <span className="mt-1 block text-body-sm-regular text-secondary">{description}</span>
-                  </span>
-                </label>
-              ))}
-            </RadioGroup>
+            <>
+              {hasTriage && (
+                <p id="bulk-triage-guidance" className="text-body-sm-regular text-secondary">
+                  Update and Move are unavailable while triage work items are selected. Choose Archive, or go back and
+                  change your selection.
+                </p>
+              )}
+              <RadioGroup<BulkRequest["operation"]>
+                density="comfortable"
+                aria-label="Operation"
+                aria-describedby={hasTriage ? "bulk-triage-guidance" : undefined}
+                value={operation}
+                onValueChange={(value) => {
+                  setOperation(value);
+                  setPreview(undefined);
+                }}
+              >
+                {operations.map(({ value, label, description, icon: Icon }) => (
+                  <label
+                    key={value}
+                    htmlFor={`bulk-operation-${value}`}
+                    className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${hasTriage && value !== "archive" ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${operation === value && operationAllowed ? "border-strong bg-layer-transparent-selected" : "border-subtle hover:bg-layer-transparent-hover"}`}
+                  >
+                    <Radio id={`bulk-operation-${value}`} value={value} disabled={hasTriage && value !== "archive"} />
+                    <Icon className="mt-0.5 size-5 text-secondary" aria-hidden="true" />
+                    <span>
+                      <span className="block text-body-sm-medium">{label}</span>
+                      <span className="mt-1 block text-body-sm-regular text-secondary">{description}</span>
+                    </span>
+                  </label>
+                ))}
+              </RadioGroup>
+            </>
           )}
           {step === 3 && operation === "update" && (
             <UpdateFields
@@ -298,20 +313,18 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
               ))}
             </>
           )}
-          {step === 3 && operation === "delete" && (
-            <div className="rounded-lg border border-danger-strong p-5">
-              <Trash2 className="mb-3 size-5 text-danger-primary" aria-hidden="true" />
-              <p className="text-body-md-medium">Delete {selectedItems.length} work items</p>
+          {step === 3 && operation === "archive" && (
+            <div className="rounded-lg border border-subtle p-5">
+              <Archive className="mb-3 size-5 text-secondary" aria-hidden="true" />
+              <p className="text-body-md-medium">Archive {selectedItems.length} work items</p>
               <p className="mt-2 text-body-sm-regular text-secondary">
-                Review the selected work items on the next step. Nothing is deleted until you confirm.
+                Review the selected work items on the next step. Nothing is archived until you confirm.
               </p>
             </div>
           )}
           {step === 4 && preview && (
             <>
-              <div
-                className={`rounded-lg border p-5 ${operation === "delete" ? "border-danger-strong" : "border-subtle"}`}
-              >
+              <div className="rounded-lg border border-subtle p-5">
                 <div className="flex items-center gap-2 text-body-md-medium">
                   <ListChecks className="size-5" aria-hidden="true" />
                   Review {operation} · {preview.count} work items
@@ -334,9 +347,7 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
                 ))}
               </div>
               <p className="text-body-sm-regular text-secondary">
-                {operation === "delete"
-                  ? "Confirm deletion below, or cancel to leave the work items unchanged."
-                  : "Confirm to apply this operation to all selected work items."}
+                Confirm to apply this operation to all selected work items.
               </p>
             </>
           )}
@@ -384,49 +395,15 @@ export function BulkUpdateRoot({ workspaceSlug }: { workspaceSlug: string }) {
               <Button
                 stretch="auto"
                 size="lg"
-                variant={operation === "delete" ? "danger" : "primary"}
-                label={busy ? "Applying..." : operation === "delete" ? "Delete Work Items" : "Confirm and Apply"}
+                variant="primary"
+                label={busy ? "Applying..." : "Confirm and Apply"}
                 disabled={busy || !preview}
-                onClick={() => (operation === "delete" ? setConfirmDelete(true) : void apply())}
+                onClick={() => void apply()}
               />
             )}
           </div>
         </div>
       </section>
-      <Dialog
-        open={confirmDelete}
-        onOpenChange={(open) => {
-          if (!busy) setConfirmDelete(open);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {selectedItems.length} work items?</DialogTitle>
-            <DialogDescription>Confirm deletion of the work items shown in your review.</DialogDescription>
-          </DialogHeader>
-          <DialogBody>
-            <p className="text-body-sm-regular text-secondary">Cancel to keep all selected work items unchanged.</p>
-          </DialogBody>
-          <DialogActions>
-            <Button
-              stretch="auto"
-              size="lg"
-              variant="secondary"
-              label="Cancel deletion"
-              disabled={busy}
-              onClick={() => setConfirmDelete(false)}
-            />
-            <Button
-              stretch="auto"
-              size="lg"
-              variant="danger"
-              label={busy ? "Deleting..." : "Confirm Delete"}
-              disabled={busy}
-              onClick={() => void apply()}
-            />
-          </DialogActions>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
