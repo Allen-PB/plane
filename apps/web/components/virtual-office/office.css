@@ -1,6 +1,10 @@
 .vo-app {
   --vo-ink: #263850;
   --vo-muted: #6c7c91;
+  --vo-border: #dce4ed;
+  --vo-surface: #fff;
+  --vo-field-bg: #f8fafc;
+  --vo-accent: var(--bg-accent-primary, #4775e7);
   min-height: 100vh;
   background: #f2f5f8;
   color: var(--vo-ink);
@@ -41,7 +45,7 @@
   font-size: 13px;
 }
 .vo-nav a[aria-current="page"] {
-  color: #4775e7;
+  color: var(--vo-accent);
   font-weight: 700;
 }
 .vo-main {
@@ -477,6 +481,7 @@
 }
 .vo-form input,
 .vo-form select {
+  font-family: inherit;
   width: 100%;
   padding: 9px 11px;
   border: 1px solid #d8e0e9;
@@ -504,7 +509,7 @@
   font-weight: 500;
 }
 .vo-table button {
-  color: #4775e7;
+  color: var(--vo-accent);
 }
 .vo-empty {
   max-width: 580px;

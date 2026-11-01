@@ -1,0 +1,34 @@
+# PathBuilder Sync UI guidelines
+
+Read this guide before adding or changing product UI. Extend the existing design system and shared components; avoid introducing a new visual style for each feature.
+
+## Typography and color
+
+- Inherit the application's Inter font stack on inputs, selects, buttons and textareas. Never rely on a browser's default form font.
+- Use the established hierarchy: page titles 28px, card headings 14px, form/section headings 13px semibold, field labels and helper text 12px. Use 1.5–1.6 line height for readable wrapping. Avoid oversized nested headings.
+- Use the owning surface's semantic tokens. Virtual Office uses `--vo-ink` for primary text, `--vo-muted` for supporting text, `--vo-border`, `--vo-surface`, `--vo-field-bg` and `--vo-accent`. Define palette values at the surface, rather than inventing feature-specific blue/gray shades.
+- Virtual Office's accent inherits the shared design system's `--bg-accent-primary`, keeping links, selected days, focus and Propel radio/button accents aligned.
+- Reserve accent color for selected states, links, focus and primary actions. Convey errors and status with text/icons as well as color. Do not change the office scene's day/night appearance setting to style management forms.
+
+## Layout and controls
+
+- Use the published `@makeplane/propel` primitives and existing Plane composites. Extend a shared component when the same interaction occurs in Profile and Office management.
+- Use a 4px spacing rhythm: 8px between related controls, 12px between fields, 16px between groups, and 20–24px between cards. Keep label-to-control spacing consistent.
+- Place field labels above their controls. Group each label and input in its own layout wrapper. Do not alternate bare labels and inputs in a grid: this misaligns fields when a label wraps.
+- Keep short headings inside the card. A long fieldset legend must not break across the card border. Give the fieldset an accessible name even when its visual heading is an internal heading.
+- Display supporting metadata, such as timezone, in a compact secondary badge. Keep instructions separate from headings.
+- Set controls to inherit typography and use consistent border, background, radius and minimum height. Checkbox/radio controls must keep their own dimensions; broad form-input rules must not stretch them.
+- Adapt to the component's available width, including a narrow desktop sidebar. Use container queries for multi-column fields; viewport breakpoints alone do not solve narrow-card layouts. Use `min-width: 0` for grid/flex children and keep time controls fully visible.
+- Preserve visible keyboard focus, associated labels, grouped choices, disabled states and descriptive errors. Do not use placeholder text as the only label.
+
+## Working-hours pattern
+
+Use `ScheduleFields` for every working-hours editor. Offer **Same hours across days** and **Different hours each day**. Shared mode applies start/end and overnight settings to selected days and copies those hours when another day is selected. Per-day mode allows independent times. Existing differing schedules must open in per-day mode without changing saved values. Switching explicitly to shared mode uses the first selected weekday's hours; explain that behavior next to the choice.
+
+The editor still submits the existing per-day API format. Timezone, approval, prospective changes, overlap validation and attendance calculations remain backend rules. A UI convenience must not bypass them.
+
+## Required visual review
+
+Before handoff, check the changed surface in a real browser at desktop width, at a narrow card width, and at a 390px viewport. Inspect empty, populated, long-label, validation and disabled states. Confirm matching font, type hierarchy, text colors, border/radius, spacing, alignment, focus and absence of page overflow. Capture screenshots of the actual implementation. Run relevant interaction tests, types, lint and the React Doctor regression check; record material limits rather than claiming untested browsers.
+
+Keep employee screenshots, report exports, credentials and deployment configuration out of public Git history and PR attachments.

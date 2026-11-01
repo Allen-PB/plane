@@ -91,10 +91,10 @@ it("clears the old editor after a schedule decision so a later save cannot resto
     />
   );
   await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
-  expect((screen.getByLabelText("Monday end time") as HTMLInputElement).value).toBe("18:00");
+  expect((screen.getByLabelText("Shared end time") as HTMLInputElement).value).toBe("18:00");
   await userEvent.click(screen.getByRole("button", { name: "Approve schedule" }));
   expect((screen.getByLabelText("Sync account") as HTMLSelectElement).value).toBe("");
-  expect(screen.queryByLabelText("Monday end time")).toBeNull();
+  expect(screen.queryByLabelText("Shared end time")).toBeNull();
   expect(screen.getByRole("status").textContent).toContain("Schedule decision saved");
   await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
   expect(act).not.toHaveBeenCalled();

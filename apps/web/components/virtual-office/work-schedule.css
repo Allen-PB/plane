@@ -1,64 +1,162 @@
 .vo-schedule-fields {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 16px;
   min-width: 0;
-  border: 1px solid var(--border-subtle, #dce1e7);
-  border-radius: 0.75rem;
-  padding: 1rem;
+  margin: 0;
+  border: 1px solid var(--vo-border, #dce4ed);
+  border-radius: 12px;
+  padding: 16px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vo-ink, #263850);
+  background: var(--vo-surface, #fff);
 }
-.vo-schedule-fields legend {
+.vo-schedule-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.vo-schedule-fields .vo-schedule-heading h3,
+.vo-schedule-fields .vo-schedule-day h4 {
+  margin: 0;
+  font-size: 13px;
   font-weight: 600;
-  padding: 0 0.25rem;
+  line-height: 1.5;
+  color: inherit;
 }
-.vo-schedule-day {
-  border-top: 1px solid var(--border-subtle, #dce1e7);
-  padding-top: 0.6rem;
+.vo-schedule-timezone {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--vo-field-bg, #f8fafc);
+  color: var(--vo-muted, #6c7c91);
+  font-size: 11px;
+  font-weight: 500;
 }
-.vo-schedule-day label {
+.vo-schedule-fields .vo-schedule-help {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--vo-muted, #6c7c91);
+}
+.vo-schedule-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.vo-schedule-mode-title {
+  padding: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.vo-schedule-fields .vo-schedule-mode label,
+.vo-schedule-fields .vo-schedule-day-toggle,
+.vo-schedule-fields .vo-schedule-overnight {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
 }
-.vo-schedule-day input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
-  accent-color: #3d77bf;
+.vo-schedule-fields input[type="checkbox"],
+.vo-schedule-fields input[type="radio"] {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--vo-accent, var(--bg-accent-primary, #4775e7));
+}
+.vo-schedule-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+}
+.vo-schedule-fields .vo-schedule-day-toggle {
+  min-height: 36px;
+  padding: 8px;
+  border: 1px solid var(--vo-border, #dce4ed);
+  border-radius: 8px;
+  background: var(--vo-field-bg, #f8fafc);
+}
+.vo-schedule-day-toggle[data-selected="true"] {
+  border-color: var(--vo-accent, var(--bg-accent-primary, #4775e7));
+}
+.vo-schedule-day,
+.vo-schedule-shared {
+  border-top: 1px solid var(--vo-border, #dce4ed);
+  padding-top: 16px;
 }
 .vo-schedule-times {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
 }
-.vo-schedule-times input[type="time"] {
+.vo-schedule-time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   min-width: 0;
-  border: 1px solid var(--border-subtle, #dce1e7);
-  border-radius: 0.4rem;
-  padding: 0.4rem;
-  background: transparent;
+}
+.vo-schedule-fields .vo-schedule-time-field label {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.vo-schedule-fields input[type="time"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--vo-border, #dce4ed);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--vo-field-bg, #f8fafc);
+  font: inherit;
   color: inherit;
 }
-.vo-schedule-times label:last-child {
+.vo-schedule-overnight {
   grid-column: 1 / -1;
+  min-height: 32px;
+}
+.vo-schedule-fields input:focus-visible {
+  outline: 2px solid var(--vo-accent, var(--bg-accent-primary, #4775e7));
+  outline-offset: 2px;
+}
+.vo-schedule-fields:disabled {
+  opacity: 0.65;
 }
 .vo-schedule-review {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: 1rem;
-  border: 1px solid #b8cee7;
-  border-radius: 0.75rem;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--vo-border, #dce4ed);
+  border-radius: 12px;
+  font: inherit;
 }
 .vo-schedule-review textarea {
   width: 100%;
-  min-height: 5rem;
-  border: 1px solid var(--border-subtle, #dce1e7);
-  border-radius: 0.4rem;
-  padding: 0.5rem;
+  min-height: 80px;
+  border: 1px solid var(--vo-border, #dce4ed);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  color: inherit;
 }
-@media (max-width: 480px) {
+@container (max-width: 280px) {
   .vo-schedule-times {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
