@@ -12,6 +12,7 @@ import { PageHead } from "@/components/core/page-title";
 import { useUser } from "@/hooks/store/user";
 // local imports
 import { GeneralProfileSettingsForm } from "./form";
+import { ProfileOfficeIdentity } from "@/components/virtual-office/profile-identity";
 
 export const GeneralProfileSettings = observer(function GeneralProfileSettings() {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export const GeneralProfileSettings = observer(function GeneralProfileSettings()
     <>
       <PageHead title={`${t("profile.label")} - ${t("general_settings")}`} />
       <GeneralProfileSettingsForm user={currentUser} profile={userProfile.data} />
+      <ProfileOfficeIdentity />
     </>
   );
 });

@@ -14,9 +14,23 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from plane.app.views.base import BaseAPIView
-from plane.db.models import User
-from plane.db.models.virtual_office import OfficeAudit, OfficeDepartment, OfficeDesk, OfficeMember, VirtualOffice
+from plane.db.models import User, Profile
+from plane.db.models.virtual_office import (
+    OfficeAudit,
+    OfficeDepartment,
+    OfficeDesk,
+    OfficeJobRole,
+    OfficeMember,
+    VirtualOffice,
+)
 from plane.utils.office_attendance import close_attendance, expire_attendance, presence_details
+from plane.utils.office_identity import (
+    apply_identity,
+    identity_data,
+    identity_pending,
+    save_identity,
+    validated_job_role,
+)
 
 
 class ActionSerializer(serializers.Serializer):
@@ -32,6 +46,7 @@ class ActionSerializer(serializers.Serializer):
             "department",
             "avatar",
             "appearance",
+            "prepare_time_in",
         ]
     )
     user_id = serializers.UUIDField(required=False)
@@ -39,6 +54,7 @@ class ActionSerializer(serializers.Serializer):
     desk_id = serializers.IntegerField(min_value=1, required=False)
     department_id = serializers.IntegerField(min_value=1, required=False, allow_null=True)
     position = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    job_role_id = serializers.IntegerField(min_value=1, required=False)
     role = serializers.ChoiceField(choices=OfficeMember.Role.choices, required=False)
     active = serializers.BooleanField(required=False)
     name = serializers.CharField(max_length=120, required=False)
@@ -48,7 +64,7 @@ class ActionSerializer(serializers.Serializer):
 
 
 def office_member(user):
-    member = OfficeMember.objects.select_related("department", "user").filter(user=user, active=True).first()
+    member = OfficeMember.objects.select_related("department", "user__profile").filter(user=user, active=True).first()
     if not member:
         raise PermissionDenied("Virtual Office access has not been granted. Contact an office administrator.")
     expire_attendance()
@@ -68,6 +84,8 @@ def person(member):
         "role": member.role,
         "department_id": member.department_id,
         "position": member.position,
+        "job_role_id": member.job_role_id,
+        "identity_pending": identity_pending(member),
         "active": member.active,
         "avatar_style": member.avatar_style,
         "online": bool(
@@ -82,7 +100,7 @@ def person(member):
 
 class OfficeStatusView(BaseAPIView):
     def get(self, request):
-        member = OfficeMember.objects.select_related("user").filter(user=request.user, active=True).first()
+        member = OfficeMember.objects.select_related("user__profile").filter(user=request.user, active=True).first()
         if member:
             expire_attendance()
             member.refresh_from_db()
@@ -100,7 +118,7 @@ class OfficeView(BaseAPIView):
 
     def get(self, request):
         member = office_member(request.user)
-        members = OfficeMember.objects.select_related("user").filter(active=True)
+        members = OfficeMember.objects.select_related("user__profile").filter(active=True)
         office = VirtualOffice.objects.get(pk=1)
         now = timezone.now()
         hour = now.astimezone(ZoneInfo("Asia/Manila")).hour
@@ -146,13 +164,11 @@ class OfficeView(BaseAPIView):
                 self.update_member(request, actor, data)
             elif action == "department":
                 department = get_object_or_404(OfficeDepartment, pk=data.get("department_id"), office_id=1)
-                name = data.get("name", department.name)
-                if len(name) > 80 or OfficeDepartment.objects.filter(name=name).exclude(pk=department.pk).exists():
-                    raise ValidationError("Department names must be unique and at most 80 characters.")
-                department.name = name
+                if "name" in data and data["name"] != department.name:
+                    raise ValidationError("Department names are fixed and cannot be changed.")
                 department.color = data.get("color", department.color)
-                department.save(update_fields=["name", "color"])
-                audit(request.user, action, department_id=department.pk, name=name, color=department.color)
+                department.save(update_fields=["color"])
+                audit(request.user, action, department_id=department.pk, name=department.name, color=department.color)
             elif action == "settings":
                 if actor.role != "super_admin":
                     raise PermissionDenied("Super Admin access required.")
@@ -194,12 +210,23 @@ class OfficeView(BaseAPIView):
                         return Response(
                             {"detail": "You are already timed in. Time out before starting again."}, status=409
                         )
-                    if not OfficeDesk.objects.filter(member=actor).exists():
+                    if identity_pending(actor):
+                        raise ValidationError("Apply your pending department and job role before choosing a desk.")
+                    apply_identity(actor)
+                    if not actor.department_id or not actor.job_role_id:
+                        raise ValidationError("Complete your department and job role before timing in.")
+                    if (
+                        not OfficeDesk.objects.filter(member=actor).exists()
+                        and OfficeDesk.objects.filter(department_id=actor.department_id, member__isnull=True).exists()
+                    ):
                         raise ValidationError("Reserve a desk before timing in.")
                     actor.timed_in_at = timezone.now()
                     actor.last_seen_at = timezone.now()
                     actor.save(update_fields=["timed_in_at", "last_seen_at"])
                     audit(request.user, action, **presence_details(actor))
+                elif action == "prepare_time_in":
+                    apply_identity(actor)
+                    audit(request.user, action, member_id=str(actor.pk))
                 elif action == "time_out":
                     close_attendance(actor, "Manual")
                 elif action == "heartbeat":
@@ -215,24 +242,37 @@ class OfficeView(BaseAPIView):
         if actor.role != "super_admin" and (role != "employee" or (target and target.role != "employee")):
             raise PermissionDenied("Only Super Admins manage office administrators.")
         active = data.get("active", target.active if target else True)
+        if target is None and not active:
+            raise ValidationError("This account has not been granted office access.")
         if target and target.role == "super_admin" and target.active and (role != "super_admin" or not active):
             if not OfficeMember.objects.filter(role="super_admin", active=True).exclude(pk=target.pk).exists():
                 raise ValidationError("The office must retain an active Super Admin.")
-        department_id = data.get("department_id", target.department_id if target else None)
-        if department_id is not None:
+        profile = Profile.objects.filter(user=user).first()
+        department_id = data.get("department_id", profile.office_department_id if profile else None)
+        if active and department_id is not None:
             get_object_or_404(OfficeDepartment, pk=department_id, office_id=1)
-        if role == "employee" and (
-            department_id is None or not data.get("position", target.position if target else "")
-        ):
-            raise ValidationError("Employees require a department and job position.")
+        if "position" in data:
+            raise ValidationError("Choose a job role from the department dropdown.")
+        job_role_id = data.get("job_role_id", profile.office_job_role_id if profile else None)
+        job_role = None
+        if active and job_role_id:
+            job_role = validated_job_role(department_id, job_role_id, target.job_role_id if target else None)
+        if active and role == "employee" and (department_id is None or job_role is None):
+            raise ValidationError("Employees require a department and job role.")
         if target is None:
             target = OfficeMember(office_id=1, user=user)
-        if target.department_id != department_id or not active:
-            close_attendance(target, "Administrator changed department or revoked access")
+        if not active:
+            close_attendance(target, "Administrator revoked access")
             OfficeDesk.objects.filter(member=target).update(member=None)
             target.timed_in_at = target.last_seen_at = None
-        target.role, target.active, target.department_id = role, active, department_id
-        target.position = data.get("position", target.position)
+        new_member = target._state.adding
+        if job_role:
+            save_identity(user, department_id, job_role, request.user, None if new_member else target)
+        if new_member:
+            target.department_id = department_id
+            target.job_role = job_role
+            target.position = job_role.name if job_role else ""
+        target.role, target.active = role, active
         target.save()
         audit(
             request.user,
@@ -242,7 +282,9 @@ class OfficeView(BaseAPIView):
             role=role,
             active=active,
             department_id=department_id,
-            position=target.position,
+            position=job_role.name if job_role else target.position,
+            job_role_id=job_role.pk if job_role else target.job_role_id,
+            assignment_effective="initial_setup" if new_member else "next_time_in",
         )
 
 
@@ -252,13 +294,28 @@ class OfficeAdminView(BaseAPIView):
         if actor.role not in ("admin", "super_admin"):
             raise PermissionDenied("Office administrator access required.")
         query = request.GET.get("q", "").strip()[:100]
-        users = User.objects.filter(is_active=True, is_bot=False).order_by("email")
+        users = (
+            User.objects.select_related("profile__office_job_role", "officemember__user__profile")
+            .filter(is_active=True, is_bot=False)
+            .order_by("email")
+        )
         if query:
             users = users.filter(email__icontains=query)
+        members = list(OfficeMember.objects.select_related("user__profile__office_job_role").all())
         return Response(
             {
-                "members": [person(m) for m in OfficeMember.objects.select_related("user").all()],
-                "users": list(users.values("id", "email", "display_name")[:50]),
+                "members": [person(m) for m in members],
+                "users": [
+                    {
+                        "id": str(user.pk),
+                        "email": user.email,
+                        "display_name": user.display_name,
+                        "identity": identity_data(user),
+                    }
+                    for user in users[:50]
+                ],
+                "identities": {str(m.user_id): identity_data(m.user, m) for m in members},
+                "job_roles": list(OfficeJobRole.objects.values("id", "department_id", "name", "archived")),
                 "audit": list(OfficeAudit.objects.values("id", "actor_id", "action", "details", "created_at")[:100]),
             }
         )

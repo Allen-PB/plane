@@ -29,7 +29,7 @@ import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-it
 import { handleCoverImageChange } from "@/helpers/cover-image.helper";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
-import { useUser, useUserProfile } from "@/hooks/store/user";
+import { useUser } from "@/hooks/store/user";
 // utils
 import { validatePersonName, validateDisplayName } from "@plane/utils";
 
@@ -77,7 +77,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       last_name: user.last_name || "",
       display_name: user.display_name || "",
       email: user.email || "",
-      role: profile.role || "Product / Project Manager",
+      role: profile.role || "",
       language: profile.language || "en",
       user_timezone: user.user_timezone || "Asia/Kolkata",
     },
@@ -87,7 +87,6 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
   const userCover = watch("cover_image_url");
   // store hooks
   const { data: currentUser, updateCurrentUser } = useUser();
-  const { updateUserProfile } = useUserProfile();
   const { config } = useInstance();
 
   const isSMTPConfigured = config?.is_smtp_configured || false;
@@ -148,16 +147,8 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       return;
     }
 
-    const profilePayload: Partial<TUserProfile> = {
-      role: formData.role,
-    };
-
     const updateCurrentUserDetail = updateCurrentUser(userPayload);
     const promises: Promise<IUser | TUserProfile | undefined>[] = [updateCurrentUserDetail];
-    if (profilePayload.role !== profile.role) {
-      const updateCurrentUserProfile = updateUserProfile(profilePayload);
-      promises.push(updateCurrentUserProfile);
-    }
 
     const updatePromise = Promise.allSettled(promises)
       .then((results) => {

@@ -231,6 +231,8 @@ class Profile(TimeAuditModel):
     onboarding_step = models.JSONField(default=get_default_onboarding)
     use_case = models.TextField(blank=True, null=True)
     role = models.CharField(max_length=300, null=True, blank=True)  # job role
+    office_department = models.ForeignKey("db.OfficeDepartment", null=True, blank=True, on_delete=models.PROTECT)
+    office_job_role = models.ForeignKey("db.OfficeJobRole", null=True, blank=True, on_delete=models.PROTECT)
     is_onboarded = models.BooleanField(default=False)
     # Last visited workspace
     last_workspace_id = models.UUIDField(null=True)

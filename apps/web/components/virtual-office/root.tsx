@@ -10,6 +10,8 @@ import { OfficeFloor } from "./floor";
 import { AdminPanel } from "./admin-panel";
 import { PresenceExport } from "./presence-export";
 import { OfficeThemeSwitch } from "./office-theme";
+import { JobRoleCatalog } from "./job-role-catalog";
+import { OfficeNotices } from "./profile-identity";
 // CSS is scoped under .vo-app to keep the rest of Sync unchanged.
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office.css";
@@ -94,6 +96,9 @@ function OfficeContent() {
   }
 
   const myDesk = office?.desks.find((d) => d.member_id === office.me.id);
+  const hasAvailableDesk = office?.desks.some(
+    (desk) => desk.department_id === office.me.department_id && !desk.member_id
+  );
 
   return (
     <div className={`vo-app ${adminPage ? "vo-management-app" : "vo-prototype vo-art-app"}`}>
@@ -160,6 +165,7 @@ function OfficeContent() {
         <p className="vo-empty">Opening the office…</p>
       ) : (
         <main className="vo-main">
+          <OfficeNotices />
           {adminPage && (
             <div className="vo-intro">
               <div>
@@ -176,7 +182,14 @@ function OfficeContent() {
                   stretch="auto"
                   label={office.me.timed_in_at ? "Time Out" : "Time In"}
                   variant={office.me.timed_in_at ? "secondary" : "primary"}
-                  disabled={busy || (!myDesk && !office.me.timed_in_at)}
+                  disabled={
+                    busy ||
+                    (!office.me.timed_in_at &&
+                      (!office.me.department_id ||
+                        office.me.job_role_id === null ||
+                        !!office.me.identity_pending ||
+                        (!myDesk && hasAvailableDesk)))
+                  }
                   onClick={() => void act({ action: office.me.timed_in_at ? "time_out" : "time_in" })}
                 />
               </div>
@@ -243,9 +256,7 @@ function OfficeContent() {
                     )}
                     <section className="vo-card vo-panel">
                       <h2>Departments</h2>
-                      <p className="vo-info">
-                        Manage department names and colors. Desk totals reflect the current office layout.
-                      </p>
+                      <p className="vo-info">Department names are fixed. Manage their colors below.</p>
                       {office.departments.map((d) => (
                         <form
                           key={`${d.id}-${d.name}-${d.color}`}
@@ -256,19 +267,11 @@ function OfficeContent() {
                             void act({
                               action: "department",
                               department_id: d.id,
-                              name: String(form.get("name")),
                               color: String(form.get("color")),
                             });
                           }}
                         >
-                          <label htmlFor={`department-name-${d.id}`}>Department {d.order + 1}</label>
-                          <input
-                            id={`department-name-${d.id}`}
-                            name="name"
-                            required
-                            maxLength={80}
-                            defaultValue={d.name}
-                          />
+                          <strong>{d.name}</strong>
                           <label htmlFor={`department-color-${d.id}`}>Section color</label>
                           <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
                           <Button
@@ -282,6 +285,13 @@ function OfficeContent() {
                         </form>
                       ))}
                     </section>
+                    {office.me.role === "super_admin" && admin && (
+                      <JobRoleCatalog
+                        departments={office.departments}
+                        roles={admin.job_roles ?? []}
+                        refresh={mutateAdmin}
+                      />
+                    )}
                   </div>
                 ) : admin ? (
                   <AdminPanel office={office} admin={admin} query={query} setQuery={setQuery} act={act} busy={busy} />

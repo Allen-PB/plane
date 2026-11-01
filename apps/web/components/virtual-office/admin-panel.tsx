@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
+import { IdentityFields } from "./identity-fields";
 import type {
   OfficeAction,
   OfficeAdminState,
@@ -26,15 +27,16 @@ export function AdminPanel({
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState<OfficeRole>("employee");
   const [departmentId, setDepartmentId] = useState("");
-  const [position, setPosition] = useState("");
+  const [jobRoleId, setJobRoleId] = useState("");
   const [active, setActive] = useState(true);
   const superAdmin = office.me.role === "super_admin";
   const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
   function edit(member: OfficeMember) {
     setUserId(member.user_id);
     setRole(member.role);
-    setDepartmentId(String(member.department_id ?? ""));
-    setPosition(member.position);
+    const identity = admin.identities?.[member.user_id];
+    setDepartmentId(String(identity?.department_id ?? member.department_id ?? ""));
+    setJobRoleId(String(identity?.job_role_id ?? member.job_role_id ?? ""));
     setActive(member.active);
   }
   return (
@@ -48,7 +50,7 @@ export function AdminPanel({
             user_id: userId,
             role,
             department_id: departmentId ? Number(departmentId) : null,
-            position,
+            ...(jobRoleId ? { job_role_id: Number(jobRoleId) } : {}),
             active,
           });
         }}
@@ -75,8 +77,9 @@ export function AdminPanel({
             else {
               setUserId(id);
               setRole("employee");
-              setDepartmentId("");
-              setPosition("");
+              const identity = admin.users.find((user) => user.id === id)?.identity;
+              setDepartmentId(String(identity?.department_id ?? ""));
+              setJobRoleId(String(identity?.job_role_id ?? ""));
               setActive(true);
             }
           }}
@@ -101,27 +104,17 @@ export function AdminPanel({
             </>
           )}
         </select>
-        <label htmlFor="office-department">Department</label>
-        <select
-          id="office-department"
-          required={role === "employee"}
-          value={departmentId}
-          onChange={(event) => setDepartmentId(event.target.value)}
-        >
-          <option value="">Unassigned</option>
-          {office.departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="office-position">Job position</label>
-        <input
-          id="office-position"
-          required={role === "employee"}
-          value={position}
-          maxLength={120}
-          onChange={(event) => setPosition(event.target.value)}
+        <IdentityFields
+          prefix="office"
+          departments={office.departments}
+          jobRoles={admin.job_roles ?? []}
+          departmentId={departmentId}
+          jobRoleId={jobRoleId}
+          required={role === "employee" && active}
+          onChange={(department, jobRole) => {
+            setDepartmentId(department);
+            setJobRoleId(jobRole);
+          }}
         />
         <label htmlFor="office-active">Access</label>
         <select
@@ -133,7 +126,8 @@ export function AdminPanel({
           <option value="revoked">Revoked</option>
         </select>
         <p className="vo-info">
-          Changing department or revoking access releases the employee's desk and ends presence.
+          Department and job Role changes take effect at the next Time In. Revoking access ends attendance and releases
+          the desk immediately.
         </p>
         <Button size="lg" stretch="auto" variant="primary" label="Save employee access" type="submit" disabled={busy} />
       </form>
@@ -161,6 +155,7 @@ export function AdminPanel({
                     {office.departments.find((d) => d.id === member.department_id)?.name ?? "Unassigned"}
                     <br />
                     <span className="vo-muted">{member.position}</span>
+                    {member.identity_pending && <p>Change pending until next Time In</p>}
                   </td>
                   <td>
                     {member.role.replaceAll("_", " ")}

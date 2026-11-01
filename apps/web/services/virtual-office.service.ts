@@ -3,6 +3,20 @@ import { APIService } from "./api.service";
 
 export type OfficeRole = "employee" | "admin" | "super_admin";
 export type OfficeAppearanceMode = "automatic" | "day" | "night";
+export type OfficeJobRole = { id: number; department_id: number; name: string; archived: boolean };
+export type OfficeIdentity = {
+  department_id: number | null;
+  job_role_id: number | null;
+  job_role_name: string;
+  locked: boolean;
+  pending: boolean;
+};
+export type OfficeNotice = { id: number; message: string; created_at: string };
+export type OfficeProfileState = OfficeIdentity & {
+  departments: OfficeDepartment[];
+  job_roles: OfficeJobRole[];
+  notices: OfficeNotice[];
+};
 export type OfficeMember = {
   id: string;
   user_id: string;
@@ -10,6 +24,8 @@ export type OfficeMember = {
   role: OfficeRole;
   department_id: number | null;
   position: string;
+  job_role_id?: number | null;
+  identity_pending?: boolean;
   avatar_style?: "male" | "female";
   active: boolean;
   online: boolean;
@@ -30,7 +46,9 @@ export type OfficeState = {
 };
 export type OfficeAdminState = {
   members: OfficeMember[];
-  users: { id: string; email: string; display_name: string }[];
+  users: { id: string; email: string; display_name: string; identity?: OfficeIdentity }[];
+  identities?: Record<string, OfficeIdentity>;
+  job_roles?: OfficeJobRole[];
   audit: { id: number; action: string; created_at: string; details: Record<string, unknown> }[];
 };
 export type OfficeAction = {
@@ -44,7 +62,9 @@ export type OfficeAction = {
     | "settings"
     | "department"
     | "avatar"
-    | "appearance";
+    | "appearance"
+    | "prepare_time_in";
+  // Employee identity changes are applied before recording the next session.
   appearance_mode?: OfficeAppearanceMode;
   avatar_style?: "male" | "female";
   desk_id?: number;
@@ -53,6 +73,7 @@ export type OfficeAction = {
   role?: OfficeRole;
   department_id?: number | null;
   position?: string;
+  job_role_id?: number;
   active?: boolean;
   name?: string;
   color?: string;
@@ -77,6 +98,24 @@ class VirtualOfficeService extends APIService {
   }
   async admin(q = ""): Promise<OfficeAdminState> {
     return (await this.get("/api/virtual-office/admin/", { params: { q } })).data;
+  }
+  async profile(): Promise<OfficeProfileState> {
+    const data = (await this.get("/api/virtual-office/profile/")).data;
+    this.csrfToken = data.csrf_token;
+    return data;
+  }
+  async saveProfile(data: { department_id: number; job_role_id: number }): Promise<OfficeIdentity> {
+    if (!this.csrfToken) await this.profile();
+    return (await this.patch("/api/virtual-office/profile/", data, { headers: { "X-CSRFToken": this.csrfToken } }))
+      .data;
+  }
+  async saveJobRole(data: { id?: number; department_id?: number; name?: string; archived?: boolean }): Promise<void> {
+    if (!this.csrfToken) await this.status();
+    await this.post("/api/virtual-office/job-roles/", data, { headers: { "X-CSRFToken": this.csrfToken } });
+  }
+  async readNotice(id: number): Promise<void> {
+    if (!this.csrfToken) await this.profile();
+    await this.post(`/api/virtual-office/notices/${id}/read/`, {}, { headers: { "X-CSRFToken": this.csrfToken } });
   }
   async action(data: OfficeAction): Promise<void> {
     if (!this.csrfToken) await this.status();

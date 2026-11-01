@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class VirtualOffice(models.Model):
@@ -45,7 +46,8 @@ class OfficeMember(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.EMPLOYEE)
     department = models.ForeignKey(OfficeDepartment, null=True, blank=True, on_delete=models.PROTECT)
-    position = models.CharField(max_length=120, blank=True)
+    position = models.CharField(max_length=300, blank=True)
+    job_role = models.ForeignKey("db.OfficeJobRole", null=True, blank=True, on_delete=models.PROTECT)
     avatar_style = models.CharField(max_length=10, choices=[("male", "Male"), ("female", "Female")], default="male")
     active = models.BooleanField(default=True)
     timed_in_at = models.DateTimeField(null=True, blank=True)
@@ -81,4 +83,28 @@ class OfficeAudit(models.Model):
 
     class Meta:
         db_table = "office_audit"
+        ordering = ["-created_at", "-id"]
+
+
+class OfficeJobRole(models.Model):
+    department = models.ForeignKey(OfficeDepartment, on_delete=models.PROTECT, related_name="job_roles")
+    name = models.CharField(max_length=300)
+    archived = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "office_job_roles"
+        ordering = ["department__order", "name", "id"]
+        constraints = [models.UniqueConstraint(Lower("name"), "department", name="vo_department_role_name")]
+
+
+class OfficeNotice(models.Model):
+    """Office notices are independent of workspace membership."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    message = models.CharField(max_length=600)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "office_notices"
         ordering = ["-created_at", "-id"]

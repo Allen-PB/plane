@@ -37,6 +37,23 @@ function floor(state: OfficeState, act = vi.fn()) {
   );
 }
 
+it("applies pending identity without starting attendance or ending an open session", async () => {
+  const act = vi.fn();
+  render(floor({ ...office, me: { ...me, identity_pending: true } }, act));
+  expect((screen.getByRole("button", { name: "Time In" }) as HTMLButtonElement).disabled).toBe(true);
+  await userEvent.click(screen.getByRole("button", { name: "Apply changes and choose a desk" }));
+  expect(act).toHaveBeenCalledExactlyOnceWith({ action: "prepare_time_in" });
+});
+
+it("allows deskless Time In when the assigned department has no available workstation", async () => {
+  const act = vi.fn();
+  render(floor({ ...office, desks: office.desks.map((desk) => ({ ...desk, member_id: "another-employee" })) }, act));
+  const button = screen.getByRole("button", { name: "Time In" }) as HTMLButtonElement;
+  expect(button.disabled).toBe(false);
+  await userEvent.click(button);
+  expect(act).toHaveBeenCalledExactlyOnceWith({ action: "time_in" });
+});
+
 describe("original office layout and presence controls", () => {
   it("lets a member change their own avatar appearance", async () => {
     const act = vi.fn();
