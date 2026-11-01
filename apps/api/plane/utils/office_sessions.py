@@ -60,10 +60,11 @@ def start_session(member, event, identity, selected_date=None):
     shift = None
     state = ""
     if arrangement == "scheduled":
+        unscheduled_state = "Schedule not configured" if not policy.schedule else "Non-working day"
         today = now.astimezone(OFFICE_ZONE).date()
         unscheduled_today = selected_date == today and not any(item["date"] == today.isoformat() for item in choices)
         if unscheduled_today:
-            state = "Non-working day"
+            state = unscheduled_state
         elif choices:
             choice = next((item for item in choices if item["date"] == str(selected_date)), None)
             if not choice:
@@ -80,7 +81,7 @@ def start_session(member, event, identity, selected_date=None):
         else:
             if selected_date:
                 raise ValidationError("The selected shift is no longer available. Refresh and try again.")
-            state = "Non-working day"
+            state = unscheduled_state
     elif selected_date:
         raise ValidationError("This attendance arrangement does not use scheduled shifts.")
     if arrangement == "unconfigured":

@@ -112,13 +112,16 @@ def publish_policy(member, actor, arrangement, schedule, *, supersede=True):
         else now
     )
     if previous and previous.arrangement == arrangement == "scheduled":
-        # A schedule edit during a shift does not redefine that shift.
-        for day in (local_now.date() - timedelta(days=1), local_now.date()):
-            for entry in previous.schedule:
-                if entry["day"] == day.weekday():
-                    start, end = shift_bounds(entry, day)
-                    if start <= now < end:
-                        effective = max(effective, end)
+        from plane.utils.office_sessions import shift_choices
+
+        # Do not pull an already queued change forward, or redefine a calendar
+        # shift that has begun even when its employee has not timed in yet.
+        effective = max(effective, previous.effective_from)
+        for choice in shift_choices(member, now):
+            if choice["expected_start"] <= now:
+                next_date = choice["expected_start"].astimezone(OFFICE_ZONE).date() + timedelta(days=1)
+                next_day = datetime.combine(next_date, time.min, tzinfo=OFFICE_ZONE)
+                effective = max(effective, choice["expected_end"], next_day)
     if previous and previous.arrangement == arrangement and previous.schedule == schedule:
         return previous
     policy = OfficeWorkPolicy.objects.create(

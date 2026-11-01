@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import type { OfficeState, OfficeAdminState } from "../../services/virtual-office.service";
 import { AdminPanel } from "./admin-panel";
+import { virtualOfficeService as service } from "../../services/virtual-office.service";
 const member = {
   id: "employee",
   user_id: "test-user",
@@ -51,6 +52,53 @@ it("allows identity edits for an existing active employee whose arrangement is s
   expect(act).toHaveBeenCalledWith(expect.objectContaining({ action: "member", user_id: "test-user" }));
   expect(act.mock.calls[0][0]).not.toHaveProperty("arrangement");
 });
+it("clears the old editor after a schedule decision so a later save cannot restore stale hours", async () => {
+  const act = vi.fn();
+  vi.spyOn(service, "decideSchedule").mockResolvedValue();
+  const schedule = [{ day: 0, start: "09:00", end: "18:00", ends_next_day: false }];
+  const pending: OfficeAdminState = {
+    ...admin,
+    work: {
+      employee: {
+        ...admin.work!.employee,
+        arrangement: "scheduled",
+        schedule,
+        requests: [
+          {
+            id: 7,
+            member_id: "employee",
+            schedule: [{ ...schedule[0], end: "19:00" }],
+            revision: 1,
+            status: "pending",
+            reason: "",
+            created_at: "2026-11-02T00:00:00Z",
+            decided_at: null,
+            revisions: [],
+          },
+        ],
+      },
+    },
+  };
+  render(
+    <AdminPanel
+      office={office}
+      admin={pending}
+      query=""
+      setQuery={vi.fn()}
+      act={act}
+      busy={false}
+      refresh={vi.fn().mockResolvedValue(undefined)}
+    />
+  );
+  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  expect((screen.getByLabelText("Monday end time") as HTMLInputElement).value).toBe("18:00");
+  await userEvent.click(screen.getByRole("button", { name: "Approve schedule" }));
+  expect((screen.getByLabelText("Sync account") as HTMLSelectElement).value).toBe("");
+  expect(screen.queryByLabelText("Monday end time")).toBeNull();
+  expect(screen.getByRole("status").textContent).toContain("Schedule decision saved");
+  await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
+  expect(act).not.toHaveBeenCalled();
+});
 it("loads saved employee fields when selecting an account and resets them for a new account", async () => {
   const act = vi.fn();
   render(<AdminPanel office={office} admin={admin} query="" setQuery={vi.fn()} act={act} busy={false} />);
@@ -68,6 +116,7 @@ it("loads saved employee fields when selecting an account and resets them for a 
     active: true,
     arrangement: "output_based",
     schedule: [],
+    policy_id: 1,
   });
   await userEvent.selectOptions(screen.getByLabelText("Sync account"), "new-user");
   expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("");

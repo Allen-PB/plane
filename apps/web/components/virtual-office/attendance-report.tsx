@@ -3,7 +3,7 @@ import { Button } from "@makeplane/propel/components/button";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
 import type { AttendanceReport, AttendanceRow, OfficeMember, OfficeState } from "../../services/virtual-office.service";
 import { officeError } from "./work-schedule";
-import { officeTime } from "./attendance-controls";
+import { officeDate, officeTime } from "./office-format";
 
 export function reportValue(value: AttendanceRow[keyof AttendanceRow]): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -18,12 +18,7 @@ export function AttendanceReportPanel({
   office: OfficeState;
   members?: OfficeMember[];
 }) {
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(office.server_time ?? Date.now()));
+  const today = officeDate(office.server_time ?? Date.now());
   const [start, setStart] = useState(`${today.slice(0, 7)}-01`);
   const [end, setEnd] = useState(today);
   const [member, setMember] = useState("");

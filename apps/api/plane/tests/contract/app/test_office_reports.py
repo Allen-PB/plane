@@ -54,6 +54,7 @@ def test_snapshot_frozen_all_rows_exports_and_historical_identity(office):
     result = api.post(URL, {**FILTERS, "department_id": employee.department_id})
     assert result.status_code == 200
     report = result.data
+    assert report["filters"]["department_id"] == employee.department_id
     assert len(report["rows"]) == 53
     assert report["rows"][0]["attendance_date"] == "2026-11-02"
     assert report["rows"][0]["time_out"].startswith("2026-11-03T06:00:00")
@@ -94,6 +95,9 @@ def test_report_date_validation_and_filtering(office):
     result = api.post(URL, {**FILTERS, "member_id": str(admin.pk)})
     assert result.data["rows"] == []
     assert api.post(URL, {"start_date": "2026-11-03", "end_date": "2026-11-03"}).data["rows"] == []
+    empty = api.get(URL + result.data["id"] + "/export.csv")
+    assert "attendance-2026-11-02_2026-11-02-" in empty["Content-Disposition"]
+    assert "Manila" in empty["Content-Disposition"]
 
 
 def test_open_duration_is_frozen_at_report_generation(office):

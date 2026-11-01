@@ -117,7 +117,7 @@ def test_policy_change_during_current_shift_is_prospective(office):
         old = publish_policy(employee, admin.user, "scheduled", SCHEDULE)
     with patch("plane.utils.office_schedules.timezone.now", return_value=datetime(2026, 11, 2, 10, tzinfo=zone)):
         new = publish_policy(employee, admin.user, "scheduled", [{**SCHEDULE[0], "start": "11:00"}])
-    assert new.effective_from == datetime(2026, 11, 2, 18, tzinfo=zone)
+    assert new.effective_from == datetime(2026, 11, 3, 0, tzinfo=zone)
     old.refresh_from_db()
     assert old.schedule == SCHEDULE
 
@@ -130,3 +130,54 @@ def test_unconfigured_output_based_and_revoked_members_cannot_submit_hours(offic
     employee.active = False
     employee.save()
     assert request(client(employee)).status_code == 404
+
+
+def test_removing_current_working_day_preserves_shift_before_first_time_in(office):
+    from plane.utils.office_sessions import shift_choices
+
+    employee, admin = new_member(), new_member("admin")
+    zone = ZoneInfo("Asia/Manila")
+    with patch("django.utils.timezone.now", return_value=datetime(2026, 11, 2, 8, tzinfo=zone)):
+        original = publish_policy(employee, admin.user, "scheduled", SCHEDULE)
+    with patch("django.utils.timezone.now", return_value=datetime(2026, 11, 2, 10, tzinfo=zone)):
+        publish_policy(employee, admin.user, "scheduled", [{**SCHEDULE[0], "day": 1}])
+        choices = shift_choices(employee)
+    current = next(choice for choice in choices if choice["date"] == "2026-11-02")
+    assert current["policy"].pk == original.pk
+    assert current["expected_start"].hour == 9
+
+
+def test_repeated_schedule_edits_do_not_pull_future_policy_into_current_shift(office):
+    from plane.utils.office_sessions import shift_choices
+
+    employee, admin = new_member(), new_member("admin")
+    zone = ZoneInfo("Asia/Manila")
+    with patch("django.utils.timezone.now", return_value=datetime(2026, 11, 2, 8, tzinfo=zone)):
+        original = publish_policy(employee, admin.user, "scheduled", SCHEDULE)
+    with patch("django.utils.timezone.now", return_value=datetime(2026, 11, 2, 10, tzinfo=zone)):
+        first = publish_policy(employee, admin.user, "scheduled", [{**SCHEDULE[0], "start": "11:00"}])
+        second = publish_policy(employee, admin.user, "scheduled", [{**SCHEDULE[0], "start": "20:00", "end": "23:00"}])
+        choices = shift_choices(employee)
+    assert second.effective_from >= first.effective_from
+    assert choices[0]["policy"].pk == original.pk
+
+
+@pytest.mark.parametrize("active", [True, False])
+def test_stale_admin_editor_cannot_restore_old_hours_but_can_revoke_access(office, active):
+    employee, admin = new_member(), new_member("admin")
+    old = publish_policy(employee, admin.user, "scheduled", SCHEDULE)
+    changed = [{**SCHEDULE[0], "end": "17:00"}]
+    current = publish_policy(employee, admin.user, "scheduled", changed)
+    response = post(
+        client(admin),
+        "member",
+        user_id=str(employee.user_id),
+        active=active,
+        arrangement="scheduled",
+        schedule=SCHEDULE,
+        policy_id=old.pk,
+    )
+    assert response.status_code == (409 if active else 200)
+    assert employee.work_policies.first().pk == current.pk
+    employee.refresh_from_db()
+    assert employee.active is active

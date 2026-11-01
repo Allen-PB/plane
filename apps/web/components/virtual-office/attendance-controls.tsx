@@ -1,21 +1,17 @@
 import { useId, useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
-import { Dialog, DialogContent, DialogTitle } from "@makeplane/propel/components/dialog";
+import {
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogHeading,
+  DialogMain,
+  DialogTitle,
+} from "@makeplane/propel/components/dialog";
 import type { OfficeAction, OfficeState } from "../../services/virtual-office.service";
-
-export function officeTime(value: string | null | undefined): string {
-  return value
-    ? new Intl.DateTimeFormat("en-PH", {
-        timeZone: "Asia/Manila",
-        year: "numeric",
-        month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }).format(new Date(value))
-    : "—";
-}
+import { officeDate, officeTime } from "./office-format";
 
 export function AttendanceControls({
   office,
@@ -42,12 +38,8 @@ export function AttendanceControls({
         : selected === "unscheduled"
           ? selected
           : (office.attendance?.suggested_date ?? "");
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(office.server_time ?? Date.now()));
+  const today = officeDate(office.server_time ?? Date.now());
+  const selectedShift = choices.find((choice) => choice.date === shiftDate);
   const timedIn = !!office.me.timed_in_at;
   const hasDesk = office.desks.some((desk) => desk.member_id === office.me.id);
   const freeDesk = office.desks.some((desk) => desk.department_id === office.me.department_id && !desk.member_id);
@@ -83,9 +75,9 @@ export function AttendanceControls({
                   : "Arrangement not configured"}
           </p>
           <p>
-            Time In: {officeTime(session.time_in)}
+            Time In (Asia/Manila): {officeTime(session.time_in)}
             <br />
-            Time Out: {session.in_progress ? "In progress" : officeTime(session.time_out)}
+            Time Out (Asia/Manila): {session.in_progress ? "In progress" : officeTime(session.time_out)}
           </p>
           <p>
             {[session.arrival, session.departure].filter(Boolean).join(" · ") || "No schedule classification"}
@@ -119,6 +111,13 @@ export function AttendanceControls({
               <option value="unscheduled">Today · non-working day (Needs review)</option>
             )}
           </select>
+          {selectedShift && (
+            <p className="vo-info">
+              Scheduled start: {officeTime(selectedShift.expected_start)}
+              <br />
+              Scheduled end: {officeTime(selectedShift.expected_end)} · Asia/Manila
+            </p>
+          )}
         </div>
       )}
       <div className="vo-presence-buttons">
@@ -154,45 +153,55 @@ export function AttendanceControls({
           if (!busy) setConfirming(open);
         }}
       >
-        <DialogContent size="md">
-          <div className="p-6">
-            <DialogTitle>Time out before your shift ends?</DialogTitle>
-            <p>
-              Your scheduled end is {officeTime(session?.expected_end)} · Asia/Manila. Confirming records an early
-              departure.
-            </p>
-            <label htmlFor={`${id}-reason`}>Reason (optional)</label>
-            <textarea
-              id={`${id}-reason`}
-              maxLength={500}
-              value={reason}
+        <DialogContent size="md" aria-describedby={`${id}-warning`}>
+          <DialogMain>
+            <DialogHeader>
+              <DialogHeading>
+                <DialogTitle>Time out before your shift ends?</DialogTitle>
+              </DialogHeading>
+            </DialogHeader>
+            <DialogBody>
+              <div className="flex flex-col gap-3">
+                <p id={`${id}-warning`}>
+                  Your scheduled end is {officeTime(session?.expected_end)} · Asia/Manila. Confirming records Undertime
+                  for this session.
+                </p>
+                <label htmlFor={`${id}-reason`}>Reason (optional)</label>
+                <textarea
+                  id={`${id}-reason`}
+                  maxLength={500}
+                  value={reason}
+                  disabled={busy}
+                  rows={3}
+                  className="border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500/30 w-full resize-y rounded-md border bg-transparent p-3 focus:ring-2 focus:outline-none"
+                  onChange={(event) => setReason(event.target.value)}
+                />
+              </div>
+            </DialogBody>
+          </DialogMain>
+          <DialogActions>
+            <Button
+              size="lg"
+              stretch="auto"
+              variant="secondary"
+              label="Stay timed in"
               disabled={busy}
-              onChange={(event) => setReason(event.target.value)}
+              onClick={() => setConfirming(false)}
             />
-            <div className="vo-actions">
-              <Button
-                size="lg"
-                stretch="auto"
-                variant="secondary"
-                label="Stay timed in"
-                disabled={busy}
-                onClick={() => setConfirming(false)}
-              />
-              <Button
-                size="lg"
-                stretch="auto"
-                variant="primary"
-                label="Confirm Time Out"
-                disabled={busy}
-                onClick={() => {
-                  void act({ action: "time_out", confirmed: true, employee_reason: reason }).then(() => {
-                    setConfirming(false);
-                    return undefined;
-                  });
-                }}
-              />
-            </div>
-          </div>
+            <Button
+              size="lg"
+              stretch="auto"
+              variant="primary"
+              label="Confirm Time Out"
+              disabled={busy}
+              onClick={() => {
+                void act({ action: "time_out", confirmed: true, employee_reason: reason }).then(() => {
+                  setConfirming(false);
+                  return undefined;
+                });
+              }}
+            />
+          </DialogActions>
         </DialogContent>
       </Dialog>
     </div>

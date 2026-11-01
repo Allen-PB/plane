@@ -60,13 +60,14 @@ def test_early_exit_requires_confirmation_and_preserves_optional_reason(office):
 @pytest.mark.parametrize("offset,departure,review", [(0, "On Time", False), (1, "Overtime", True)])
 def test_departure_classification_and_elapsed_duration(office, offset, departure, review):
     member = setup_employee()
-    with patch("django.utils.timezone.now", return_value=START):
+    with patch("django.utils.timezone.now", return_value=START + timedelta(minutes=1)):
         assert post(client(member), "time_in", shift_date="2026-11-02").status_code == 200
     with patch("django.utils.timezone.now", return_value=START + timedelta(hours=9, seconds=offset)):
         assert post(client(member), "time_out").status_code == 200
     row = OfficeAttendanceSession.objects.get(member=member)
+    assert row.arrival == "Late"
     assert row.departure == departure and row.needs_review == review
-    assert (row.time_out - row.time_in).total_seconds() == 9 * 3600 + offset
+    assert (row.time_out - row.time_in).total_seconds() == 9 * 3600 + offset - 60
 
 
 def test_same_shift_reentry_keeps_frozen_schedule_after_edit(office):
@@ -216,3 +217,74 @@ def test_old_unpaired_time_out_does_not_replace_latest_personal_session(office):
         arrangement="output_based",
     )
     assert attendance_data(member)["session"]["id"] == latest.pk
+
+
+@pytest.mark.parametrize("elapsed_hours", [1, 50])
+def test_account_deactivation_closes_attendance_and_retains_history(office, elapsed_hours, settings):
+    settings.APP_BASE_URL = "http://office-tests.invalid"
+    member = setup_employee()
+    api = client(member)
+    with patch("django.utils.timezone.now", return_value=START):
+        assert post(api, "time_in", shift_date="2026-11-02").status_code == 200
+    with patch("django.utils.timezone.now", return_value=START + timedelta(hours=elapsed_hours)):
+        assert api.delete("/api/users/me/").status_code == 204
+    member.refresh_from_db()
+    member.user.refresh_from_db()
+    assert not member.active and not member.user.is_active and member.timed_in_at is None
+    assert not OfficeDesk.objects.filter(member=member).exists()
+    record = OfficeAttendanceSession.objects.get(member=member)
+    assert record.departure == "Exception" and record.needs_review
+    expected_reason = "Account deactivated" if elapsed_hours < 48 else "Automatic—48 hr limit"
+    assert record.reason == expected_reason and record.identity["position"] == "Engineer"
+    assert record.time_out == START + timedelta(hours=min(elapsed_hours, 48))
+
+
+def test_last_active_office_super_admin_cannot_deactivate_or_be_demoted(office):
+    owner, inactive = new_member("super_admin"), new_member("super_admin")
+    inactive.user.is_active = False
+    inactive.user.save()
+    api = client(owner)
+    assert post(api, "member", user_id=str(owner.user_id), role="employee").status_code == 400
+    assert api.delete("/api/users/me/").status_code == 400
+    owner.user.refresh_from_db()
+    assert owner.user.is_active
+
+
+@pytest.mark.parametrize(
+    "missing_schedule,expected", [(False, "Arrangement not configured"), (True, "Schedule not configured")]
+)
+def test_missing_configuration_keeps_recording_available_with_explicit_review_state(office, missing_schedule, expected):
+    from plane.db.models.virtual_office import OfficeWorkPolicy
+
+    member = new_member()
+    desk = OfficeDesk.objects.filter(department=member.department, member__isnull=True).first()
+    api = client(member)
+    assert post(api, "reserve", desk_id=desk.pk).status_code == 200
+    if missing_schedule:
+        # Simulate incomplete imported configuration; the administrator API itself
+        # rejects this state rather than letting a new grant create it.
+        OfficeWorkPolicy.objects.create(
+            member=member,
+            arrangement="scheduled",
+            schedule=[],
+            effective_from=START - timedelta(days=1),
+            created_by=member.user,
+        )
+    with patch("django.utils.timezone.now", return_value=START):
+        assert post(api, "time_in").status_code == 200
+    record = OfficeAttendanceSession.objects.get(member=member)
+    assert record.needs_review and record.arrival == expected and record.reason == expected
+
+
+def test_account_without_office_membership_keeps_existing_deactivation_flow(office, settings):
+    from plane.db.models import Profile, User
+    from rest_framework.test import APIClient
+
+    settings.APP_BASE_URL = "http://office-tests.invalid"
+    user = User.objects.create(email="no-office@example.test", username="no-office")
+    Profile.objects.get_or_create(user=user)
+    api = APIClient()
+    api.force_authenticate(user=user)
+    assert api.delete("/api/users/me/").status_code == 204
+    user.refresh_from_db()
+    assert not user.is_active

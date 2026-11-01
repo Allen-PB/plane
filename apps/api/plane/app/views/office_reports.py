@@ -109,7 +109,7 @@ class OfficeReportsView(BaseAPIView):
                     row[key] = stamp.astimezone(OFFICE_ZONE).isoformat(timespec="seconds") if stamp else ""
                 row["attendance_date"] = str(row["attendance_date"])
                 rows.append(row)
-            stored_filters = {key: str(value) for key, value in filters.items()}
+            stored_filters = {key: value if key == "department_id" else str(value) for key, value in filters.items()}
             snapshot = OfficeAttendanceReport.objects.create(
                 owner=request.user,
                 filters=stored_filters,
@@ -178,7 +178,12 @@ class OfficeReportCSVView(BaseAPIView):
                 yield buffer.getvalue()
 
         response = StreamingHttpResponse(lines(), content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = f'attachment; filename="attendance-{snapshot.pk}.csv"'
+        generated = snapshot.generated_at.astimezone(OFFICE_ZONE).strftime("%Y%m%dT%H%M%S")
+        filename = (
+            f"attendance-{snapshot.filters['start_date']}_{snapshot.filters['end_date']}-"
+            f"{generated}-Manila-{snapshot.pk}.csv"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         response["Cache-Control"] = "no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response

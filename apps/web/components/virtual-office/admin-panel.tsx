@@ -36,6 +36,7 @@ export function AdminPanel({
   const [active, setActive] = useState(true);
   const [arrangement, setArrangement] = useState<WorkArrangement | "">("");
   const [schedule, setSchedule] = useState<WorkingDay[]>([]);
+  const [reviewMessage, setReviewMessage] = useState("");
   const selectedMember = admin.members.find((member) => member.user_id === userId);
   const pendingRequest = selectedMember
     ? admin.work?.[selectedMember.id]?.requests.find((request) => request.status === "pending")
@@ -43,6 +44,7 @@ export function AdminPanel({
   const superAdmin = office.me.role === "super_admin";
   const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
   function edit(member: OfficeMember) {
+    setReviewMessage("");
     setUserId(member.user_id);
     setRole(member.role);
     const identity = admin.identities?.[member.user_id];
@@ -65,11 +67,18 @@ export function AdminPanel({
             department_id: departmentId ? Number(departmentId) : null,
             ...(jobRoleId ? { job_role_id: Number(jobRoleId) } : {}),
             active,
-            ...(arrangement ? { arrangement, schedule: arrangement === "scheduled" ? schedule : [] } : {}),
+            ...(arrangement
+              ? {
+                  arrangement,
+                  policy_id: selectedMember ? (admin.work?.[selectedMember.id]?.policy_id ?? null) : null,
+                  schedule: arrangement === "scheduled" ? schedule : [],
+                }
+              : {}),
           });
         }}
       >
         <h2>Employee access</h2>
+        {reviewMessage && <p role="status">{reviewMessage}</p>}
         <p className="vo-info">Choose an existing Sync account. Office roles are independent of Sync permissions.</p>
         <label htmlFor="office-search">Find a Sync account by email</label>
         <input
@@ -85,6 +94,7 @@ export function AdminPanel({
           required
           value={userId}
           onChange={(event) => {
+            setReviewMessage("");
             const id = event.target.value;
             const existing = admin.members.find((member) => member.user_id === id);
             if (existing) edit(existing);
@@ -149,7 +159,9 @@ export function AdminPanel({
           disabled={busy}
           onChange={(event) => setArrangement(event.target.value as WorkArrangement | "")}
         >
-          <option value="">Arrangement not configured</option>
+          <option value="" disabled={!!(selectedMember && admin.work?.[selectedMember.id]?.arrangement)}>
+            Arrangement not configured
+          </option>
           <option value="scheduled">Scheduled shift</option>
           <option value="output_based">Output-based</option>
         </select>
@@ -161,7 +173,19 @@ export function AdminPanel({
           <ScheduleRequestReview
             key={`${pendingRequest.id}-${pendingRequest.revision}`}
             request={pendingRequest}
-            refresh={refresh}
+            refresh={async () => {
+              // A decision changes approved policy. Clear the old editor so a
+              // later identity save cannot unknowingly restore its old hours.
+              setUserId("");
+              setRole("employee");
+              setDepartmentId("");
+              setJobRoleId("");
+              setActive(true);
+              setArrangement("");
+              setSchedule([]);
+              setReviewMessage("Schedule decision saved. Select the account again to review its latest settings.");
+              return refresh();
+            }}
           />
         )}
         <p className="vo-info">

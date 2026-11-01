@@ -14,6 +14,7 @@ import { JobRoleCatalog } from "./job-role-catalog";
 import { OfficeNotices } from "./profile-identity";
 import { AttendanceControls } from "./attendance-controls";
 import { AttendanceReportPanel } from "./attendance-report";
+import { officeTime } from "./office-format";
 // CSS is scoped under .vo-app to keep the rest of Sync unchanged.
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office.css";
@@ -34,7 +35,6 @@ function errorMessage(error: unknown) {
 function OfficeContent() {
   const { pathname } = useLocation();
   const currentPath = useRef(pathname);
-  currentPath.current = pathname;
   const attendancePage = pathname.includes("/directory/attendance");
   const adminPage = pathname.includes("/admin") || attendancePage;
   const settingsPage = /\/settings\/?$/.test(pathname);
@@ -61,6 +61,7 @@ function OfficeContent() {
   const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
+    currentPath.current = pathname;
     setMessage("");
     setExportOpen(false);
   }, [pathname]);
@@ -298,7 +299,7 @@ function OfficeContent() {
                     <summary>Recent audit records ({admin.audit.length})</summary>
                     {admin.audit.map((entry) => (
                       <pre key={entry.id}>
-                        {new Date(entry.created_at).toLocaleString()} · {entry.action}
+                        {officeTime(entry.created_at)} · {entry.action}
                         {"\n"}
                         {JSON.stringify(entry.details)}
                       </pre>

@@ -2,6 +2,7 @@ import { Document, Font, Page, StyleSheet, Text, View, pdf } from "@react-pdf/re
 import interRegular from "@/app/assets/fonts/inter/regular.ttf?url";
 import interBold from "@/app/assets/fonts/inter/bold.ttf?url";
 import type { AttendanceReport } from "../../services/virtual-office.service";
+import { officeTime } from "./office-format";
 
 Font.register({
   family: "OfficeInter",
@@ -34,7 +35,7 @@ export function AttendancePDF({ report }: { report: AttendanceReport }) {
             {report.filters.start_date} → {report.filters.end_date} · {report.rows.length} sessions · Asia/Manila
           </Text>
           <Text style={styles.meta}>
-            Generated {report.generated_at} · Report {report.id}
+            Generated {officeTime(report.generated_at)} · Asia/Manila · Report {report.id}
           </Text>
           <Text style={styles.meta}>
             Employee filter: {report.filters.member_id || "All"} · Department filter:{" "}

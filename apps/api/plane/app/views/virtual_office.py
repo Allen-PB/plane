@@ -31,7 +31,7 @@ from plane.utils.office_identity import (
     save_identity,
     validated_job_role,
 )
-from plane.utils.office_schedules import latest_policy, publish_policy, validate_schedule, work_data
+from plane.utils.office_schedules import ScheduleConflict, latest_policy, publish_policy, validate_schedule, work_data
 from plane.utils.office_sessions import attendance_data, current_session, start_session
 
 
@@ -59,6 +59,7 @@ class ActionSerializer(serializers.Serializer):
     job_role_id = serializers.IntegerField(min_value=1, required=False)
     arrangement = serializers.ChoiceField(choices=["scheduled", "output_based"], required=False)
     schedule = serializers.ListField(required=False)
+    policy_id = serializers.IntegerField(min_value=1, required=False, allow_null=True)
     shift_date = serializers.DateField(required=False)
     confirmed = serializers.BooleanField(default=False)
     employee_reason = serializers.CharField(max_length=500, allow_blank=True, required=False)
@@ -275,7 +276,11 @@ class OfficeView(BaseAPIView):
         if target is None and not active:
             raise ValidationError("This account has not been granted office access.")
         if target and target.role == "super_admin" and target.active and (role != "super_admin" or not active):
-            if not OfficeMember.objects.filter(role="super_admin", active=True).exclude(pk=target.pk).exists():
+            if (
+                not OfficeMember.objects.filter(role="super_admin", active=True, user__is_active=True)
+                .exclude(pk=target.pk)
+                .exists()
+            ):
                 raise ValidationError("The office must retain an active Super Admin.")
         profile = Profile.objects.filter(user=user).first()
         department_id = data.get("department_id", profile.office_department_id if profile else None)
@@ -299,6 +304,9 @@ class OfficeView(BaseAPIView):
             target.timed_in_at = target.last_seen_at = None
         new_member = target._state.adding
         previous_policy = latest_policy(target) if not new_member else None
+        if active and "policy_id" in data and ("arrangement" in data or "schedule" in data):
+            if data["policy_id"] != (previous_policy.pk if previous_policy else None):
+                raise ScheduleConflict("This employee's working schedule changed. Refresh and review the latest hours.")
         arrangement = data.get("arrangement", previous_policy.arrangement if previous_policy else None)
         schedule = data.get("schedule", previous_policy.schedule if previous_policy else [])
         if active and (new_member or not target.active) and not arrangement:

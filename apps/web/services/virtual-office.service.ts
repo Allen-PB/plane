@@ -108,6 +108,7 @@ export type OfficeAction = {
   job_role_id?: number;
   active?: boolean;
   arrangement?: WorkArrangement;
+  policy_id?: number | null;
   schedule?: WorkingDay[];
   name?: string;
   color?: string;
