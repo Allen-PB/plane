@@ -47,7 +47,7 @@ export function ScheduleFields({
                 onChange={(event) =>
                   onChange(
                     event.target.checked
-                      ? [...value, { day, start: "", end: "", ends_next_day: false }].toSorted((a, b) => a.day - b.day)
+                      ? [...value, { day, start: "", end: "", ends_next_day: false }]
                       : value.filter((item) => item.day !== day)
                   )
                 }
