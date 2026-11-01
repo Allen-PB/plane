@@ -10,6 +10,7 @@ const member = {
   role: "employee" as const,
   department_id: 1,
   position: "Engineer",
+  job_role_id: 1,
   active: true,
   online: false,
   timed_in_at: null,
@@ -28,6 +29,7 @@ const admin: OfficeAdminState = {
     { id: "new-user", email: "new@example.invalid", display_name: "New" },
   ],
   audit: [],
+  job_roles: [{ id: 1, department_id: 1, name: "Engineer", archived: false }],
 };
 it("loads saved employee fields when selecting an account and resets them for a new account", async () => {
   const act = vi.fn();
@@ -35,17 +37,43 @@ it("loads saved employee fields when selecting an account and resets them for a 
   expect(screen.getAllByText("vo-dev-01@example.invalid")).toHaveLength(2);
   await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
   expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("1");
-  expect((screen.getByLabelText("Job position") as HTMLInputElement).value).toBe("Engineer");
+  expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("1");
   await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
   expect(act).toHaveBeenCalledWith({
     action: "member",
     user_id: "test-user",
     role: "employee",
     department_id: 1,
-    position: "Engineer",
+    job_role_id: 1,
     active: true,
   });
   await userEvent.selectOptions(screen.getByLabelText("Sync account"), "new-user");
   expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("");
-  expect((screen.getByLabelText("Job position") as HTMLInputElement).value).toBe("");
+  expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("");
+});
+
+it("loads a new account's saved Profile identity without granting a permission role", async () => {
+  render(
+    <AdminPanel
+      office={office}
+      admin={{
+        ...admin,
+        users: [
+          {
+            id: "new-user",
+            email: "new@example.invalid",
+            display_name: "New",
+            identity: { department_id: 1, job_role_id: 1, job_role_name: "Engineer", locked: false, pending: false },
+          },
+        ],
+      }}
+      query=""
+      setQuery={vi.fn()}
+      act={vi.fn()}
+      busy={false}
+    />
+  );
+  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "new-user");
+  expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("1");
+  expect((screen.getByLabelText("Virtual Office role") as HTMLSelectElement).value).toBe("employee");
 });

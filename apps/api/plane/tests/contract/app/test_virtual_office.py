@@ -10,8 +10,15 @@ from django.db import IntegrityError, close_old_connections, transaction
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from plane.db.models import User
-from plane.db.models.virtual_office import OfficeAudit, OfficeDepartment, OfficeDesk, OfficeMember, VirtualOffice
+from plane.db.models import User, Profile
+from plane.db.models.virtual_office import (
+    OfficeAudit,
+    OfficeDepartment,
+    OfficeDesk,
+    OfficeJobRole,
+    OfficeMember,
+    VirtualOffice,
+)
 
 pytestmark = [pytest.mark.contract, pytest.mark.django_db]
 URL = "/api/virtual-office/"
@@ -40,11 +47,17 @@ def office():
 def new_member(role="employee", department=None):
     token = uuid.uuid4().hex
     user = User.objects.create(email=f"{token}@example.test", username=token, display_name="Test Colleague")
+    department = department or OfficeDepartment.objects.first()
+    job_role, _ = OfficeJobRole.objects.get_or_create(department=department, name="Engineer")
+    profile, _ = Profile.objects.get_or_create(user=user)
+    profile.office_department, profile.office_job_role, profile.role = department, job_role, job_role.name
+    profile.save()
     return OfficeMember.objects.create(
         user=user,
         office_id=1,
         role=role,
-        department=department or OfficeDepartment.objects.first(),
+        department=department,
+        job_role=job_role,
         position="Engineer",
     )
 
@@ -235,7 +248,15 @@ def test_admin_department_change_and_reassignment(office):
     assert post(api, "release", desk_id=desk.pk).status_code == 200
     assert post(api, "reserve", desk_id=desk.pk, member_id=str(employee.pk)).status_code == 200
     department = OfficeDepartment.objects.exclude(pk=employee.department_id).first()
-    assert post(api, "member", user_id=str(employee.user_id), department_id=department.pk).status_code == 200
+    job_role = OfficeJobRole.objects.create(department=department, name="Manager")
+    assert (
+        post(
+            api, "member", user_id=str(employee.user_id), department_id=department.pk, job_role_id=job_role.pk
+        ).status_code
+        == 200
+    )
+    assert OfficeDesk.objects.filter(member=employee).exists()
+    assert post(client(employee), "prepare_time_in").status_code == 200
     assert not OfficeDesk.objects.filter(member=employee).exists()
     assert post(api, "member", user_id=str(employee.user_id), department_id=None).status_code == 400
 
@@ -251,10 +272,11 @@ def test_department_management_requires_office_admin(office):
     department = employee.department
     data = {"department_id": department.pk, "name": "Engineering", "color": "#123abc"}
     assert post(client(employee), "department", **data).status_code == 403
-    assert post(client(admin), "department", **data).status_code == 200
+    assert post(client(admin), "department", **data).status_code == 400
+    assert post(client(admin), "department", department_id=department.pk, color="#123abc").status_code == 200
     assert post(client(admin), "department", department_id=department.pk, color="invalid").status_code == 400
     assert OfficeDesk.objects.count() == 39
-    assert OfficeDepartment.objects.get(pk=department.pk).name == "Engineering"
+    assert OfficeDepartment.objects.get(pk=department.pk).name == department.name
     assert OfficeAudit.objects.filter(action="department").exists()
 
 
@@ -445,7 +467,7 @@ def test_expired_manual_time_out_does_not_add_second_event(office):
     assert event.details["reason"] == "Automatic—48 hr limit"
 
 
-@pytest.mark.parametrize("operation", ["release", "revoke", "department"])
+@pytest.mark.parametrize("operation", ["release", "revoke"])
 def test_admin_session_closure_records_old_profile_before_changes(office, operation):
     admin, employee = new_member("admin"), new_member()
     api = client(admin)
