@@ -194,3 +194,25 @@ def test_roll_forward_reconciles_old_image_closure_without_losing_new_snapshot(o
     assert session.identity["position"] == "Engineer" and session.shift.expected_start == START
     call_command("reconcile_office_sessions")
     assert OfficeAttendanceSession.objects.filter(member=member).count() == 1
+
+
+def test_old_unpaired_time_out_does_not_replace_latest_personal_session(office):
+    from plane.utils.office_sessions import attendance_data
+
+    member = new_member()
+    OfficeAttendanceSession.objects.create(
+        member=member,
+        time_out=START - timedelta(days=1),
+        attendance_date=(START - timedelta(days=1)).date(),
+        arrangement="legacy",
+        legacy=True,
+        needs_review=True,
+    )
+    latest = OfficeAttendanceSession.objects.create(
+        member=member,
+        time_in=START,
+        time_out=START + timedelta(hours=1),
+        attendance_date=START.date(),
+        arrangement="output_based",
+    )
+    assert attendance_data(member)["session"]["id"] == latest.pk

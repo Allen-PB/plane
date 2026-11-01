@@ -105,3 +105,18 @@ def test_open_duration_is_frozen_at_report_generation(office):
         report = client(admin).post(URL, FILTERS).data
     assert report["rows"][0]["duration_seconds"] == 7200
     assert report["rows"][0]["in_progress"] is True
+
+
+def test_direct_report_request_applies_overdue_48_hour_cutoff(office):
+    employee, admin = new_member(), new_member("admin")
+    employee.timed_in_at = STAMP
+    employee.save()
+    OfficeAttendanceSession.objects.create(
+        member=employee, time_in=STAMP, attendance_date=STAMP.date(), arrangement="output_based", is_open=True
+    )
+    with patch("django.utils.timezone.now", return_value=STAMP + timedelta(hours=50)):
+        response = client(admin).post(URL, FILTERS)
+    assert response.status_code == 200
+    record = response.data["rows"][0]
+    assert record["duration_seconds"] == 48 * 3600
+    assert record["departure"] == "Exception" and record["in_progress"] is False and record["needs_review"]

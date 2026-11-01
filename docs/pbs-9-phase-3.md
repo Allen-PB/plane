@@ -8,4 +8,6 @@ Reports are admin-only, owned snapshots with a one-hour lifetime. Date filtering
 
 Validation: 91 backend tests passed on isolated PostgreSQL, covering existing regressions, schedule boundaries, early-exit confirmation, overnight attribution, re-entry, legacy import, report authorization, snapshot consistency and CSV exports. New backend lint passed. Restored-data migration rehearsal remains a deployment gate.
 
+Follow-up checkpoint: all 93 backend tests passed, including a direct report request's 48-hour cutoff and correct latest-session ordering when older unpaired Time Outs exist. Migration/model consistency also passed.
+
 This is a code checkpoint. Deploy it together with phase 4's matching frontend; a phase-2 frontend cannot select the new scheduled-shift input. Retain additive tables on image rollback. Before rolling forward from an older image, run `python manage.py reconcile_office_sessions` under the controlled deployment procedure, then verify session/audit consistency. The command preserves raw audits and original snapshots; recovered older-image closures are flagged for review. Its idempotence is tested.

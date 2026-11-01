@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from plane.app.views.base import BaseAPIView
 from plane.db.models.virtual_office import OfficeAttendanceReport, OfficeAttendanceSession, OfficeMember, VirtualOffice
 from plane.utils.office_schedules import OFFICE_ZONE
+from plane.utils.office_attendance import expire_attendance
 from plane.utils.office_sessions import session_data
 
 COLUMNS = [
@@ -84,6 +85,7 @@ class OfficeReportsView(BaseAPIView):
             get_object_or_404(VirtualOffice.objects.select_for_update(), pk=1)
             require_admin(request.user)
             now = timezone.now()
+            expire_attendance(now)
             OfficeAttendanceReport.objects.filter(expires_at__lte=now).delete()
             if OfficeAttendanceReport.objects.filter(owner=request.user).count() >= 10:
                 raise ValidationError("You already have ten active reports. Reuse one or wait for expiry.")

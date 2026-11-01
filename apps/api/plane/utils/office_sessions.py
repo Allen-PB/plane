@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -167,7 +168,12 @@ def session_data(session, now=None):
 
 def attendance_data(member):
     active = current_session(member)
-    latest = active or member.attendance_sessions.select_related("shift").order_by("-time_in", "-id").first()
+    latest = (
+        active
+        or member.attendance_sessions.select_related("shift")
+        .order_by(Coalesce("time_in", "time_out").desc(), "-id")
+        .first()
+    )
     choices = shift_choices(member) if not member.timed_in_at else []
     return {
         "session": session_data(latest),
