@@ -1,6 +1,6 @@
 # PBS-9 phase 5: release validation
 
-Status: dev acceptance passed for application revision `2a6ac6e80ce2901d6f7f58f694aa2cb3e273775b`. Production rollout is authorized by the user after the dev gates pass; production has not been changed by this release yet. Earlier specification documents retain their initial review-stage authorization language.
+Status: dev acceptance passed for application revision `2a6ac6e80ce2901d6f7f58f694aa2cb3e273775b`. The subsequent authorized production rollout and final verification are recorded in [phase 6](pbs-9-phase-6.md). Earlier specification documents retain their initial review-stage authorization language.
 
 ## Automated and rehearsal evidence
 
