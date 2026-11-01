@@ -22,8 +22,17 @@ from .webhook import urlpatterns as webhook_urls
 from .workspace import urlpatterns as workspace_urls
 from .timezone import urlpatterns as timezone_urls
 from .exporter import urlpatterns as exporter_urls
+from .virtual_office import urlpatterns as virtual_office_urls
+
+from .workflow import urlpatterns as workflow_urls
+from .bulk_update import urlpatterns as bulk_update_urls
+from .structured_update import urlpatterns as structured_update_urls
 
 urlpatterns = [
+    *bulk_update_urls,
+    *structured_update_urls,
+    *workflow_urls,
+    *virtual_office_urls,
     *analytic_urls,
     *asset_urls,
     *cycle_urls,

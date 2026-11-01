@@ -5,6 +5,7 @@
  */
 
 import { observer } from "mobx-react";
+import { BulkWorkItemActivity } from "@/components/bulk-update/activity";
 // helpers
 import { getValidKeysFromObject } from "@plane/utils";
 // hooks
@@ -52,6 +53,9 @@ export const IssueActivityItem = observer(function IssueActivityItem(props: TIss
 
   const activityField = getActivityById(activityId)?.field;
   switch (activityField) {
+    case "bulk_update":
+    case "project":
+      return <BulkWorkItemActivity {...componentDefaultProps} />;
     case null: // default issue creation
       return <IssueDefaultActivity {...componentDefaultProps} />;
     case "state":

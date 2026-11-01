@@ -4,10 +4,10 @@
  * See the LICENSE file for details.
  */
 
-export const SITE_NAME = "PathBuilder Sync | Work management";
-export const SITE_TITLE = "PathBuilder Sync | Work management";
+export const SITE_NAME = "PathBuilder Sync";
+export const SITE_TITLE = "PathBuilder Sync | Plan. Build. Succeed.";
 export const SITE_DESCRIPTION =
-  "Open-source project management tool to manage work items, cycles, and product roadmaps easily";
+  "PathBuilder's unified workspace for project management, team collaboration, task tracking, and seamless coordination—all in one place.";
 export const SITE_KEYWORDS =
   "software development, plan, ship, software, accelerate, code management, release management, project management, work items tracking, agile, scrum, kanban, collaboration";
 export const SITE_URL = "https://sync.pathbuilderedu.com/";

@@ -168,6 +168,16 @@ class IssueFilterSet(BaseFilterSet):
     subscriber_id = filters.UUIDFilter(method="filter_subscriber_id")
     subscriber_id__in = UUIDInFilter(method="filter_subscriber_id_in", lookup_expr="in")
 
+    # Structured update results (PBS-7), denormalized on IssueStructuredSummary
+    qa_result = filters.CharFilter(field_name="structured_summary__latest_qa_result")
+    qa_result__in = CharInFilter(field_name="structured_summary__latest_qa_result", lookup_expr="in")
+    ba_result = filters.CharFilter(field_name="structured_summary__latest_ba_result")
+    ba_result__in = CharInFilter(field_name="structured_summary__latest_ba_result", lookup_expr="in")
+    root_cause_category = filters.CharFilter(field_name="structured_summary__root_cause_category")
+    root_cause_category__in = CharInFilter(field_name="structured_summary__root_cause_category", lookup_expr="in")
+    qa_round = filters.NumberFilter(field_name="structured_summary__qa_round_count")
+    qa_round__in = CharInFilter(field_name="structured_summary__qa_round_count", lookup_expr="in")
+
     # created_at / updated_at are DateTimeFields, but the UI sends a bare calendar
     # date (yyyy-MM-dd, e.g. {"created_at__exact": "2026-07-30"}). An `exact` lookup
     # coerces that to midnight, so the filter only matched rows stamped exactly

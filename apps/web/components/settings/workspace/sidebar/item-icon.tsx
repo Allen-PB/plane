@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import type { LucideIcon } from "lucide-react";
+import { GitBranch, type LucideIcon } from "lucide-react";
 import {
   BillingsOutline,
   BuildingOutline,
@@ -17,6 +17,7 @@ import type { ISvgIcons } from "@plane/blocks/icons";
 import type { TWorkspaceSettingsTabs } from "@plane/types";
 
 export const WORKSPACE_SETTINGS_ICONS: Record<TWorkspaceSettingsTabs, LucideIcon | React.FC<ISvgIcons>> = {
+  workflow: GitBranch,
   general: BuildingOutline,
   members: MembersOutline,
   export: ExportOutline,

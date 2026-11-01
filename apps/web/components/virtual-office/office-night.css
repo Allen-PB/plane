@@ -1,0 +1,113 @@
+/* Appearance affects only the office scene; surrounding UI keeps its existing theme. */
+.vo-appearance-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+.vo-appearance-control select {
+  padding: 7px 9px;
+  border: 1px solid #d8e2ed;
+  border-radius: 8px;
+  color: #263850;
+  background: #fff;
+  font: inherit;
+  max-width: 190px;
+}
+.vo-appearance-control select:focus-visible {
+  outline: 2px solid #438de0;
+  outline-offset: 2px;
+}
+.vo-app .vo-header > .vo-nav {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.vo-app .vo-header {
+  min-height: 80px;
+  padding: 16px 24px;
+  gap: 20px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.vo-app .vo-header > .vo-nav {
+  margin-left: auto;
+  gap: 18px;
+  width: auto;
+  font: inherit;
+  color: #34465b;
+}
+.vo-app .vo-header > .vo-nav a {
+  color: #34465b;
+  font-weight: 400;
+}
+.vo-app .vo-header > .vo-nav a[aria-current="page"] {
+  color: #155bc6;
+  font-weight: 600;
+}
+.vo-app .vo-header > .vo-nav a:hover,
+.vo-app .vo-header > .vo-nav a:focus-visible {
+  color: #155bc6;
+}
+.vo-app .vo-header .vo-office-lockup {
+  width: 220px;
+  height: 44px;
+  object-fit: contain;
+}
+.vo-app .vo-management-sections {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.vo-management-sections a {
+  color: #49617b;
+  text-decoration: none;
+}
+.vo-management-sections a:hover,
+.vo-management-sections a:focus-visible,
+.vo-management-sections a[aria-expanded="true"] {
+  color: #155bc6;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.vo-art-scene[data-office-appearance="night"] {
+  background: radial-gradient(ellipse at 50% 40%, #253d59, #101c30 85%);
+}
+.vo-art-scene[data-office-appearance="night"] .vo-art-wall-logo {
+  filter: drop-shadow(0 0 7px #ffe6ab65);
+}
+.vo-desk-attendance-light {
+  position: absolute;
+  left: 50%;
+  top: 37%;
+  width: 108px;
+  height: 72px;
+  transform: translate(-50%, -50%) rotate(-23deg);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #ffe7a840, #ffd4801c 45%, transparent 72%);
+  box-shadow: 0 0 15px #ffd48015;
+  pointer-events: none;
+}
+.vo-art-scene[data-office-appearance="night"] .vo-desk-attendance-light {
+  background: radial-gradient(ellipse, #fff0bb85, #ffd47e42 42%, transparent 72%);
+  box-shadow: 0 0 22px #ffdc8528;
+  mix-blend-mode: screen;
+}
+@media (max-width: 850px) {
+  .vo-app .vo-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .vo-app .vo-header > .vo-nav {
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .vo-appearance-control span {
+    display: none;
+  }
+}

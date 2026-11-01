@@ -78,7 +78,11 @@ export interface IInstanceAdmin {
   user_detail: IUserLite;
 }
 
+/** Instance-wide feature switches ("1" on, "0" off). */
+export type TInstanceFeatureConfigurationKeys = "ENABLE_STRUCTURED_UPDATES";
+
 export type TInstanceConfigurationKeys =
+  | TInstanceFeatureConfigurationKeys
   | TInstanceAIConfigurationKeys
   | TInstanceEmailConfigurationKeys
   | TInstanceImageConfigurationKeys

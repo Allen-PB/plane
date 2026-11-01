@@ -6,7 +6,7 @@
 
 import { Fragment } from "react";
 import { observer } from "mobx-react";
-import { FileUp } from "lucide-react";
+import { FileUp, ListChecks } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useParams } from "react-router";
 // plane imports
@@ -68,13 +68,22 @@ export const WorkspaceSettingsSidebarItemCategories = observer(function Workspac
                     />
                     {item.key === "export" &&
                       allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE, workspaceSlug) && (
-                        <SettingsSidebarItem
-                          as="link"
-                          href={joinUrlPath(workspaceSlug ?? "", "settings/csv-import")}
-                          isActive={pathname.includes("/settings/csv-import")}
-                          icon={FileUp}
-                          label="CSV Import"
-                        />
+                        <>
+                          <SettingsSidebarItem
+                            as="link"
+                            href={joinUrlPath(workspaceSlug ?? "", "settings/csv-import")}
+                            isActive={pathname.includes("/settings/csv-import")}
+                            icon={FileUp}
+                            label="CSV Import"
+                          />
+                          <SettingsSidebarItem
+                            as="link"
+                            href={joinUrlPath(workspaceSlug ?? "", "settings/bulk-update")}
+                            isActive={pathname.includes("/settings/bulk-update")}
+                            icon={ListChecks}
+                            label="Bulk Update"
+                          />
+                        </>
                       )}
                   </Fragment>
                 );

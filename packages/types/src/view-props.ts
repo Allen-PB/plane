@@ -109,6 +109,10 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "project_id",
   "created_at",
   "updated_at",
+  "qa_result",
+  "ba_result",
+  "root_cause_category",
+  "qa_round",
 ] as const;
 export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number];
 

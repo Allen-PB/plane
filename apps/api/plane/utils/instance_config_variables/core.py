@@ -250,6 +250,16 @@ unsplash_config_variables = [
     },
 ]
 
+# Instance-wide feature switches, toggled from God Mode > General.
+feature_config_variables = [
+    {
+        "key": "ENABLE_STRUCTURED_UPDATES",
+        "value": os.environ.get("ENABLE_STRUCTURED_UPDATES", "1"),
+        "category": "FEATURES",
+        "is_encrypted": False,
+    },
+]
+
 core_config_variables = [
     *authentication_config_variables,
     *workspace_management_config_variables,
@@ -260,4 +270,5 @@ core_config_variables = [
     *smtp_config_variables,
     *llm_config_variables,
     *unsplash_config_variables,
+    *feature_config_variables,
 ]

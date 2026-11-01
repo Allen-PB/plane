@@ -21,6 +21,7 @@ import { useUser } from "@/hooks/store/user";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
 // plane web components
 import { IssueTypeSwitcher } from "@/components/issues/issue-type-switcher";
+import { StructuredUpdateSummaryBar } from "@/components/structured-updates/summary-bar";
 // plane web hooks
 // services
 import { WorkItemVersionService } from "@/services/issue";
@@ -94,6 +95,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
       <div className="flex items-center justify-between gap-2">
         <IssueTypeSwitcher issueId={issueId} disabled={isArchived || disabled} />
       </div>
+      <StructuredUpdateSummaryBar workspaceSlug={workspaceSlug} projectId={issue.project_id} issueId={issueId} />
       <IssueTitleInput
         workspaceSlug={workspaceSlug}
         projectId={issue.project_id}

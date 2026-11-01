@@ -4,13 +4,13 @@
  * See the LICENSE file for details.
  */
 
-import { BrainCog } from "lucide-react";
+import { BrainCog, ToggleRight } from "lucide-react";
 // plane imports
 import { ImageOutline, LockOutline, MailOutline, SettingsOutline, WorkspaceOutline } from "@makeplane/propel/icons";
 // types
 import type { TSidebarMenuItem } from "./types";
 
-export type TCoreSidebarMenuKey = "general" | "email" | "workspace" | "authentication" | "ai" | "image";
+export type TCoreSidebarMenuKey = "general" | "email" | "workspace" | "authentication" | "ai" | "image" | "features";
 
 export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem> = {
   general: {
@@ -48,5 +48,11 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     name: "Images in PathBuilder Sync",
     description: "Allow third-party image libraries.",
     href: `/image/`,
+  },
+  features: {
+    Icon: ToggleRight,
+    name: "Feature flags",
+    description: "Turn PathBuilder Sync features on or off.",
+    href: `/features/`,
   },
 };

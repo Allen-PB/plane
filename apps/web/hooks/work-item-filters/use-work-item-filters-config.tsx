@@ -48,6 +48,7 @@ import {
   getStartDateFilterConfig,
   getStateFilterConfig,
   getStateGroupFilterConfig,
+  getStructuredUpdateFilterConfig,
   getSubscriberFilterConfig,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
@@ -60,6 +61,11 @@ import { useMember } from "@/hooks/store/use-member";
 import { useModule } from "@/hooks/store/use-module";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import {
+  isStructuredUpdatesOn,
+  useStructuredUpdateSetting,
+} from "@/components/structured-updates/use-structured-updates";
+import { BA_RESULT_OPTIONS, QA_RESULT_OPTIONS, ROOT_CAUSE_OPTIONS } from "@/components/structured-updates/constants";
 // plane web imports
 import { useFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
 
@@ -98,6 +104,8 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  const { data: structuredUpdateSetting } = useStructuredUpdateSetting(workspaceSlug, projectId);
+  const structuredUpdatesEnabled = isStructuredUpdatesOn(structuredUpdateSetting);
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
@@ -349,6 +357,32 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [operatorConfigs]
   );
 
+  // structured update result filters (only for projects with the feature on)
+  const structuredUpdateFilterConfigs = useMemo(() => {
+    const toOptions = (options: { value: string; label: string }[]) =>
+      options.map((option) => ({ key: option.value, title: option.label }));
+    const build = (key: TWorkItemFilterProperty, label: string, options: { key: string; title: string }[]) =>
+      getStructuredUpdateFilterConfig<TWorkItemFilterProperty>(
+        key,
+        label,
+        options
+      )({
+        isEnabled: structuredUpdatesEnabled && isFilterEnabled(key),
+        filterIcon: StateOutline,
+        ...operatorConfigs,
+      });
+    return {
+      qa_result: build("qa_result", "QA result", toOptions(QA_RESULT_OPTIONS)),
+      ba_result: build("ba_result", "BA result", toOptions(BA_RESULT_OPTIONS)),
+      root_cause_category: build("root_cause_category", "Root cause category", toOptions(ROOT_CAUSE_OPTIONS)),
+      qa_round: build(
+        "qa_round",
+        "QA round",
+        [1, 2, 3, 4, 5].map((round) => ({ key: String(round), title: `Round ${round}` }))
+      ),
+    };
+  }, [structuredUpdatesEnabled, isFilterEnabled, operatorConfigs]);
+
   // project filter config
   const projectFilterConfig = useMemo(
     () =>
@@ -380,6 +414,10 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      structuredUpdateFilterConfigs.qa_result,
+      structuredUpdateFilterConfigs.qa_round,
+      structuredUpdateFilterConfigs.ba_result,
+      structuredUpdateFilterConfigs.root_cause_category,
     ],
     configMap: {
       project_id: projectFilterConfig,
@@ -397,6 +435,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       target_date: targetDateFilterConfig,
       created_at: createdAtFilterConfig,
       updated_at: updatedAtFilterConfig,
+      ...structuredUpdateFilterConfigs,
     },
     isFilterEnabled,
     members: members ?? [],

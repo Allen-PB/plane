@@ -47,6 +47,11 @@ export const coreRoutes: RouteConfigEntry[] = [
   // ALL APP ROUTES
   // ========================================================================
   layout("./(all)/layout.tsx", [
+    route("virtual-office", "./(all)/virtual-office/page.tsx"),
+    route("virtual-office/setup", "./(all)/virtual-office/setup.tsx"),
+    route("virtual-office/admin", "./(all)/virtual-office/admin.tsx"),
+    route("virtual-office/admin/access", "./(all)/virtual-office/access.tsx"),
+    route("virtual-office/admin/settings", "./(all)/virtual-office/settings.tsx"),
     // ======================================================================
     // WORKSPACE-SCOPED ROUTES
     // ======================================================================
@@ -267,12 +272,20 @@ export const coreRoutes: RouteConfigEntry[] = [
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/members/page.tsx"
           ),
           route(
+            ":workspaceSlug/settings/workflow",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/workflow/page.tsx"
+          ),
+          route(
             ":workspaceSlug/settings/billing",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/billing/page.tsx"
           ),
           route(
             ":workspaceSlug/settings/csv-import",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/csv-import/page.tsx"
+          ),
+          route(
+            ":workspaceSlug/settings/bulk-update",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/bulk-update/page.tsx"
           ),
           route(
             ":workspaceSlug/settings/exports",
@@ -326,6 +339,14 @@ export const coreRoutes: RouteConfigEntry[] = [
             route(
               ":workspaceSlug/settings/projects/:projectId/features/intake",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/intake/page.tsx"
+            ),
+            route(
+              ":workspaceSlug/settings/projects/:projectId/workflow",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/workflow/page.tsx"
+            ),
+            route(
+              ":workspaceSlug/settings/projects/:projectId/structured-updates",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/structured-updates/page.tsx"
             ),
             // Project States
             route(

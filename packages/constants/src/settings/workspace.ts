@@ -41,6 +41,13 @@ export const WORKSPACE_SETTINGS: Record<TWorkspaceSettingsTabs, TWorkspaceSettin
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/members/`,
   },
+  workflow: {
+    key: "workflow",
+    i18n_label: "common.workflow",
+    href: `/settings/workflow`,
+    access: [EUserWorkspaceRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/workflow/`,
+  },
   "billing-and-plans": {
     key: "billing-and-plans",
     i18n_label: "workspace_settings.settings.billing_and_plans.title",
@@ -67,13 +74,14 @@ export const WORKSPACE_SETTINGS: Record<TWorkspaceSettingsTabs, TWorkspaceSettin
 export const WORKSPACE_SETTINGS_ACCESS: Record<string, EUserWorkspaceRoles[]> = {
   ...Object.fromEntries(Object.entries(WORKSPACE_SETTINGS).map(([_, { href, access }]) => [href, access])),
   "/settings/csv-import": [EUserWorkspaceRoles.ADMIN],
+  "/settings/bulk-update": [EUserWorkspaceRoles.ADMIN],
 };
 
 export const GROUPED_WORKSPACE_SETTINGS: Record<WORKSPACE_SETTINGS_CATEGORY, TWorkspaceSettingsItem[]> = {
   [WORKSPACE_SETTINGS_CATEGORY.ADMINISTRATION]: [
     WORKSPACE_SETTINGS["general"],
     WORKSPACE_SETTINGS["members"],
-    WORKSPACE_SETTINGS["billing-and-plans"],
+    WORKSPACE_SETTINGS["workflow"],
     WORKSPACE_SETTINGS["export"],
   ],
   [WORKSPACE_SETTINGS_CATEGORY.FEATURES]: [],
