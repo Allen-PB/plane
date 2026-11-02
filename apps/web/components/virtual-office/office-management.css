@@ -12,6 +12,9 @@
   background: var(--vo-surface);
   border-color: var(--vo-border);
 }
+[data-theme^="dark"] .vo-app:not(.vo-prototype) .vo-brand img {
+  filter: invert(1);
+}
 .vo-app:not(.vo-prototype)
   :is(.vo-card-head, .vo-table th, .vo-table td, .vo-attendance-table th, .vo-attendance-table td) {
   border-color: var(--vo-border);
