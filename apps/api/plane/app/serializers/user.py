@@ -8,6 +8,7 @@ from rest_framework import serializers
 # Module import
 from plane.db.models import Account, Profile, User, Workspace, WorkspaceMemberInvite
 from plane.utils.url import contains_url
+from plane.utils.account_permissions import can_change_account_email
 
 from .base import BaseSerializer
 
@@ -61,10 +62,16 @@ class UserSerializer(BaseSerializer):
 
 
 class UserMeSerializer(BaseSerializer):
+    can_change_email = serializers.SerializerMethodField()
+
+    def get_can_change_email(self, obj):
+        return can_change_account_email(obj)
+
     class Meta:
         model = User
         fields = [
             "id",
+            "can_change_email",
             "avatar",
             "cover_image",
             "avatar_url",
