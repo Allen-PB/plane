@@ -1,6 +1,6 @@
 # PBS-9 UI conventions
 
-Use Sync's shared components and semantic theme tokens for every new Office and Profile control. Office artwork may follow its day/night schedule; application controls follow the user's Preferences theme independently.
+This checklist extends [the shared UI guidelines](UI_DESIGN_GUIDELINES.md). Use Sync's shared components and semantic theme tokens for every new Office and Profile control. Office artwork may follow its day/night schedule; application controls follow the user's Preferences theme independently.
 
 - Use Inter Variable throughout, including portalled dialogs. Body copy is 13px with a 1.5 line height; supporting labels are 12px; dialog titles are 16px semibold. Use the existing shared typography scale elsewhere.
 - Use `--txt-primary`, `--txt-secondary`, `--border-subtle`, `--bg-surface-1`, `--bg-layer-2`, and accent tokens. Avoid fixed light backgrounds, gray borders, or blue focus colors on form controls.

@@ -1,5 +1,7 @@
 # PathBuilder release procedure
 
+Before any production action that could interrupt members, notify the owner of the affected services, expected downtime and rollback plan, and coordinate the timing before proceeding. Members may still be working. Deployment authorization does not replace advance notice of an interruption. Use a maintenance window when downtime is needed; keep routine verification read-only and avoid unnecessary restarts.
+
 1. Review the code diff and CI result. Keep the license and source-offer obligations
    applicable to the exact release. No enterprise license restrictions are removed.
 2. Build custom web, admin, space, and backend Docker images using the release's

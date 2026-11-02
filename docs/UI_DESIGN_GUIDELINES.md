@@ -10,6 +10,14 @@ Read this guide before adding or changing product UI. Extend the existing design
 - Virtual Office's accent inherits the shared design system's `--bg-accent-primary`, keeping links, selected days, focus and Propel radio/button accents aligned.
 - Reserve accent color for selected states, links, focus and primary actions. Convey errors and status with text/icons as well as color. Do not change the office scene's day/night appearance setting to style management forms.
 
+## Preference themes and dialogs
+
+Application chrome must follow the theme selected in Preferences, including light, dark, high-contrast and custom palettes. Office day/night artwork is independent of that preference. Bind Office foregrounds, surfaces, borders and fields to Sync's semantic tokens; check headings and navigation as well as body text. Restore any preference changed for testing.
+
+Dialogs render through a document-level portal and need their own inherited Inter typography and semantic colors. Use 13px body copy, 12px labels and a 16px semibold warning title. Contain the illustrated Office's floating layers in its stacking context so badges, employee indicators and controls cannot overlap a modal or backdrop. Allow action buttons to wrap at narrow widths, retain visible focus, and check 320px as well as 390px layouts.
+
+An early Time Out warning shows the scheduled end and timezone, explains the attendance consequence, and keeps the reason optional. Stay timed in and Escape must preserve attendance. Only explicit confirmation may submit Time Out. Test confirmation with mocked or disposable sessions; never end an active employee session to verify layout.
+
 ## Layout and controls
 
 - Use the published `@makeplane/propel` primitives and existing Plane composites. Extend a shared component when the same interaction occurs in Profile and Office management.
