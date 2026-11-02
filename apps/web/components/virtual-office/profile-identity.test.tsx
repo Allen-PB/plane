@@ -65,10 +65,12 @@ it("groups multiple updates with separately labeled review and dismiss actions",
   vi.mocked(service.profile).mockResolvedValue({ ...data, notices });
   profile();
   const panel = await screen.findByRole("region", { name: "Office notifications" });
-  expect(within(panel).getByRole("heading", { name: "Office updates" })).toBeTruthy();
+  expect(within(panel).getByRole("heading", { name: "Your account updates" })).toBeTruthy();
   expect(within(panel).getByText("2 unread")).toBeTruthy();
   const rows = within(panel).getAllByRole("status");
   expect(rows).toHaveLength(2);
+  expect(rows[0].querySelector("time")?.getAttribute("datetime")).toBe(notices[0].created_at);
+  expect(rows[0].querySelector("time")?.textContent).toContain("Asia/Manila");
   expect(within(rows[0]).getByRole("link", { name: "Review details" }).getAttribute("href")).toBe(
     "/settings/profile/general/"
   );

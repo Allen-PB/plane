@@ -3,6 +3,7 @@ import { act, render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import VirtualOfficeRoot from "./root";
+import type { OfficeAction } from "../../services/virtual-office.service";
 
 const state = vi.hoisted(() => ({
   role: "employee" as "employee" | "admin" | "super_admin",
@@ -12,7 +13,13 @@ vi.mock("@/lib/wrappers/authentication-wrapper", () => ({
   AuthenticationWrapper: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock("./floor", () => ({ OfficeFloor: () => <div>Office floor scene</div> }));
-vi.mock("./admin-panel", () => ({ AdminPanel: () => null }));
+vi.mock("./admin-panel", () => ({
+  AdminPanel: ({ act: saveEmployee }: { act: (action: OfficeAction) => Promise<void> }) => (
+    <button onClick={() => void saveEmployee({ action: "member", user_id: "other-user" })}>
+      Save employee fixture
+    </button>
+  ),
+}));
 vi.mock("./presence-export", () => ({
   PresenceExport: ({ onClose }: { onClose: () => void }) => (
     <section aria-label="Export attendance">
@@ -35,7 +42,9 @@ vi.mock("swr", () => ({
               departments: [],
               desks: [],
             }
-          : undefined,
+          : Array.isArray(key)
+            ? { users: [{ id: "other-user", email: "other@example.invalid" }], members: [], audit: [] }
+            : undefined,
     mutate: vi.fn().mockResolvedValue(undefined),
   }),
 }));
@@ -123,4 +132,16 @@ describe("office scene control access", () => {
     });
     expect(screen.queryByText("Office updated.")).toBeNull();
   });
+});
+
+it("identifies the edited employee in save feedback rather than saying your account changed", async () => {
+  state.role = "super_admin";
+  render(
+    <MemoryRouter initialEntries={["/virtual-office/admin/access/"]}>
+      <VirtualOfficeRoot />
+    </MemoryRouter>
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Save employee fixture" }));
+  expect(await screen.findByText("Employee access saved for other@example.invalid.")).toBeTruthy();
+  expect(screen.queryByText("Office updated.")).toBeNull();
 });

@@ -4,6 +4,10 @@ import { expect, it, vi } from "vitest";
 import type { OfficeState, OfficeAdminState } from "../../services/virtual-office.service";
 import { AdminPanel } from "./admin-panel";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
+async function chooseAccount(email: string) {
+  await userEvent.click(screen.getByLabelText("Sync account"));
+  await userEvent.click(await screen.findByRole("option", { name: email }));
+}
 const member = {
   id: "employee",
   user_id: "test-user",
@@ -47,7 +51,7 @@ it("allows identity edits for an existing active employee whose arrangement is s
   render(
     <AdminPanel office={office} admin={{ ...admin, work: {} }} query="" setQuery={vi.fn()} act={act} busy={false} />
   );
-  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  await chooseAccount("vo-dev-01@example.invalid");
   await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
   expect(act).toHaveBeenCalledWith(expect.objectContaining({ action: "member", user_id: "test-user" }));
   expect(act.mock.calls[0][0]).not.toHaveProperty("arrangement");
@@ -90,10 +94,10 @@ it("clears the old editor after a schedule decision so a later save cannot resto
       refresh={vi.fn().mockResolvedValue(undefined)}
     />
   );
-  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  await chooseAccount("vo-dev-01@example.invalid");
   expect((screen.getByLabelText("Shared end time") as HTMLInputElement).value).toBe("18:00");
   await userEvent.click(screen.getByRole("button", { name: "Approve schedule" }));
-  expect((screen.getByLabelText("Sync account") as HTMLSelectElement).value).toBe("");
+  expect(screen.getByLabelText("Sync account").textContent).toContain("Select an account");
   expect(screen.queryByLabelText("Shared end time")).toBeNull();
   expect(screen.getByRole("status").textContent).toContain("Schedule decision saved");
   await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
@@ -102,8 +106,8 @@ it("clears the old editor after a schedule decision so a later save cannot resto
 it("loads saved employee fields when selecting an account and resets them for a new account", async () => {
   const act = vi.fn();
   render(<AdminPanel office={office} admin={admin} query="" setQuery={vi.fn()} act={act} busy={false} />);
-  expect(screen.getAllByText("vo-dev-01@example.invalid")).toHaveLength(2);
-  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  expect(screen.getByText("vo-dev-01@example.invalid")).toBeTruthy();
+  await chooseAccount("vo-dev-01@example.invalid");
   expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("1");
   expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("1");
   await userEvent.click(screen.getByRole("button", { name: "Save employee access" }));
@@ -118,7 +122,7 @@ it("loads saved employee fields when selecting an account and resets them for a 
     schedule: [],
     policy_id: 1,
   });
-  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "new-user");
+  await chooseAccount("new@example.invalid");
   expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("");
   expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("");
 });
@@ -133,7 +137,7 @@ it("submits the policy version actually loaded into the editor after a backgroun
   const { rerender } = render(
     <AdminPanel office={office} admin={initial} query="" setQuery={vi.fn()} act={act} busy={false} />
   );
-  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "test-user");
+  await chooseAccount("vo-dev-01@example.invalid");
   const refreshed: OfficeAdminState = {
     ...initial,
     work: { employee: { ...initial.work!.employee, policy_id: 2, schedule: [{ ...schedule[0], end: "19:00" }] } },
@@ -164,7 +168,7 @@ it("loads a new account's saved Profile identity without granting a permission r
       busy={false}
     />
   );
-  await userEvent.selectOptions(screen.getByLabelText("Sync account"), "new-user");
+  await chooseAccount("new@example.invalid");
   expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("1");
   expect((screen.getByLabelText("Virtual Office role") as HTMLSelectElement).value).toBe("employee");
 });

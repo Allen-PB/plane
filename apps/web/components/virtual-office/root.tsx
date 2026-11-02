@@ -53,7 +53,8 @@ function OfficeContent() {
   const [query, setQuery] = useState("");
   const { data: admin, mutate: mutateAdmin } = useSWR(
     adminPage && isAdmin ? ["virtual-office-admin", query] : null,
-    () => service.admin(query)
+    () => service.admin(query),
+    { keepPreviousData: true }
   );
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -67,7 +68,7 @@ function OfficeContent() {
   }, [pathname]);
 
   useEffect(() => {
-    if (message !== "Office updated.") return;
+    if (message !== "Office updated." && !message.startsWith("Employee access saved for ")) return;
     const timer = window.setTimeout(() => setMessage(""), 3500);
     return () => window.clearTimeout(timer);
   }, [message]);
@@ -87,10 +88,17 @@ function OfficeContent() {
     setBusy(true);
     setMessage("");
     const actionPath = pathname;
+    const editedAccount =
+      action.action === "member"
+        ? (admin?.users.find((user) => user.id === action.user_id)?.email ??
+          admin?.members.find((member) => member.user_id === action.user_id)?.name ??
+          "the selected account")
+        : null;
     try {
       await service.action(action);
       await Promise.all([mutate(), mutateAdmin()]);
-      if (currentPath.current === actionPath) setMessage("Office updated.");
+      if (currentPath.current === actionPath)
+        setMessage(editedAccount ? `Employee access saved for ${editedAccount}.` : "Office updated.");
     } catch (actionError: unknown) {
       if (currentPath.current === actionPath) setMessage(errorMessage(actionError));
       await mutate();

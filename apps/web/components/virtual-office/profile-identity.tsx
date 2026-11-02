@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { Button } from "@makeplane/propel/components/button";
 import type { OfficeProfileState } from "../../services/virtual-office.service";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
+import { officeTime } from "./office-format";
 import { IdentityFields } from "./identity-fields";
 import { ProfileWorkSchedule } from "./work-schedule";
 // oxlint-disable-next-line import/no-unassigned-import
@@ -30,13 +31,16 @@ export function OfficeNotices() {
   return (
     <section className="vo-notices" aria-label="Office notifications">
       <div className="vo-notices-heading">
-        <h2>Office updates</h2>
+        <h2>Your account updates</h2>
         {!!data?.notices.length && <span>{data.notices.length} unread</span>}
       </div>
       <div className="vo-notices-list" tabIndex={0} role="region" aria-label="Unread office updates">
         {data?.notices.map((notice) => (
           <div className="vo-notice" role="status" key={notice.id}>
-            <p className="vo-notice-message">{notice.message}</p>
+            <div className="vo-notice-copy">
+              <p className="vo-notice-message">{notice.message}</p>
+              <time dateTime={notice.created_at}>{officeTime(notice.created_at)} (Asia/Manila)</time>
+            </div>
             <div className="vo-notice-actions">
               {notice.href && <a href={notice.href}>Review details</a>}
               <Button

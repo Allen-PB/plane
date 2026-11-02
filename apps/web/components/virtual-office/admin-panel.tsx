@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
+import { SyncAccountPicker } from "./sync-account-picker";
 import { IdentityFields } from "./identity-fields";
 import { ScheduleFields, ScheduleRequestReview } from "./work-schedule";
 import type {
@@ -62,6 +63,7 @@ export function AdminPanel({
         className="vo-card vo-panel vo-form"
         onSubmit={(event) => {
           event.preventDefault();
+          if (!userId || busy) return;
           void act({
             action: "member",
             user_id: userId,
@@ -82,22 +84,14 @@ export function AdminPanel({
         <h2>Employee access</h2>
         {reviewMessage && <p role="status">{reviewMessage}</p>}
         <p className="vo-info">Choose an existing Sync account. Office roles are independent of Sync permissions.</p>
-        <label htmlFor="office-search">Find a Sync account by email</label>
-        <input
-          id="office-search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search email…"
-        />
-        <label htmlFor="office-user">Sync account</label>
-        <select
-          id="office-user"
-          required
+        <SyncAccountPicker
+          admin={admin}
           value={userId}
-          onChange={(event) => {
+          query={query}
+          setQuery={setQuery}
+          disabled={busy}
+          onChange={(id) => {
             setReviewMessage("");
-            const id = event.target.value;
             const existing = admin.members.find((member) => member.user_id === id);
             if (existing) edit(existing);
             else {
@@ -112,17 +106,7 @@ export function AdminPanel({
               setPolicyId(null);
             }
           }}
-        >
-          <option value="">Select an account</option>
-          {userId && !admin.users.some((u) => u.id === userId) && (
-            <option value={userId}>{admin.members.find((m) => m.user_id === userId)?.name ?? userId}</option>
-          )}
-          {admin.users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.email}
-            </option>
-          ))}
-        </select>
+        />
         <label htmlFor="office-role">Virtual Office role</label>
         <select id="office-role" value={role} onChange={(event) => setRole(event.target.value as OfficeRole)}>
           <option value="employee">Employee</option>

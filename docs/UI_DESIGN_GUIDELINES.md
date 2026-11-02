@@ -31,6 +31,12 @@ The editor still submits the existing per-day API format. Timezone, approval, pr
 
 Notifications must use the shared `OfficeNotices` layout: an inset panel aligned with page gutters, readable message text, separated review/dismiss actions and a bounded, keyboard-scrollable list. Return no panel when empty. Keep persistent account updates distinct from transient action feedback; neither may overlap the header or obscure the Office scene.
 
+Use **Your account updates** for notices addressed to the signed-in person and show when each update occurred. Admin save feedback must name the employee or account edited, so it cannot be confused with a personal notification.
+
+## Account selection pattern
+
+Use the shared searchable combobox for long account lists. Keep the popup aligned to the field width, bounded by the viewport, and vertically scrollable. Place email search inside the popup. Preserve the selected account and unsaved form values while search results load. Support keyboard selection and Escape, provide an empty state, and disable the picker during saves. Selecting or searching must never submit the form.
+
 ## Required visual review
 
 Before handoff, check the changed surface in a real browser at desktop width, at a narrow card width, and at a 390px viewport. Inspect empty, populated, long-label, validation and disabled states. Confirm matching font, type hierarchy, text colors, border/radius, spacing, alignment, focus and absence of page overflow. Capture screenshots of the actual implementation. Run relevant interaction tests, types, lint and the React Doctor regression check; record material limits rather than claiming untested browsers.

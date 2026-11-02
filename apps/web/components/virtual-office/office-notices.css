@@ -99,3 +99,14 @@
     margin-left: 16px;
   }
 }
+
+.vo-notice-copy {
+  min-width: 0;
+}
+.vo-notice-copy time {
+  display: block;
+  margin-top: 4px;
+  color: var(--vo-muted, var(--txt-secondary));
+  font-size: 12px;
+  line-height: 1.5;
+}
