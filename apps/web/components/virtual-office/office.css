@@ -1,4 +1,6 @@
 .vo-app {
+  /* Contain floating scene labels beneath document-level dialog portals. */
+  isolation: isolate;
   --vo-ink: #263850;
   --vo-muted: #6c7c91;
   --vo-border: #dce4ed;

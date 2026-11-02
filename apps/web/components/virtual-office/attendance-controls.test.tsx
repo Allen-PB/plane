@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import type { OfficeState } from "../../services/virtual-office.service";
@@ -49,7 +49,7 @@ it("cancelling an early departure makes no attendance mutation", async () => {
   const act = vi.fn().mockResolvedValue(undefined);
   render(<AttendanceControls office={office} busy={false} act={act} />);
   await userEvent.click(screen.getByRole("button", { name: "Time Out" }));
-  expect(screen.getByRole("dialog")).toBeTruthy();
+  expect(screen.getByRole("dialog", { name: "Time out before your shift ends?" })).toBeTruthy();
   expect(act).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole("button", { name: "Stay timed in" }));
   expect(act).not.toHaveBeenCalled();
@@ -119,4 +119,14 @@ it("clears a previous shift selection when the arrangement stops using shifts", 
   );
   await userEvent.click(screen.getByRole("button", { name: "Time In" }));
   expect(act).toHaveBeenCalledWith({ action: "time_in" });
+});
+
+it("Escape dismisses the warning without timing the employee out", async () => {
+  const act = vi.fn().mockResolvedValue(undefined);
+  render(<AttendanceControls office={office} busy={false} act={act} />);
+  await userEvent.click(screen.getByRole("button", { name: "Time Out" }));
+  await userEvent.type(screen.getByLabelText("Reason (optional)"), "Still working");
+  await userEvent.keyboard("{Escape}");
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(act).not.toHaveBeenCalled();
 });
