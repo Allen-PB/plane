@@ -269,3 +269,18 @@
 .vo-app.vo-art-app .vo-directory-desks > button[aria-checked="true"] {
   border-color: var(--vo-accent);
 }
+
+.vo-app :is(h1, h2, h3) {
+  color: var(--vo-ink);
+}
+.vo-app .vo-management-sections a {
+  color: var(--vo-muted);
+}
+.vo-app .vo-management-sections a:is(:hover, :focus-visible, [aria-current="page"], [aria-expanded="true"]) {
+  color: var(--txt-accent-primary, var(--vo-accent));
+}
+.vo-app .vo-appearance-control select {
+  background: var(--vo-field-bg);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+}
