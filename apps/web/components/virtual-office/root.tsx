@@ -20,6 +20,8 @@ import { officeTime } from "./office-format";
 import "./office.css";
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office-night.css";
+// oxlint-disable-next-line import/no-unassigned-import
+import "./office-management.css";
 
 function errorMessage(error: unknown) {
   if (isAxiosError(error)) {
@@ -176,8 +178,8 @@ function OfficeContent() {
           {adminPage && (
             <div className="vo-intro">
               <div>
-                <span className="vo-eyebrow">One team. Endless possibilities.</span>
-                <h1>Office management</h1>
+                <span className="vo-eyebrow">Office management</span>
+                <h1>{attendancePage ? "Attendance" : settingsPage ? "Office settings" : "People & access"}</h1>
                 <p className="vo-muted">
                   {office.name} · {office.desks.length} desks · {office.departments.length} departments
                 </p>
@@ -201,9 +203,18 @@ function OfficeContent() {
             ) : (
               <>
                 <nav className="vo-nav vo-management-sections" aria-label="Office management sections">
-                  <Link to="/virtual-office/admin/access">People & access</Link>
-                  <Link to="/virtual-office/admin/settings">Office settings</Link>
-                  <Link to="/virtual-office/directory/attendance">Attendance</Link>
+                  <Link
+                    to="/virtual-office/admin/access"
+                    aria-current={!attendancePage && !settingsPage ? "page" : undefined}
+                  >
+                    People & access
+                  </Link>
+                  <Link to="/virtual-office/admin/settings" aria-current={settingsPage ? "page" : undefined}>
+                    Office settings
+                  </Link>
+                  <Link to="/virtual-office/directory/attendance" aria-current={attendancePage ? "page" : undefined}>
+                    Attendance
+                  </Link>
                   <Link to="/virtual-office">Desk assignments ↗</Link>
                   <a
                     href="#presence-export"
@@ -221,7 +232,7 @@ function OfficeContent() {
                 {attendancePage ? (
                   <AttendanceReportPanel office={office} members={admin?.members} />
                 ) : settingsPage ? (
-                  <div className="vo-side">
+                  <div className="vo-settings-grid">
                     {office.me.role === "super_admin" && (
                       <form
                         className="vo-card vo-panel vo-form"
@@ -256,7 +267,8 @@ function OfficeContent() {
                       {office.departments.map((d) => (
                         <form
                           key={`${d.id}-${d.name}-${d.color}`}
-                          className="vo-form"
+                          className="vo-form vo-department-color-form"
+                          aria-label={`${d.name} color`}
                           onSubmit={(event) => {
                             event.preventDefault();
                             const form = new FormData(event.currentTarget);
@@ -268,16 +280,21 @@ function OfficeContent() {
                           }}
                         >
                           <strong>{d.name}</strong>
-                          <label htmlFor={`department-color-${d.id}`}>Section color</label>
-                          <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
-                          <Button
-                            size="lg"
-                            stretch="auto"
-                            variant="secondary"
-                            label={`Save ${d.name}`}
-                            type="submit"
-                            disabled={busy}
-                          />
+                          <div className="vo-department-color-controls">
+                            <div>
+                              <label htmlFor={`department-color-${d.id}`}>Section color</label>
+                              <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
+                            </div>
+                            <Button
+                              size="lg"
+                              stretch="auto"
+                              variant="secondary"
+                              label="Save color"
+                              aria-label={`Save ${d.name} color`}
+                              type="submit"
+                              disabled={busy}
+                            />
+                          </div>
                         </form>
                       ))}
                     </section>

@@ -8,7 +8,7 @@
   min-height: 100vh;
   background: #f2f5f8;
   color: var(--vo-ink);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: "Inter Variable", Inter, system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.5;
 }

@@ -201,3 +201,14 @@ it("does not offer privileged accounts to an admin or expose their edit controls
   expect(screen.queryByRole("option", { name: "owner@example.invalid" })).toBeNull();
   expect(await screen.findByRole("option", { name: "vo-dev-01@example.invalid" })).toBeTruthy();
 });
+
+it("opens a directory entry in the editor and gives its account control keyboard focus without saving", async () => {
+  const act = vi.fn();
+  render(<AdminPanel office={office} admin={admin} query="" setQuery={vi.fn()} act={act} busy={false} />);
+  await userEvent.click(screen.getByRole("button", { name: "Edit Test DEV 01" }));
+  const account = screen.getByLabelText("Sync account");
+  expect(account.textContent).toContain("vo-dev-01@example.invalid");
+  expect(document.activeElement).toBe(account);
+  expect((screen.getByLabelText("Department") as HTMLSelectElement).value).toBe("1");
+  expect(act).not.toHaveBeenCalled();
+});

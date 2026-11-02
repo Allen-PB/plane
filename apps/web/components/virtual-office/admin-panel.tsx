@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
 import { SyncAccountPicker } from "./sync-account-picker";
 import { IdentityFields } from "./identity-fields";
@@ -39,13 +39,14 @@ export function AdminPanel({
   const [schedule, setSchedule] = useState<WorkingDay[]>([]);
   const [policyId, setPolicyId] = useState<number | null>(null);
   const [reviewMessage, setReviewMessage] = useState("");
+  const editor = useRef<HTMLFormElement>(null);
   const selectedMember = admin.members.find((member) => member.user_id === userId);
   const pendingRequest = selectedMember
     ? admin.work?.[selectedMember.id]?.requests.find((request) => request.status === "pending")
     : undefined;
   const superAdmin = office.me.role === "super_admin";
   const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
-  function edit(member: OfficeMember) {
+  function edit(member: OfficeMember, focusEditor = false) {
     if (!editable(member)) return;
     setReviewMessage("");
     setUserId(member.user_id);
@@ -57,10 +58,12 @@ export function AdminPanel({
     setArrangement(admin.work?.[member.id]?.arrangement ?? "");
     setSchedule(admin.work?.[member.id]?.schedule ?? []);
     setPolicyId(admin.work?.[member.id]?.policy_id ?? null);
+    if (focusEditor) editor.current?.querySelector<HTMLButtonElement>("#office-user")?.focus();
   }
   return (
     <div className="vo-admin-grid">
       <form
+        ref={editor}
         className="vo-card vo-panel vo-form"
         onSubmit={(event) => {
           event.preventDefault();
@@ -203,7 +206,7 @@ export function AdminPanel({
       </form>
       <section className="vo-card">
         <div className="vo-card-head">OFFICE DIRECTORY · {admin.members.length} PEOPLE</div>
-        <div className="vo-table-wrap">
+        <div className="vo-table-wrap" tabIndex={0} role="region" aria-label="Employee access directory">
           <table className="vo-table">
             <thead>
               <tr>
@@ -235,7 +238,18 @@ export function AdminPanel({
                     <br />
                     <span className="vo-muted">{member.active ? "Active" : "Revoked"}</span>
                   </td>
-                  <td>{editable(member) && <button onClick={() => edit(member)}>Edit</button>}</td>
+                  <td>
+                    {editable(member) && (
+                      <button
+                        type="button"
+                        aria-label={`Edit ${member.name}`}
+                        disabled={busy}
+                        onClick={() => edit(member, true)}
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

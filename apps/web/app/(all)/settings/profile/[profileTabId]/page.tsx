@@ -12,8 +12,7 @@ import type { TProfileSettingsTabs } from "@plane/types";
 // components
 import { LogoSpinner } from "@/components/common/logo-spinner";
 import { PageHead } from "@/components/core/page-title";
-import { ProfileSettingsContent } from "@/components/settings/profile/content";
-import { ProfileSettingsSidebarRoot } from "@/components/settings/profile/sidebar";
+import { ProfileSettingsLayout } from "@/components/settings/profile/layout";
 // hooks
 import { useUser } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -41,19 +40,10 @@ function ProfileSettingsPage(props: Route.ComponentProps) {
   return (
     <>
       <PageHead title={`${t("profile.label")} - ${t("general_settings")}`} />
-      <div className="relative size-full">
-        <div className="flex size-full">
-          <ProfileSettingsSidebarRoot
-            activeTab={profileTabId as TProfileSettingsTabs}
-            className="w-[250px]"
-            updateActiveTab={(tab) => router.push(`/settings/profile/${tab}`)}
-          />
-          <ProfileSettingsContent
-            activeTab={profileTabId as TProfileSettingsTabs}
-            className="mx-auto w-fit max-w-225 grow px-page-x py-20"
-          />
-        </div>
-      </div>
+      <ProfileSettingsLayout
+        activeTab={profileTabId as TProfileSettingsTabs}
+        updateActiveTab={(tab) => router.push(`/settings/profile/${tab}`)}
+      />
     </>
   );
 }

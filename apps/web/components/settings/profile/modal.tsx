@@ -15,8 +15,7 @@ import { useTranslation } from "@plane/i18n";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 // local imports
-import { ProfileSettingsContent } from "./content";
-import { ProfileSettingsSidebarRoot } from "./sidebar";
+import { ProfileSettingsLayout } from "./layout";
 
 export const ProfileSettingsModal = observer(function ProfileSettingsModal() {
   // plane hooks
@@ -61,13 +60,11 @@ export const ProfileSettingsModal = observer(function ProfileSettingsModal() {
         </div>
         {/* A plain two-column row rather than `DialogPanes`/`DialogAside`/`DialogMain`: the sidebar and
             content roots carry their own gutters and scroll areas, which the pane slots would pad again. */}
-        <div className="@container flex min-h-0 flex-1">
-          <ProfileSettingsSidebarRoot
+        <div className="flex min-h-0 flex-1">
+          <ProfileSettingsLayout
             activeTab={activeTab}
-            className="w-[250px] rounded-l-xl"
             updateActiveTab={(tab) => toggleProfileSettingsModal({ activeTab: tab })}
           />
-          <ProfileSettingsContent activeTab={activeTab} className="flex-1 rounded-r-xl" />
         </div>
       </DialogContent>
     </Dialog>
