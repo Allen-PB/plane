@@ -37,7 +37,10 @@ it("supports keyboard selection and Escape without submitting a form", async () 
   await user.keyboard("{ArrowDown}{Enter}");
   await waitFor(() => expect(screen.getByLabelText("Sync account").textContent).toContain("employee@example.invalid"));
   expect(submit).not.toHaveBeenCalled();
+  await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
   await user.click(screen.getByLabelText("Sync account"));
+  const reopenedSearch = await screen.findByLabelText("Find a Sync account by email");
+  await waitFor(() => expect(document.activeElement).toBe(reopenedSearch));
   await user.keyboard("{Escape}");
   await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 });
