@@ -12,6 +12,7 @@ import type { OfficeAdminState } from "../../services/virtual-office.service";
 import "./sync-account-picker.css";
 
 type AccountOption = { value: string; label: string };
+const accountSearch = <ComboboxSearch aria-label="Find a Sync account by email" placeholder="Search email…" />;
 
 export function SyncAccountPicker({
   admin,
@@ -69,7 +70,7 @@ export function SyncAccountPicker({
           data-office-account-popup=""
           aria-label="Choose a Sync account"
           sizing="anchor"
-          search={<ComboboxSearch aria-label="Find a Sync account by email" placeholder="Search email…" />}
+          search={accountSearch}
         >
           <ComboboxEmpty>No matching accounts.</ComboboxEmpty>
           <ComboboxList aria-label="Sync accounts">
