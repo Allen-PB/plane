@@ -37,6 +37,10 @@ Use **Your account updates** for notices addressed to the signed-in person and s
 
 Use the shared searchable combobox for long account lists. Keep the popup aligned to the field width, bounded by the viewport, and vertically scrollable. Place email search inside the popup. Preserve the selected account and unsaved form values while search results load. Support keyboard selection and Escape, provide an empty state, and disable the picker during saves. Selecting or searching must never submit the form.
 
+## Profile pattern
+
+Keep Profile identity and working-hours sections consistent with the surrounding account settings: inherited Inter typography, 13px control text, 12px labels, compact shared controls, and grouped labels above fields. Scope styles to Profile so management forms retain their own layout. Check long dropdown values at 390px and narrow 320px widths. Employee-facing guidance should refer to an administrator rather than expose internal privileged-role names. Hide restricted actions using server-provided capabilities, and enforce the same restriction in the API.
+
 ## Required visual review
 
 Before handoff, check the changed surface in a real browser at desktop width, at a narrow card width, and at a 390px viewport. Inspect empty, populated, long-label, validation and disabled states. Confirm matching font, type hierarchy, text colors, border/radius, spacing, alignment, focus and absence of page overflow. Capture screenshots of the actual implementation. Run relevant interaction tests, types, lint and the React Doctor regression check; record material limits rather than claiming untested browsers.

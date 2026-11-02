@@ -10,6 +10,8 @@ import { IdentityFields } from "./identity-fields";
 import { ProfileWorkSchedule } from "./work-schedule";
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office-notices.css";
+// oxlint-disable-next-line import/no-unassigned-import
+import "./profile-office.css";
 
 export function OfficeNotices() {
   const { data, mutate } = useSWR("office-profile", () => service.profile(), { refreshInterval: 15000 });
@@ -120,9 +122,9 @@ function IdentityForm({ profile, refresh }: { profile: OfficeProfileState; refre
 export function ProfileOfficeIdentity() {
   const { data, error, mutate } = useSWR("office-profile", () => service.profile());
   return (
-    <section className="mt-8 flex flex-col gap-3" aria-label="Employee profile">
-      <h2>Department and job Role</h2>
-      <p>Your job Role describes your position. It does not grant administrator permissions.</p>
+    <section className="profile-office-settings mt-8 flex flex-col gap-3" aria-label="Employee profile">
+      <h2>Department and job role</h2>
+      <p>Your job role describes your position. It does not grant administrator permissions.</p>
       {error ? (
         <p role="alert">
           Could not load your employee profile.{" "}

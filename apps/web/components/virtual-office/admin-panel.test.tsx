@@ -172,3 +172,32 @@ it("loads a new account's saved Profile identity without granting a permission r
   expect((screen.getByLabelText("Job Role") as HTMLSelectElement).value).toBe("1");
   expect((screen.getByLabelText("Virtual Office role") as HTMLSelectElement).value).toBe("employee");
 });
+
+it("does not offer privileged accounts to an admin or expose their edit controls", async () => {
+  const protectedMember = {
+    ...member,
+    id: "owner-member",
+    user_id: "owner-user",
+    name: "Owner",
+    role: "super_admin" as const,
+  };
+  const regularAdmin = { ...office, me: { ...office.me, role: "admin" as const } };
+  const act = vi.fn();
+  render(
+    <AdminPanel
+      office={regularAdmin}
+      admin={{
+        ...admin,
+        members: [member, protectedMember],
+        users: [...admin.users, { id: "owner-user", email: "owner@example.invalid", display_name: "Owner" }],
+      }}
+      query=""
+      setQuery={vi.fn()}
+      act={act}
+      busy={false}
+    />
+  );
+  await userEvent.click(screen.getByLabelText("Sync account"));
+  expect(screen.queryByRole("option", { name: "owner@example.invalid" })).toBeNull();
+  expect(await screen.findByRole("option", { name: "vo-dev-01@example.invalid" })).toBeTruthy();
+});

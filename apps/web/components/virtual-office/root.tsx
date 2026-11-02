@@ -160,8 +160,8 @@ function OfficeContent() {
             department and position.
           </p>
           <p className="vo-info">
-            Setting up the office for the first time? Your deployment operator must designate the first Virtual Office
-            Super Admin.
+            Setting up the office for the first time? Your deployment operator must designate the first office
+            administrator.
           </p>
         </div>
       ) : error ? (

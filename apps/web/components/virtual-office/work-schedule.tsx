@@ -351,7 +351,7 @@ export function ProfileWorkSchedule({
           <h3>Approved schedule · Asia/Manila</h3>
           <ScheduleSummary schedule={work.schedule} />
           <p>
-            Request changes below. An Admin or Super Admin must approve them. Open sessions retain their original
+            Request changes below. An office administrator must approve them. Open sessions retain their original
             schedule.
           </p>
           <EmployeeScheduleForm key={`${work.policy_id}-${pending?.revision ?? 0}`} work={work} refresh={refresh} />

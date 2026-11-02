@@ -46,6 +46,7 @@ export function AdminPanel({
   const superAdmin = office.me.role === "super_admin";
   const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
   function edit(member: OfficeMember) {
+    if (!editable(member)) return;
     setReviewMessage("");
     setUserId(member.user_id);
     setRole(member.role);
@@ -63,7 +64,7 @@ export function AdminPanel({
         className="vo-card vo-panel vo-form"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!userId || busy) return;
+          if (!userId || busy || (selectedMember && !editable(selectedMember))) return;
           void act({
             action: "member",
             user_id: userId,
@@ -85,7 +86,14 @@ export function AdminPanel({
         {reviewMessage && <p role="status">{reviewMessage}</p>}
         <p className="vo-info">Choose an existing Sync account. Office roles are independent of Sync permissions.</p>
         <SyncAccountPicker
-          admin={admin}
+          admin={{
+            ...admin,
+            users: superAdmin
+              ? admin.users
+              : admin.users.filter(
+                  (user) => !admin.members.some((member) => member.user_id === user.id && member.role !== "employee")
+                ),
+          }}
           value={userId}
           query={query}
           setQuery={setQuery}
@@ -186,7 +194,11 @@ export function AdminPanel({
           variant="primary"
           label="Save employee access"
           type="submit"
-          disabled={busy || (active && arrangement === "scheduled" && schedule.length === 0)}
+          disabled={
+            busy ||
+            Boolean(selectedMember && !editable(selectedMember)) ||
+            (active && arrangement === "scheduled" && schedule.length === 0)
+          }
         />
       </form>
       <section className="vo-card">

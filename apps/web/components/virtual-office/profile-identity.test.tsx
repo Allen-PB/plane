@@ -103,3 +103,10 @@ it("retains failed updates and restores the dismiss action for retry", async () 
   expect(screen.getByText(notices[0].message)).toBeTruthy();
   await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
 });
+
+it("uses employee-facing administrator wording when no job roles are available", async () => {
+  vi.mocked(service.profile).mockResolvedValue({ ...data, job_roles: [] });
+  profile();
+  expect(await screen.findByText("No job roles are available. Contact an office administrator.")).toBeTruthy();
+  expect(screen.queryByText(/super admin/i)).toBeNull();
+});
