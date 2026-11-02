@@ -203,10 +203,10 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       />
       <form onSubmit={handleSubmit(onSubmit)} className="profile-general-form w-full">
         <div className="flex w-full flex-col gap-7">
-          <div className="relative h-44 w-full">
+          <div className="profile-cover relative h-44 w-full">
             <CoverImage
               src={userCover}
-              className="h-44 w-full rounded-lg"
+              className="profile-cover-image h-44 w-full rounded-lg"
               alt={currentUser?.first_name ?? "Cover image"}
             />
             <div className="absolute -bottom-6 left-6 flex items-end justify-between">
@@ -392,7 +392,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
           <div>
             <Button
               variant="primary"
-              size="sm"
+              size="lg"
               stretch="auto"
               type="submit"
               label={isLoading ? t("saving") : t("save_changes")}

@@ -24,6 +24,20 @@
   border-color: var(--vo-border);
   color: var(--vo-ink);
 }
+.vo-app:not(.vo-prototype)
+  .vo-form
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="time"]), select) {
+  height: 32px;
+  min-height: 32px;
+  padding: 5px 10px;
+  line-height: 20px;
+}
+.vo-app:not(.vo-prototype) .vo-table {
+  font-size: 13px;
+}
+.vo-app:not(.vo-prototype) .vo-table .vo-muted {
+  font-size: 12px;
+}
 .vo-app:not(.vo-prototype) .vo-attendance-table th {
   background: var(--vo-field-bg);
   color: var(--vo-ink);

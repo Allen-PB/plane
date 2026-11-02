@@ -39,7 +39,7 @@ export function ProfileSettingsLayout({
             ref={menuButton}
             type="button"
             variant="secondary"
-            size="sm"
+            size="lg"
             stretch="auto"
             icon={menuIcon}
             label={t("profile_settings")}

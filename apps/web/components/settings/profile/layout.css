@@ -39,6 +39,10 @@
 .profile-settings-content-inner :is(input, select, textarea) {
   max-width: 100%;
 }
+.profile-general-form .profile-cover {
+  border-radius: 8px;
+  background: var(--bg-layer-2);
+}
 @container (max-width: 760px) {
   .profile-settings-layout {
     flex-direction: column;
@@ -70,5 +74,8 @@
   }
   .profile-settings-content-inner {
     padding: 24px 16px;
+  }
+  .profile-general-form :is(.profile-cover, .profile-cover-image) {
+    height: 128px;
   }
 }
