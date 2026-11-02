@@ -64,3 +64,8 @@
   font-family: inherit;
   font-size: 13px;
 }
+
+.profile-office-settings select:disabled {
+  appearance: none;
+  background-image: none;
+}

@@ -39,7 +39,7 @@ Use the shared searchable combobox for long account lists. Keep the popup aligne
 
 ## Profile pattern
 
-Keep Profile identity and working-hours sections consistent with the surrounding account settings: inherited Inter typography, 13px control text, 12px labels, compact shared controls, and grouped labels above fields. Scope styles to Profile so management forms retain their own layout. Check long dropdown values at 390px and narrow 320px widths. Employee-facing guidance should refer to an administrator rather than expose internal privileged-role names. Hide restricted actions using server-provided capabilities, and enforce the same restriction in the API.
+Keep Profile identity and working-hours sections consistent with the surrounding account settings: inherited Inter typography, 13px control text, 12px labels, compact shared controls, and grouped labels above fields. Scope styles to Profile so management forms retain their own layout. Check long dropdown values at 390px and narrow 320px widths. Non-editable Profile fields must not show dropdown arrows; retain their disabled state and readable value. Employee-facing guidance should refer to an administrator rather than expose internal privileged-role names. Hide restricted actions using server-provided capabilities, and enforce the same restriction in the API.
 
 ## Required visual review
 
