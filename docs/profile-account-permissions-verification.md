@@ -34,3 +34,13 @@ Private test logs and screenshot evidence are retained outside Git under the tas
 - The deployment guard initially stopped before mutation because API inherited its image rather than declaring it in its service block. The guarded rollout was corrected to add a service-local override; no shared backend-image override was changed.
 - The original synthetic browser fixture was inspected at desktop and mobile size and retains its earlier 320px, long-label, empty and disabled-state evidence. **Fresh authenticated full-app visual review is still outstanding:** computer-use connections timed out in both Chrome and the in-app browser. No fresh live screenshot or full browser end-to-end pass is claimed. Review the deployed Profile in dev when browser control is available.
 - Private integrated evidence is under `artifacts/pbs9-profile-permissions-20261102-01/`. Credentials, employee screenshots and runtime configuration are not committed or attached to the PR. Production was not modified by this continuation.
+
+## Read-only dropdown follow-up
+
+Source `cd87247f8e4c6f18cb30dc162f8dc12074e159e5` hides native and background-image arrows only on disabled selects within Profile office settings. Values and disabled semantics are retained; editable selectors keep their existing appearance. The UI guidelines now state this rule.
+
+Nine focused identity/Profile tests, the frontend production build and all 28 locale checks passed. Dev web-only release `pbs9-profile-readonly-20261102-01` retains the previous web image and Compose configuration for rollback. API and account permissions were not changed. Tag `pbs9-profile-readonly-dev-20261102` identifies the application checkpoint.
+
+Browser control reconnected. A normal synthetic employee sign-in reached the actual deployed Profile; Department and Job Role were visibly arrow-free and remained disabled, with computed `appearance: none` and `background-image: none`. A fresh authenticated desktop screenshot is retained privately in `artifacts/pbs9-profile-readonly-20261102-01/`. No profile, schedule or attendance changes were submitted.
+
+The 390px check found clipping in the surrounding Settings shell: its fixed sidebar leaves insufficient visible width for the main Profile. This is outside the disabled-arrow styling change and remains a responsive-layout follow-up. The earlier isolated component fixture does not establish that the full Settings shell fits mobile. The temporary viewport override was reset. Production is unchanged.
