@@ -27,6 +27,10 @@ Use `ScheduleFields` for every working-hours editor. Offer **Same hours across d
 
 The editor still submits the existing per-day API format. Timezone, approval, prospective changes, overlap validation and attendance calculations remain backend rules. A UI convenience must not bypass them.
 
+## Notification pattern
+
+Notifications must use the shared `OfficeNotices` layout: an inset panel aligned with page gutters, readable message text, separated review/dismiss actions and a bounded, keyboard-scrollable list. Return no panel when empty. Keep persistent account updates distinct from transient action feedback; neither may overlap the header or obscure the Office scene.
+
 ## Required visual review
 
 Before handoff, check the changed surface in a real browser at desktop width, at a narrow card width, and at a 390px viewport. Inspect empty, populated, long-label, validation and disabled states. Confirm matching font, type hierarchy, text colors, border/radius, spacing, alignment, focus and absence of page overflow. Capture screenshots of the actual implementation. Run relevant interaction tests, types, lint and the React Doctor regression check; record material limits rather than claiming untested browsers.

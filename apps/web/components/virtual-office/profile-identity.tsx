@@ -7,31 +7,54 @@ import type { OfficeProfileState } from "../../services/virtual-office.service";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
 import { IdentityFields } from "./identity-fields";
 import { ProfileWorkSchedule } from "./work-schedule";
+// oxlint-disable-next-line import/no-unassigned-import
+import "./office-notices.css";
 
 export function OfficeNotices() {
   const { data, mutate } = useSWR("office-profile", () => service.profile(), { refreshInterval: 15000 });
   const [error, setError] = useState("");
+  const [dismissing, setDismissing] = useState<number | null>(null);
   async function dismiss(id: number) {
+    setError("");
+    setDismissing(id);
     try {
       await service.readNotice(id);
       await mutate();
     } catch {
       setError("Could not dismiss the notification. Please try again.");
+    } finally {
+      setDismissing(null);
     }
   }
+  if (!data?.notices.length && !error) return null;
   return (
-    <div aria-label="Office notifications">
-      {data?.notices.map((notice) => (
-        <div role="status" key={notice.id}>
-          <p>{notice.message}</p>
-          {notice.href && <a href={notice.href}>Review details</a>}
-          <button type="button" onClick={() => void dismiss(notice.id)}>
-            Dismiss notification
-          </button>
-        </div>
-      ))}
+    <section className="vo-notices" aria-label="Office notifications">
+      <div className="vo-notices-heading">
+        <h2>Office updates</h2>
+        {!!data?.notices.length && <span>{data.notices.length} unread</span>}
+      </div>
+      <div className="vo-notices-list" tabIndex={0} role="region" aria-label="Unread office updates">
+        {data?.notices.map((notice) => (
+          <div className="vo-notice" role="status" key={notice.id}>
+            <p className="vo-notice-message">{notice.message}</p>
+            <div className="vo-notice-actions">
+              {notice.href && <a href={notice.href}>Review details</a>}
+              <Button
+                type="button"
+                size="sm"
+                stretch="auto"
+                variant="secondary"
+                aria-label="Dismiss notification"
+                label={dismissing === notice.id ? "Dismissing…" : "Dismiss"}
+                disabled={dismissing !== null}
+                onClick={() => void dismiss(notice.id)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
       {error && <p role="alert">{error}</p>}
-    </div>
+    </section>
   );
 }
 
