@@ -7,6 +7,7 @@ export type BulkWorkItem = {
   name: string;
   key: string;
   state: string;
+  state_group?: string;
   priority: string;
   assignees: string[];
   labels: string[];
@@ -36,7 +37,7 @@ export type BulkFilters = {
 export type BulkRequest = {
   project_id: string;
   issue_ids: string[];
-  operation: "update" | "move" | "delete";
+  operation: "update" | "move" | "archive";
   changes: {
     state_id?: string;
     priority?: string;
@@ -51,6 +52,14 @@ export type BulkRequest = {
   destinations: Record<string, string>;
 };
 export type BulkPreview = { token: string; count: number; summary: string[]; items: { key: string; name: string }[] };
+
+export type BulkOutcome = {
+  id: string;
+  key: string;
+  name: string;
+  status: "archived" | "skipped" | "failed";
+  reason: string;
+};
 
 class BulkUpdateService extends APIService {
   constructor() {
@@ -80,7 +89,7 @@ class BulkUpdateService extends APIService {
   async preview(slug: string, data: BulkRequest): Promise<BulkPreview> {
     return (await this.post(this.url(slug), { ...data, action: "preview" })).data;
   }
-  async apply(slug: string, data: BulkRequest, token: string): Promise<{ count: number }> {
+  async apply(slug: string, data: BulkRequest, token: string): Promise<{ count: number; results?: BulkOutcome[] }> {
     return (await this.post(this.url(slug), { ...data, action: "apply", token })).data;
   }
 }

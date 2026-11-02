@@ -119,3 +119,70 @@ def test_nested_editor_asset_urls_are_updated_without_changing_other_projects():
     assert str(new) in result["content"][0]["attrs"]["src"]
     assert result["content"][1] == value["content"][1]
     assert str(old) in value["content"][0]["attrs"]["src"]
+
+
+@pytest.mark.parametrize("operation_name,valid", [("archive", True), ("delete", False)])
+def test_archive_replaces_bulk_delete(operation_name, valid):
+    serializer = OperationSerializer(data=operation(operation=operation_name, changes={}))
+    assert serializer.is_valid() is valid
+
+
+def test_archive_continues_after_failure_and_reports_skips():
+    from plane.app.views.workspace.bulk_update import archive_operation
+    from django.core import signing
+    from contextlib import nullcontext
+    from unittest.mock import Mock
+
+    source = SimpleNamespace(id=uuid4(), identifier="SRC")
+    request = SimpleNamespace(user=SimpleNamespace(id=uuid4()))
+    items = [
+        SimpleNamespace(
+            id=uuid4(),
+            sequence_id=i + 1,
+            name=f"Ticket {i}",
+            updated_at="v1",
+            archived_at=None,
+            is_draft=False,
+            type=None,
+            save=Mock(),
+        )
+        for i in range(4)
+    ]
+    data = {"issue_ids": [item.id for item in items], "action": "preview"}
+    with (
+        patch("plane.app.views.workspace.bulk_update.Issue.objects") as manager,
+        patch("plane.app.views.workspace.bulk_update.IssueActivity.objects.create") as activity,
+        patch("plane.app.views.workspace.bulk_update.transaction.atomic", side_effect=lambda: nullcontext()),
+        patch("plane.app.views.workspace.bulk_update.log_exception"),
+    ):
+        manager.select_for_update.return_value.select_related.return_value.filter.return_value.order_by.return_value = (
+            items
+        )
+        preview = archive_operation(request, source, data)
+        assert all(item.archived_at is None for item in items)
+        assert all(not item.save.called for item in items)
+        activity.side_effect = [RuntimeError("Controlled failure"), None]
+        items[2].updated_at = "v2"
+        items[3].archived_at = "2026-11-02"
+        response = archive_operation(request, source, {**data, "action": "apply", "token": preview.data["token"]})
+        assert response.data["count"] == 1
+        assert [row["status"] for row in response.data["results"]] == ["failed", "archived", "skipped", "skipped"]
+        assert activity.call_count == 2
+        assert not items[2].save.called
+        assert not items[3].save.called
+        changed = {**data, "issue_ids": [uuid4()], "action": "apply", "token": preview.data["token"]}
+        assert archive_operation(request, source, changed).status_code == 409
+        other_user = SimpleNamespace(user=SimpleNamespace(id=uuid4()))
+        assert (
+            archive_operation(
+                other_user, source, {**data, "action": "apply", "token": preview.data["token"]}
+            ).status_code
+            == 409
+        )
+        with patch("plane.app.views.workspace.bulk_update.signing.loads", side_effect=signing.SignatureExpired):
+            assert (
+                archive_operation(
+                    request, source, {**data, "action": "apply", "token": preview.data["token"]}
+                ).status_code
+                == 409
+            )
