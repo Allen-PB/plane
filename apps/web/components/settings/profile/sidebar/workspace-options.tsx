@@ -13,10 +13,13 @@ import { SettingsSidebarItem } from "@/components/settings/sidebar/item";
 import { WorkspaceLogo } from "@/components/workspace/logo";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useInstance } from "@/hooks/store/use-instance";
+import { GodModeOnly } from "../god-mode-only";
 
 export const ProfileSettingsSidebarWorkspaceOptions = observer(function ProfileSettingsSidebarWorkspaceOptions() {
   // store hooks
   const { workspaces } = useWorkspace();
+  const { config } = useInstance();
   // translation
   const { t } = useTranslation();
 
@@ -34,22 +37,26 @@ export const ProfileSettingsSidebarWorkspaceOptions = observer(function ProfileS
             isActive={false}
           />
         ))}
-        <div className="mt-1.5">
-          <SettingsSidebarItem
-            as="link"
-            href="/create-workspace/"
-            icon={PlusCircleOutline}
-            label={t("create_workspace")}
-            isActive={false}
-          />
-          <SettingsSidebarItem
-            as="link"
-            href="/invitations/"
-            icon={MailOutline}
-            label={t("workspace_invites")}
-            isActive={false}
-          />
-        </div>
+        <GodModeOnly>
+          <div className="mt-1.5">
+            {!config?.is_workspace_creation_disabled && (
+              <SettingsSidebarItem
+                as="link"
+                href="/create-workspace/"
+                icon={PlusCircleOutline}
+                label={t("create_workspace")}
+                isActive={false}
+              />
+            )}
+            <SettingsSidebarItem
+              as="link"
+              href="/invitations/"
+              icon={MailOutline}
+              label={t("workspace_invites")}
+              isActive={false}
+            />
+          </div>
+        </GodModeOnly>
       </div>
     </div>
   );

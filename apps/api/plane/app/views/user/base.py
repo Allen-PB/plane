@@ -23,6 +23,7 @@ from django.core.cache import cache
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import PermissionDenied
 
 # Module imports
 from plane.app.serializers import (
@@ -54,6 +55,7 @@ from plane.db.models.virtual_office import OfficeAudit, OfficeDesk, OfficeMember
 from plane.utils.office_attendance import close_attendance, expire_attendance
 from plane.bgtasks.user_email_update_task import send_email_update_magic_code, send_email_update_confirmation
 from plane.authentication.rate_limit import EmailVerificationThrottle
+from plane.utils.account_permissions import can_change_account_email
 
 
 logger = logging.getLogger("plane")
@@ -144,6 +146,8 @@ class UserEndpoint(BaseViewSet):
         Additional per-email cooldown of 60 seconds prevents rapid repeated requests.
         """
         user = self.get_object()
+        if not can_change_account_email(user):
+            raise PermissionDenied("Email changes are managed by an administrator.")
         new_email = request.data.get("email", "").strip().lower()
 
         # Validate the new email
@@ -183,6 +187,8 @@ class UserEndpoint(BaseViewSet):
         without creating a new user, ensuring the user ID remains unchanged.
         """
         user = self.get_object()
+        if not can_change_account_email(user):
+            raise PermissionDenied("Email changes are managed by an administrator.")
         new_email = request.data.get("email", "").strip().lower()
         code = request.data.get("code", "").strip()
 

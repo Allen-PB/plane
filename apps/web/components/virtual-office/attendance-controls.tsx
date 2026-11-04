@@ -153,7 +153,7 @@ export function AttendanceControls({
           if (!busy) setConfirming(open);
         }}
       >
-        <DialogContent size="md" aria-describedby={`${id}-warning`}>
+        <DialogContent size="sm" data-office-attendance-dialog="" aria-describedby={`${id}-warning`}>
           <DialogMain>
             <DialogHeader>
               <DialogHeading>
@@ -161,7 +161,7 @@ export function AttendanceControls({
               </DialogHeading>
             </DialogHeader>
             <DialogBody>
-              <div className="flex flex-col gap-3">
+              <div className="vo-attendance-warning">
                 <p id={`${id}-warning`}>
                   Your scheduled end is {officeTime(session?.expected_end)} · Asia/Manila. Confirming records Undertime
                   for this session.
@@ -173,7 +173,7 @@ export function AttendanceControls({
                   value={reason}
                   disabled={busy}
                   rows={3}
-                  className="border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500/30 w-full resize-y rounded-md border bg-transparent p-3 focus:ring-2 focus:outline-none"
+                  className="vo-attendance-reason"
                   onChange={(event) => setReason(event.target.value)}
                 />
               </div>

@@ -90,6 +90,10 @@ class OfficeScheduleDecisionView(BaseAPIView):
             ).exists():
                 raise PermissionDenied("Office administrator access required.")
             pending = get_object_or_404(OfficeScheduleRequest.objects.select_related("member"), pk=pk)
+            if pending.member.role == "super_admin" and not OfficeMember.objects.filter(
+                user=request.user, active=True, role="super_admin"
+            ).exists():
+                raise PermissionDenied("You do not have permission to edit this account.")
             if pending.status != "pending" or pending.revision != data["revision"]:
                 raise ScheduleConflict()
             if not pending.member.active:

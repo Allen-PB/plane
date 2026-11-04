@@ -1,10 +1,18 @@
 .vo-app {
+  /* Contain floating scene labels beneath document-level dialog portals. */
+  isolation: isolate;
   --vo-ink: #263850;
   --vo-muted: #6c7c91;
+  --vo-border: #dce4ed;
+  --vo-surface: #fff;
+  --vo-field-bg: #f8fafc;
+  --vo-accent: var(--bg-accent-primary, #4775e7);
   min-height: 100vh;
   background: #f2f5f8;
   color: var(--vo-ink);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: "Inter Variable", Inter, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
 }
 .vo-header {
   display: flex;
@@ -41,7 +49,7 @@
   font-size: 13px;
 }
 .vo-nav a[aria-current="page"] {
-  color: #4775e7;
+  color: var(--vo-accent);
   font-weight: 700;
 }
 .vo-main {
@@ -467,7 +475,7 @@
 }
 .vo-admin-grid {
   display: grid;
-  grid-template-columns: 350px minmax(0, 1fr);
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
   gap: 22px;
 }
 .vo-form label {
@@ -477,6 +485,7 @@
 }
 .vo-form input,
 .vo-form select {
+  font-family: inherit;
   width: 100%;
   padding: 9px 11px;
   border: 1px solid #d8e0e9;
@@ -504,7 +513,7 @@
   font-weight: 500;
 }
 .vo-table button {
-  color: #4775e7;
+  color: var(--vo-accent);
 }
 .vo-empty {
   max-width: 580px;
@@ -719,9 +728,12 @@
 }
 .vo-prototype .vo-message {
   flex-shrink: 0;
-  margin: 0;
-  border-radius: 0;
-  padding: 8px 18px;
+  margin: 12px 24px;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.vo-prototype .vo-notices + .vo-message {
+  margin-top: 0;
 }
 .vo-office-layout {
   display: flex;

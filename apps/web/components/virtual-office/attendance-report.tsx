@@ -62,55 +62,65 @@ export function AttendanceReportPanel({
   }
   return (
     <section className="vo-card vo-panel vo-attendance-report" aria-label="Team attendance">
-      <h1>Attendance</h1>
+      <h2>Attendance report</h2>
       <p>
         All dates and times use Asia/Manila. Overnight shifts belong to their start date. Durations include breaks;
         legacy or incomplete records remain marked for review.
       </p>
       <form
-        className="vo-form"
+        className="vo-form vo-report-filters"
         onSubmit={(event) => {
           event.preventDefault();
           void generate();
         }}
       >
-        <label htmlFor="attendance-start">Start date</label>
-        <input
-          id="attendance-start"
-          type="date"
-          required
-          value={start}
-          onChange={(event) => setStart(event.target.value)}
-        />
-        <label htmlFor="attendance-end">End date</label>
-        <input
-          id="attendance-end"
-          type="date"
-          required
-          min={start}
-          value={end}
-          onChange={(event) => setEnd(event.target.value)}
-        />
-        <label htmlFor="attendance-member">Employee</label>
-        <select id="attendance-member" value={member} onChange={(event) => setMember(event.target.value)}>
-          <option value="">All employees, including historical records</option>
-          {members.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-              {!item.active ? " (Revoked)" : ""}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="attendance-department">Department at Time In</label>
-        <select id="attendance-department" value={department} onChange={(event) => setDepartment(event.target.value)}>
-          <option value="">All departments</option>
-          {office.departments.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-        <Button size="lg" stretch="auto" variant="primary" label="Generate report" type="submit" disabled={busy} />
+        <div className="vo-filter-field">
+          <label htmlFor="attendance-start">Start date</label>
+          <input
+            id="attendance-start"
+            type="date"
+            required
+            value={start}
+            onChange={(event) => setStart(event.target.value)}
+          />
+        </div>
+        <div className="vo-filter-field">
+          <label htmlFor="attendance-end">End date</label>
+          <input
+            id="attendance-end"
+            type="date"
+            required
+            min={start}
+            value={end}
+            onChange={(event) => setEnd(event.target.value)}
+          />
+        </div>
+        <div className="vo-filter-field">
+          <label htmlFor="attendance-member">Employee</label>
+          <select id="attendance-member" value={member} onChange={(event) => setMember(event.target.value)}>
+            <option value="">All employees, including historical records</option>
+            {members.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+                {!item.active ? " (Revoked)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="vo-filter-field">
+          <label htmlFor="attendance-department">Department at Time In</label>
+          <select id="attendance-department" value={department} onChange={(event) => setDepartment(event.target.value)}>
+            <option value="">All departments</option>
+            {office.departments.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="vo-filter-actions">
+          <Button size="lg" stretch="auto" variant="primary" label="Generate report" type="submit" disabled={busy} />
+        </div>
       </form>
       {message && <p role="alert">{message}</p>}
       {report && (

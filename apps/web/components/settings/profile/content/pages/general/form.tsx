@@ -21,7 +21,7 @@ import { getFileURL } from "@plane/utils";
 // components
 import { DeactivateAccountModal } from "@/components/account/deactivate-account-modal";
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
-import { ChangeEmailModal } from "@/components/core/modals/change-email-modal";
+import { ProfileEmailChange } from "./email-change";
 import { UserImageUploadModal } from "@/components/core/modals/user-image-upload-modal";
 import { CoverImage } from "@/components/common/cover-image";
 import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-item";
@@ -59,7 +59,6 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
   const [isLoading, setIsLoading] = useState(false);
   const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false);
   const [deactivateAccountModal, setDeactivateAccountModal] = useState(false);
-  const [isChangeEmailModalOpen, setIsChangeEmailModalOpen] = useState(false);
   // language support
   const { t } = useTranslation();
   // form info
@@ -185,7 +184,6 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
   return (
     <>
       <DeactivateAccountModal isOpen={deactivateAccountModal} onClose={() => setDeactivateAccountModal(false)} />
-      <ChangeEmailModal isOpen={isChangeEmailModalOpen} onClose={() => setIsChangeEmailModalOpen(false)} />
       <Controller
         control={control}
         name="avatar_url"
@@ -203,18 +201,18 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
           />
         )}
       />
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="profile-general-form w-full">
         <div className="flex w-full flex-col gap-7">
-          <div className="relative h-44 w-full">
+          <div className="profile-cover relative h-44 w-full">
             <CoverImage
               src={userCover}
-              className="h-44 w-full rounded-lg"
+              className="profile-cover-image h-44 w-full rounded-lg"
               alt={currentUser?.first_name ?? "Cover image"}
             />
             <div className="absolute -bottom-6 left-6 flex items-end justify-between">
               <div className="flex gap-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-surface-2">
-                  <button type="button" onClick={() => setIsImageUploadModalOpen(true)}>
+                  <button type="button" aria-label={t("avatar")} onClick={() => setIsImageUploadModalOpen(true)}>
                     {!userAvatar || userAvatar === "" ? (
                       <div className="h-16 w-16 rounded-md bg-layer-1 p-2">
                         <UserOutline className="h-full w-full text-secondary" />
@@ -224,9 +222,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                         <img
                           src={getFileURL(userAvatar)}
                           className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
-                          onClick={() => setIsImageUploadModalOpen(true)}
                           alt={currentUser?.display_name}
-                          role="button"
                         />
                       </div>
                     )}
@@ -274,9 +270,9 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   }}
                   render={({ field: { value, onChange, ref } }) => (
                     <Field name="first_name" invalid={Boolean(errors.first_name)}>
-                      <InputGroup size="2xl">
+                      <InputGroup size="lg">
                         <Input
-                          size="2xl"
+                          size="lg"
                           id="first_name"
                           name="first_name"
                           type="text"
@@ -303,9 +299,9 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   }}
                   render={({ field: { value, onChange, ref } }) => (
                     <Field name="last_name" invalid={Boolean(errors.last_name)}>
-                      <InputGroup size="2xl">
+                      <InputGroup size="lg">
                         <Input
-                          size="2xl"
+                          size="lg"
                           id="last_name"
                           name="last_name"
                           type="text"
@@ -336,9 +332,9 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   }}
                   render={({ field: { value, onChange, ref } }) => (
                     <Field name="display_name" invalid={Boolean(errors?.display_name)}>
-                      <InputGroup size="2xl">
+                      <InputGroup size="lg">
                         <Input
-                          size="2xl"
+                          size="lg"
                           id="display_name"
                           name="display_name"
                           type="text"
@@ -369,9 +365,9 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   }}
                   render={({ field: { value, ref } }) => (
                     <Field name="email" invalid={Boolean(errors.email)}>
-                      <InputGroup size="2xl">
+                      <InputGroup size="lg">
                         <Input
-                          size="2xl"
+                          size="lg"
                           id="email"
                           name="email"
                           type="email"
@@ -385,22 +381,18 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                     </Field>
                   )}
                 />
-                {isSMTPConfigured && (
-                  <button
-                    type="button"
-                    className="btn w-fit text-11 text-secondary underline"
-                    onClick={() => setIsChangeEmailModalOpen(true)}
-                  >
-                    {t("account_settings.profile.change_email_modal.title")}
-                  </button>
-                )}
+                <ProfileEmailChange
+                  allowed={user.can_change_email === true}
+                  smtpConfigured={isSMTPConfigured}
+                  label={t("account_settings.profile.change_email_modal.title")}
+                />
               </div>
             </div>
           </div>
           <div>
             <Button
               variant="primary"
-              size="sm"
+              size="lg"
               stretch="auto"
               type="submit"
               label={isLoading ? t("saving") : t("save_changes")}

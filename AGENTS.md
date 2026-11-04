@@ -12,6 +12,8 @@
 
 ## Code Style
 
+- **UI consistency**: Before changing UI, read [UI design guidelines](docs/UI_DESIGN_GUIDELINES.md). Reuse shared components and surface tokens. Verify typography, colors, spacing, control alignment, keyboard focus, and desktop/narrow-card/mobile layouts before handoff.
+
 - **Imports**: Use `workspace:*` for internal packages, `catalog:` for external deps
 - **TypeScript**: Strict mode enabled, all files must be typed
 - **Formatting**: oxfmt, run `pnpm fix:format`

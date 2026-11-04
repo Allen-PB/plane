@@ -1,0 +1,286 @@
+/* Application chrome follows Sync preferences; artwork retains its own palette. */
+.vo-app {
+  --vo-ink: var(--txt-primary, #263850);
+  --vo-muted: var(--txt-secondary, #6c7c91);
+  --vo-border: var(--border-subtle, #dce4ed);
+  --vo-surface: var(--bg-surface-1, #fff);
+  --vo-field-bg: var(--bg-layer-2, #f8fafc);
+  background: var(--bg-surface-2, #f2f5f8);
+  color: var(--vo-ink);
+}
+.vo-app:not(.vo-prototype) :is(.vo-card, .vo-header) {
+  background: var(--vo-surface);
+  border-color: var(--vo-border);
+}
+[data-theme^="dark"] .vo-app .vo-brand img {
+  filter: invert(1);
+}
+.vo-app:not(.vo-prototype)
+  :is(.vo-card-head, .vo-table th, .vo-table td, .vo-attendance-table th, .vo-attendance-table td) {
+  border-color: var(--vo-border);
+}
+.vo-app:not(.vo-prototype) :is(.vo-muted, .vo-info, .vo-eyebrow, .vo-table th) {
+  color: var(--vo-muted);
+}
+.vo-app:not(.vo-prototype) .vo-form :is(input, select) {
+  background: var(--vo-field-bg);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+}
+.vo-app:not(.vo-prototype)
+  .vo-form
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="time"]), select) {
+  height: 32px;
+  min-height: 32px;
+  padding: 5px 10px;
+  line-height: 20px;
+}
+.vo-app:not(.vo-prototype) .vo-table {
+  font-size: 13px;
+}
+.vo-app:not(.vo-prototype) .vo-table .vo-muted {
+  font-size: 12px;
+}
+.vo-app:not(.vo-prototype) .vo-attendance-table th {
+  background: var(--vo-field-bg);
+  color: var(--vo-ink);
+}
+.vo-management-sections {
+  flex-wrap: wrap;
+  row-gap: 10px;
+  margin-bottom: 24px;
+}
+.vo-app:not(.vo-prototype) .vo-actions > a {
+  color: var(--vo-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.vo-admin-grid .vo-table-wrap {
+  max-height: min(70dvh, 760px);
+  overflow: auto;
+}
+.vo-admin-grid .vo-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--vo-surface);
+}
+.vo-app:not(.vo-prototype) .vo-audit[open] {
+  max-height: 420px;
+  overflow: auto;
+}
+.vo-export-panel {
+  container-type: inline-size;
+}
+.vo-export-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.vo-export-fields > div {
+  min-width: 0;
+}
+.vo-form .vo-export-fields label {
+  margin-top: 0;
+}
+@container (max-width: 620px) {
+  .vo-export-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.vo-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+  gap: 24px;
+}
+.vo-settings-grid > * {
+  min-width: 0;
+}
+.vo-department-color-form {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--vo-border);
+}
+.vo-department-color-form:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.vo-department-color-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.vo-app .vo-department-color-controls input[type="color"] {
+  width: 64px;
+  height: 36px;
+  padding: 4px;
+}
+.vo-attendance-report {
+  container-type: inline-size;
+}
+.vo-report-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  margin: 24px 0;
+}
+.vo-filter-field {
+  min-width: 0;
+}
+.vo-form .vo-filter-field label {
+  margin-top: 0;
+}
+.vo-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+.vo-form .vo-filter-actions button {
+  margin-top: 0;
+}
+.vo-attendance-report > .vo-actions {
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+@container (min-width: 1000px) {
+  .vo-report-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@container (max-width: 520px) {
+  .vo-report-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vo-filter-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* Dialog portals sit outside .vo-app and must inherit Sync's theme directly. */
+[data-office-attendance-dialog] {
+  font-family: "Inter Variable", Inter, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--txt-primary);
+  background: var(--bg-surface-1);
+}
+[data-office-attendance-dialog] h2 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.vo-attendance-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.vo-attendance-warning p {
+  margin: 0;
+  color: var(--txt-secondary);
+  overflow-wrap: anywhere;
+}
+.vo-attendance-warning label {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: -6px;
+}
+.vo-attendance-reason {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-layer-2);
+  color: var(--txt-primary);
+  padding: 10px 12px;
+  font: inherit;
+}
+.vo-attendance-reason:focus-visible {
+  outline: 2px solid var(--bg-accent-primary);
+  outline-offset: 2px;
+}
+.vo-attendance-reason:disabled {
+  opacity: 0.6;
+}
+
+[data-office-attendance-dialog] > :last-child {
+  flex-wrap: wrap;
+}
+@media (max-width: 480px) {
+  [data-office-attendance-dialog] > :last-child > button {
+    flex: 1 1 auto;
+  }
+}
+
+/* Theme the floor's UI overlays without recoloring office artwork or departments. */
+.vo-app .vo-header {
+  background: var(--vo-surface);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+  font-family: inherit;
+}
+.vo-app .vo-header > .vo-nav,
+.vo-app .vo-header > .vo-nav a {
+  color: var(--vo-ink);
+}
+.vo-app .vo-header > .vo-nav a:is(:hover, :focus-visible, [aria-current="page"]) {
+  color: var(--vo-accent);
+}
+.vo-app.vo-art-app
+  :is(.vo-floor-nav, .vo-office-directory, .vo-office-table, .vo-art-heading, .vo-art-legend, .vo-art-failure) {
+  background: var(--vo-surface);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+}
+.vo-app.vo-art-app :is(.vo-art-controls button, .vo-art-controls > span, .vo-directory-desks > button) {
+  background: var(--vo-field-bg);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+}
+.vo-app.vo-art-app
+  :is(
+    .vo-art-heading small,
+    .vo-floor-nav button small,
+    .vo-office-directory p,
+    .vo-office-directory small,
+    .vo-office-directory footer,
+    .vo-info
+  ) {
+  color: var(--vo-muted);
+}
+.vo-app.vo-art-app :is(.vo-appearance-control select, .vo-office-directory select) {
+  background: var(--vo-field-bg);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+  font: inherit;
+}
+.vo-app.vo-art-app :is(.vo-directory-selection, .vo-directory-presence) {
+  border-color: var(--vo-border);
+}
+.vo-app.vo-art-app .vo-floor-nav button {
+  color: var(--vo-ink);
+}
+.vo-app.vo-art-app .vo-directory-desks > button[aria-checked="true"] {
+  border-color: var(--vo-accent);
+}
+
+.vo-app :is(h1, h2, h3) {
+  color: var(--vo-ink);
+}
+.vo-app .vo-management-sections a {
+  color: var(--vo-muted);
+}
+.vo-app .vo-management-sections a:is(:hover, :focus-visible, [aria-current="page"], [aria-expanded="true"]) {
+  color: var(--txt-accent-primary, var(--vo-accent));
+}
+.vo-app .vo-appearance-control select {
+  background: var(--vo-field-bg);
+  border-color: var(--vo-border);
+  color: var(--vo-ink);
+}

@@ -1,0 +1,71 @@
+.profile-office-settings {
+  min-width: 0;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--txt-secondary);
+}
+.profile-office-settings :is(h2, h3, h4, p) {
+  margin: 0;
+}
+.profile-office-settings h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--txt-primary);
+}
+.profile-office-settings :is(h3, h4) {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--txt-primary);
+}
+.profile-office-settings label {
+  font-size: 12px;
+  font-weight: 500;
+}
+.profile-office-settings :is(input, select, textarea, button) {
+  font-family: inherit;
+}
+.profile-office-settings .office-identity-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.profile-office-settings .office-identity-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 12px;
+  font-size: 13px;
+  line-height: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-layer-2);
+  color: var(--txt-primary);
+}
+.profile-office-settings .office-identity-field select:disabled {
+  color: var(--txt-tertiary);
+  cursor: not-allowed;
+}
+.profile-office-settings :is(input, select, button, summary):focus-visible {
+  outline: 2px solid var(--bg-accent-primary);
+  outline-offset: 2px;
+}
+.profile-office-settings :is(p, summary) {
+  overflow-wrap: anywhere;
+}
+
+.profile-general-form {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.profile-general-form input {
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.profile-office-settings select:disabled {
+  appearance: none;
+  background-image: none;
+}

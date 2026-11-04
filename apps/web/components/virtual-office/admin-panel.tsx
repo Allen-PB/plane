@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
+import { SyncAccountPicker } from "./sync-account-picker";
 import { IdentityFields } from "./identity-fields";
 import { ScheduleFields, ScheduleRequestReview } from "./work-schedule";
 import type {
@@ -38,13 +39,15 @@ export function AdminPanel({
   const [schedule, setSchedule] = useState<WorkingDay[]>([]);
   const [policyId, setPolicyId] = useState<number | null>(null);
   const [reviewMessage, setReviewMessage] = useState("");
+  const editor = useRef<HTMLFormElement>(null);
   const selectedMember = admin.members.find((member) => member.user_id === userId);
   const pendingRequest = selectedMember
     ? admin.work?.[selectedMember.id]?.requests.find((request) => request.status === "pending")
     : undefined;
   const superAdmin = office.me.role === "super_admin";
   const editable = (member: OfficeMember) => superAdmin || member.role === "employee";
-  function edit(member: OfficeMember) {
+  function edit(member: OfficeMember, focusEditor = false) {
+    if (!editable(member)) return;
     setReviewMessage("");
     setUserId(member.user_id);
     setRole(member.role);
@@ -55,13 +58,16 @@ export function AdminPanel({
     setArrangement(admin.work?.[member.id]?.arrangement ?? "");
     setSchedule(admin.work?.[member.id]?.schedule ?? []);
     setPolicyId(admin.work?.[member.id]?.policy_id ?? null);
+    if (focusEditor) editor.current?.querySelector<HTMLButtonElement>("#office-user")?.focus();
   }
   return (
     <div className="vo-admin-grid">
       <form
+        ref={editor}
         className="vo-card vo-panel vo-form"
         onSubmit={(event) => {
           event.preventDefault();
+          if (!userId || busy || (selectedMember && !editable(selectedMember))) return;
           void act({
             action: "member",
             user_id: userId,
@@ -82,22 +88,21 @@ export function AdminPanel({
         <h2>Employee access</h2>
         {reviewMessage && <p role="status">{reviewMessage}</p>}
         <p className="vo-info">Choose an existing Sync account. Office roles are independent of Sync permissions.</p>
-        <label htmlFor="office-search">Find a Sync account by email</label>
-        <input
-          id="office-search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search email…"
-        />
-        <label htmlFor="office-user">Sync account</label>
-        <select
-          id="office-user"
-          required
+        <SyncAccountPicker
+          admin={{
+            ...admin,
+            users: superAdmin
+              ? admin.users
+              : admin.users.filter(
+                  (user) => !admin.members.some((member) => member.user_id === user.id && member.role !== "employee")
+                ),
+          }}
           value={userId}
-          onChange={(event) => {
+          query={query}
+          setQuery={setQuery}
+          disabled={busy}
+          onChange={(id) => {
             setReviewMessage("");
-            const id = event.target.value;
             const existing = admin.members.find((member) => member.user_id === id);
             if (existing) edit(existing);
             else {
@@ -112,17 +117,7 @@ export function AdminPanel({
               setPolicyId(null);
             }
           }}
-        >
-          <option value="">Select an account</option>
-          {userId && !admin.users.some((u) => u.id === userId) && (
-            <option value={userId}>{admin.members.find((m) => m.user_id === userId)?.name ?? userId}</option>
-          )}
-          {admin.users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.email}
-            </option>
-          ))}
-        </select>
+        />
         <label htmlFor="office-role">Virtual Office role</label>
         <select id="office-role" value={role} onChange={(event) => setRole(event.target.value as OfficeRole)}>
           <option value="employee">Employee</option>
@@ -202,12 +197,16 @@ export function AdminPanel({
           variant="primary"
           label="Save employee access"
           type="submit"
-          disabled={busy || (active && arrangement === "scheduled" && schedule.length === 0)}
+          disabled={
+            busy ||
+            Boolean(selectedMember && !editable(selectedMember)) ||
+            (active && arrangement === "scheduled" && schedule.length === 0)
+          }
         />
       </form>
       <section className="vo-card">
         <div className="vo-card-head">OFFICE DIRECTORY · {admin.members.length} PEOPLE</div>
-        <div className="vo-table-wrap">
+        <div className="vo-table-wrap" tabIndex={0} role="region" aria-label="Employee access directory">
           <table className="vo-table">
             <thead>
               <tr>
@@ -239,7 +238,18 @@ export function AdminPanel({
                     <br />
                     <span className="vo-muted">{member.active ? "Active" : "Revoked"}</span>
                   </td>
-                  <td>{editable(member) && <button onClick={() => edit(member)}>Edit</button>}</td>
+                  <td>
+                    {editable(member) && (
+                      <button
+                        type="button"
+                        aria-label={`Edit ${member.name}`}
+                        disabled={busy}
+                        onClick={() => edit(member, true)}
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

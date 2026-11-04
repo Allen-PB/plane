@@ -24,38 +24,42 @@ export function IdentityFields({
   );
   return (
     <>
-      <label htmlFor={`${prefix}-department`}>Department</label>
-      <select
-        id={`${prefix}-department`}
-        required={required}
-        disabled={disabled}
-        value={departmentId}
-        onChange={(event) => onChange(event.target.value, "")}
-      >
-        <option value="">Select a department</option>
-        {departments.map((department) => (
-          <option key={department.id} value={department.id}>
-            {department.name}
-          </option>
-        ))}
-      </select>
-      <label htmlFor={`${prefix}-job-role`}>Job Role</label>
-      <select
-        id={`${prefix}-job-role`}
-        required={required}
-        disabled={disabled || !departmentId}
-        value={jobRoleId}
-        onChange={(event) => onChange(departmentId, event.target.value)}
-      >
-        <option value="">Select a job role</option>
-        {roles.map((role) => (
-          <option key={role.id} value={role.id}>
-            {role.name}
-            {role.archived ? " (Archived)" : ""}
-          </option>
-        ))}
-      </select>
-      {departmentId && roles.length === 0 && <p>No job roles are available. Contact an office Super Admin.</p>}
+      <div className="office-identity-field">
+        <label htmlFor={`${prefix}-department`}>Department</label>
+        <select
+          id={`${prefix}-department`}
+          required={required}
+          disabled={disabled}
+          value={departmentId}
+          onChange={(event) => onChange(event.target.value, "")}
+        >
+          <option value="">Select a department</option>
+          {departments.map((department) => (
+            <option key={department.id} value={department.id}>
+              {department.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="office-identity-field">
+        <label htmlFor={`${prefix}-job-role`}>Job Role</label>
+        <select
+          id={`${prefix}-job-role`}
+          required={required}
+          disabled={disabled || !departmentId}
+          value={jobRoleId}
+          onChange={(event) => onChange(departmentId, event.target.value)}
+        >
+          <option value="">Select a job role</option>
+          {roles.map((role) => (
+            <option key={role.id} value={role.id}>
+              {role.name}
+              {role.archived ? " (Archived)" : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      {departmentId && roles.length === 0 && <p>No job roles are available. Contact an office administrator.</p>}
     </>
   );
 }

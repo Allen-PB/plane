@@ -26,6 +26,7 @@ import { useUser, useUserProfile } from "@/hooks/store/user";
 import { useInstance } from "@/hooks/store/use-instance";
 // components
 import { WorkspaceLogo } from "../logo";
+import { GodModeOnly } from "@/components/settings/profile/god-mode-only";
 import SidebarDropdownItem from "./dropdown-item";
 
 type WorkspaceMenuRootProps = {
@@ -170,19 +171,21 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
           </div>
           <div className="shrink-0">
             <MenuSeparator />
-            {!isWorkspaceCreationDisabled && (
+            <GodModeOnly>
+              {!isWorkspaceCreationDisabled && (
+                <MenuItem
+                  icon={<Icon icon={PlusCircleOutline} />}
+                  label={t("create_workspace")}
+                  render={<Link href="/create-workspace" />}
+                />
+              )}
               <MenuItem
-                icon={<Icon icon={PlusCircleOutline} />}
-                label={t("create_workspace")}
-                render={<Link href="/create-workspace" />}
+                icon={<Icon icon={MailOutline} />}
+                label={t("workspace_invites")}
+                render={<Link href="/invitations" />}
+                onClick={handleItemClick}
               />
-            )}
-            <MenuItem
-              icon={<Icon icon={MailOutline} />}
-              label={t("workspace_invites")}
-              render={<Link href="/invitations" />}
-              onClick={handleItemClick}
-            />
+            </GodModeOnly>
             <MenuItem
               variant="danger"
               icon={<Icon icon={LogOutOutline} />}

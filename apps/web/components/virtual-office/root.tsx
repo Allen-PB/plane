@@ -20,6 +20,8 @@ import { officeTime } from "./office-format";
 import "./office.css";
 // oxlint-disable-next-line import/no-unassigned-import
 import "./office-night.css";
+// oxlint-disable-next-line import/no-unassigned-import
+import "./office-management.css";
 
 function errorMessage(error: unknown) {
   if (isAxiosError(error)) {
@@ -53,7 +55,8 @@ function OfficeContent() {
   const [query, setQuery] = useState("");
   const { data: admin, mutate: mutateAdmin } = useSWR(
     adminPage && isAdmin ? ["virtual-office-admin", query] : null,
-    () => service.admin(query)
+    () => service.admin(query),
+    { keepPreviousData: true }
   );
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -67,7 +70,7 @@ function OfficeContent() {
   }, [pathname]);
 
   useEffect(() => {
-    if (message !== "Office updated.") return;
+    if (message !== "Office updated." && !message.startsWith("Employee access saved for ")) return;
     const timer = window.setTimeout(() => setMessage(""), 3500);
     return () => window.clearTimeout(timer);
   }, [message]);
@@ -87,10 +90,17 @@ function OfficeContent() {
     setBusy(true);
     setMessage("");
     const actionPath = pathname;
+    const editedAccount =
+      action.action === "member"
+        ? (admin?.users.find((user) => user.id === action.user_id)?.email ??
+          admin?.members.find((member) => member.user_id === action.user_id)?.name ??
+          "the selected account")
+        : null;
     try {
       await service.action(action);
       await Promise.all([mutate(), mutateAdmin()]);
-      if (currentPath.current === actionPath) setMessage("Office updated.");
+      if (currentPath.current === actionPath)
+        setMessage(editedAccount ? `Employee access saved for ${editedAccount}.` : "Office updated.");
     } catch (actionError: unknown) {
       if (currentPath.current === actionPath) setMessage(errorMessage(actionError));
       await mutate();
@@ -152,8 +162,8 @@ function OfficeContent() {
             department and position.
           </p>
           <p className="vo-info">
-            Setting up the office for the first time? Your deployment operator must designate the first Virtual Office
-            Super Admin.
+            Setting up the office for the first time? Your deployment operator must designate the first office
+            administrator.
           </p>
         </div>
       ) : error ? (
@@ -168,8 +178,8 @@ function OfficeContent() {
           {adminPage && (
             <div className="vo-intro">
               <div>
-                <span className="vo-eyebrow">One team. Endless possibilities.</span>
-                <h1>Office management</h1>
+                <span className="vo-eyebrow">Office management</span>
+                <h1>{attendancePage ? "Attendance" : settingsPage ? "Office settings" : "People & access"}</h1>
                 <p className="vo-muted">
                   {office.name} · {office.desks.length} desks · {office.departments.length} departments
                 </p>
@@ -193,9 +203,18 @@ function OfficeContent() {
             ) : (
               <>
                 <nav className="vo-nav vo-management-sections" aria-label="Office management sections">
-                  <Link to="/virtual-office/admin/access">People & access</Link>
-                  <Link to="/virtual-office/admin/settings">Office settings</Link>
-                  <Link to="/virtual-office/directory/attendance">Attendance</Link>
+                  <Link
+                    to="/virtual-office/admin/access"
+                    aria-current={!attendancePage && !settingsPage ? "page" : undefined}
+                  >
+                    People & access
+                  </Link>
+                  <Link to="/virtual-office/admin/settings" aria-current={settingsPage ? "page" : undefined}>
+                    Office settings
+                  </Link>
+                  <Link to="/virtual-office/directory/attendance" aria-current={attendancePage ? "page" : undefined}>
+                    Attendance
+                  </Link>
                   <Link to="/virtual-office">Desk assignments ↗</Link>
                   <a
                     href="#presence-export"
@@ -213,7 +232,7 @@ function OfficeContent() {
                 {attendancePage ? (
                   <AttendanceReportPanel office={office} members={admin?.members} />
                 ) : settingsPage ? (
-                  <div className="vo-side">
+                  <div className="vo-settings-grid">
                     {office.me.role === "super_admin" && (
                       <form
                         className="vo-card vo-panel vo-form"
@@ -248,7 +267,8 @@ function OfficeContent() {
                       {office.departments.map((d) => (
                         <form
                           key={`${d.id}-${d.name}-${d.color}`}
-                          className="vo-form"
+                          className="vo-form vo-department-color-form"
+                          aria-label={`${d.name} color`}
                           onSubmit={(event) => {
                             event.preventDefault();
                             const form = new FormData(event.currentTarget);
@@ -260,16 +280,21 @@ function OfficeContent() {
                           }}
                         >
                           <strong>{d.name}</strong>
-                          <label htmlFor={`department-color-${d.id}`}>Section color</label>
-                          <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
-                          <Button
-                            size="lg"
-                            stretch="auto"
-                            variant="secondary"
-                            label={`Save ${d.name}`}
-                            type="submit"
-                            disabled={busy}
-                          />
+                          <div className="vo-department-color-controls">
+                            <div>
+                              <label htmlFor={`department-color-${d.id}`}>Section color</label>
+                              <input id={`department-color-${d.id}`} name="color" type="color" defaultValue={d.color} />
+                            </div>
+                            <Button
+                              size="lg"
+                              stretch="auto"
+                              variant="secondary"
+                              label="Save color"
+                              aria-label={`Save ${d.name} color`}
+                              type="submit"
+                              disabled={busy}
+                            />
+                          </div>
                         </form>
                       ))}
                     </section>

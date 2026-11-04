@@ -271,7 +271,7 @@ class OfficeView(BaseAPIView):
         target = OfficeMember.objects.filter(user=user).first()
         role = data.get("role", target.role if target else "employee")
         if actor.role != "super_admin" and (role != "employee" or (target and target.role != "employee")):
-            raise PermissionDenied("Only Super Admins manage office administrators.")
+            raise PermissionDenied("You do not have permission to edit this account.")
         active = data.get("active", target.active if target else True)
         if target is None and not active:
             raise ValidationError("This account has not been granted office access.")
@@ -348,6 +348,8 @@ class OfficeAdminView(BaseAPIView):
             .filter(is_active=True, is_bot=False)
             .order_by("email")
         )
+        if actor.role != "super_admin":
+            users = users.exclude(officemember__role__in=["admin", "super_admin"])
         if query:
             users = users.filter(email__icontains=query)
         members = list(OfficeMember.objects.select_related("user__profile__office_job_role").all())

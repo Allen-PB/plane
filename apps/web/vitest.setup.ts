@@ -17,3 +17,9 @@ vi.stubGlobal(
 );
 
 afterEach(cleanup);
+
+// jsdom omits the Web Animations API used by Base UI's scroll areas.
+if (typeof Element !== "undefined" && !Element.prototype.getAnimations) {
+  // oxlint-disable-next-line no-extend-native
+  Object.defineProperty(Element.prototype, "getAnimations", { configurable: true, value: () => [] });
+}

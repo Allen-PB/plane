@@ -36,51 +36,58 @@ export function PresenceExport({ onClose }: { onClose: () => void }) {
   const invalid = preset !== "all" && (!range.start || !range.end || range.start > range.end);
   return (
     <div style={{ marginBottom: 20 }}>
-      <section id="presence-export" className="vo-card vo-panel vo-form" aria-label="Export attendance">
+      <section id="presence-export" className="vo-card vo-panel vo-form vo-export-panel" aria-label="Export attendance">
         <h2>Export Time In/Out</h2>
         <p>Choose the event dates to export. Dates include the full day in Asia/Manila (UTC+08:00).</p>
-        <label htmlFor="presence-period">Date range</label>
-        <select
-          id="presence-period"
-          value={preset}
-          onChange={(event) => {
-            const value = event.target.value as Preset;
-            setPreset(value);
-            if (value !== "custom" && value !== "all") setRange(presenceDateRange(value));
-          }}
-        >
-          <option value="today">Today</option>
-          <option value="week">This week</option>
-          <option value="month">This month</option>
-          <option value="last-month">Last month</option>
-          <option value="custom">Custom range</option>
-          <option value="all">All time</option>
-        </select>
-        {preset !== "all" ? (
-          <>
-            <label htmlFor="presence-start">Start date</label>
-            <input
-              id="presence-start"
-              type="date"
-              required
-              value={range.start}
-              disabled={preset !== "custom"}
-              onChange={(event) => setRange({ ...range, start: event.target.value })}
-            />
-            <label htmlFor="presence-end">End date</label>
-            <input
-              id="presence-end"
-              type="date"
-              required
-              value={range.end}
-              disabled={preset !== "custom"}
-              onChange={(event) => setRange({ ...range, end: event.target.value })}
-            />
-            {invalid && <p role="alert">Choose both dates, with the end date on or after the start date.</p>}
-          </>
-        ) : (
-          <p>All time exports the complete attendance history.</p>
-        )}
+        <div className="vo-export-fields">
+          <div>
+            <label htmlFor="presence-period">Date range</label>
+            <select
+              id="presence-period"
+              value={preset}
+              onChange={(event) => {
+                const value = event.target.value as Preset;
+                setPreset(value);
+                if (value !== "custom" && value !== "all") setRange(presenceDateRange(value));
+              }}
+            >
+              <option value="today">Today</option>
+              <option value="week">This week</option>
+              <option value="month">This month</option>
+              <option value="last-month">Last month</option>
+              <option value="custom">Custom range</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+          {preset !== "all" ? (
+            <>
+              <div>
+                <label htmlFor="presence-start">Start date</label>
+                <input
+                  id="presence-start"
+                  type="date"
+                  required
+                  value={range.start}
+                  disabled={preset !== "custom"}
+                  onChange={(event) => setRange({ ...range, start: event.target.value })}
+                />
+              </div>
+              <div>
+                <label htmlFor="presence-end">End date</label>
+                <input
+                  id="presence-end"
+                  type="date"
+                  required
+                  value={range.end}
+                  disabled={preset !== "custom"}
+                  onChange={(event) => setRange({ ...range, end: event.target.value })}
+                />
+              </div>
+            </>
+          ) : null}
+        </div>
+        {invalid && <p role="alert">Choose both dates, with the end date on or after the start date.</p>}
+        {preset === "all" && <p>All time exports the complete attendance history.</p>}
         <p>Each row is a Time In or Time Out event. Empty ranges download a CSV with column headers only.</p>
         <div className="vo-actions">
           <Button label="Cancel" size="lg" stretch="auto" variant="secondary" onClick={onClose} />

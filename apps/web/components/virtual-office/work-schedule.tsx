@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { isAxiosError } from "axios";
 import { Button } from "@makeplane/propel/components/button";
+import { Radio, RadioGroup } from "@makeplane/propel/components/radio";
 import type { OfficeWorkState, ScheduleRequest, WorkingDay } from "../../services/virtual-office.service";
 import { virtualOfficeService as service } from "../../services/virtual-office.service";
 // oxlint-disable-next-line import/no-unassigned-import
 import "./work-schedule.css";
 
 export const workingDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+function orderedSchedule(value: WorkingDay[]) {
+  return workingDays.flatMap((_, day) => value.filter((entry) => entry.day === day));
+}
 export function officeError(
   error: unknown,
   fallback = "Could not save. Check the working hours and try again."
@@ -20,6 +24,55 @@ export function officeError(
   return fallback;
 }
 
+function ScheduleTimes({
+  entry,
+  name,
+  prefix,
+  onChange,
+}: {
+  entry: WorkingDay;
+  name: string;
+  prefix: string;
+  onChange: (fields: Partial<WorkingDay>) => void;
+}) {
+  return (
+    <div className="vo-schedule-times">
+      <div className="vo-schedule-time-field">
+        <label htmlFor={`${prefix}-start`}>Start time</label>
+        <input
+          id={`${prefix}-start`}
+          aria-label={`${name} start time`}
+          type="time"
+          required
+          value={entry.start}
+          onChange={(event) => onChange({ start: event.target.value })}
+        />
+      </div>
+      <div className="vo-schedule-time-field">
+        <label htmlFor={`${prefix}-end`}>End time</label>
+        <input
+          id={`${prefix}-end`}
+          aria-label={`${name} end time`}
+          type="time"
+          required
+          value={entry.end}
+          onChange={(event) => onChange({ end: event.target.value })}
+        />
+      </div>
+      <label className="vo-schedule-overnight" htmlFor={`${prefix}-overnight`}>
+        <input
+          id={`${prefix}-overnight`}
+          aria-label={`${name} ends next day`}
+          type="checkbox"
+          checked={entry.ends_next_day}
+          onChange={(event) => onChange({ ends_next_day: event.target.checked })}
+        />
+        Ends next day
+      </label>
+    </div>
+  );
+}
+
 export function ScheduleFields({
   value,
   onChange,
@@ -31,64 +84,119 @@ export function ScheduleFields({
   disabled?: boolean;
   prefix: string;
 }) {
+  const [mode, setMode] = useState<"same" | "different">("same");
+  const first = orderedSchedule(value)[0];
+  const uniform = value.every(
+    (entry) => entry.start === first?.start && entry.end === first?.end && entry.ends_next_day === first?.ends_next_day
+  );
+  const same = mode === "same" && uniform;
   function update(day: number, fields: Partial<WorkingDay>) {
     onChange(value.map((entry) => (entry.day === day ? { ...entry, ...fields } : entry)));
   }
   return (
-    <fieldset disabled={disabled} className="vo-schedule-fields">
-      <legend>Working days and hours · Asia/Manila</legend>
-      <p>Choose each working day. Use Ends next day for overnight shifts. Overlapping shifts are not allowed.</p>
-      {workingDays.map((name, day) => {
-        const entry = value.find((item) => item.day === day);
-        return (
-          <div key={name} className="vo-schedule-day">
-            <label htmlFor={`${prefix}-${day}-selected`}>
+    <fieldset
+      disabled={disabled}
+      className="vo-schedule-fields"
+      aria-labelledby={`${prefix}-heading`}
+      aria-describedby={`${prefix}-help`}
+    >
+      <div className="vo-schedule-heading">
+        <h3 id={`${prefix}-heading`}>Working hours</h3>
+        <span className="vo-schedule-timezone">Asia/Manila</span>
+      </div>
+      <p id={`${prefix}-help`} className="vo-schedule-help">
+        Select working days, then set their hours. Overnight shifts can end the next day.
+      </p>
+      <div className="vo-schedule-mode">
+        <span className="vo-schedule-mode-title">Schedule setup</span>
+        <RadioGroup<"same" | "different">
+          density="comfortable"
+          aria-label="Schedule setup"
+          disabled={disabled}
+          value={same ? "same" : "different"}
+          onValueChange={(next) => {
+            setMode(next);
+            if (next === "same" && first)
+              onChange(
+                value.map((entry) => ({
+                  ...entry,
+                  start: first.start,
+                  end: first.end,
+                  ends_next_day: first.ends_next_day,
+                }))
+              );
+          }}
+        >
+          <label htmlFor={`${prefix}-same`}>
+            <Radio id={`${prefix}-same`} value="same" />
+            Same hours across days
+          </label>
+          <label htmlFor={`${prefix}-different`}>
+            <Radio id={`${prefix}-different`} value="different" />
+            Different hours each day
+          </label>
+        </RadioGroup>
+      </div>
+      <p className="vo-schedule-help">Shared hours use the first selected day’s times for every selected day.</p>
+      <div className="vo-schedule-days" role="group" aria-label="Working days">
+        {workingDays.map((name, day) => {
+          const entry = value.find((item) => item.day === day);
+          return (
+            <label key={name} className="vo-schedule-day-toggle" data-selected={!!entry}>
               <input
-                id={`${prefix}-${day}-selected`}
                 type="checkbox"
                 checked={!!entry}
                 onChange={(event) =>
                   onChange(
                     event.target.checked
-                      ? [...value, { day, start: "", end: "", ends_next_day: false }]
+                      ? orderedSchedule([
+                          ...value,
+                          {
+                            day,
+                            start: same && first ? first.start : "",
+                            end: same && first ? first.end : "",
+                            ends_next_day: same && first ? first.ends_next_day : false,
+                          },
+                        ])
                       : value.filter((item) => item.day !== day)
                   )
                 }
               />
               {name}
             </label>
-            {entry && (
-              <div className="vo-schedule-times">
-                <label htmlFor={`${prefix}-${day}-start`}>{name} start time</label>
-                <input
-                  id={`${prefix}-${day}-start`}
-                  type="time"
-                  required
-                  value={entry.start}
-                  onChange={(event) => update(day, { start: event.target.value })}
-                />
-                <label htmlFor={`${prefix}-${day}-end`}>{name} end time</label>
-                <input
-                  id={`${prefix}-${day}-end`}
-                  type="time"
-                  required
-                  value={entry.end}
-                  onChange={(event) => update(day, { end: event.target.value })}
-                />
-                <label htmlFor={`${prefix}-${day}-overnight`}>
-                  <input
-                    id={`${prefix}-${day}-overnight`}
-                    type="checkbox"
-                    checked={entry.ends_next_day}
-                    onChange={(event) => update(day, { ends_next_day: event.target.checked })}
-                  />
-                  {name} ends next day
-                </label>
-              </div>
-            )}
+          );
+        })}
+      </div>
+      {same ? (
+        first ? (
+          <div className="vo-schedule-shared">
+            <p className="vo-schedule-help">These hours apply to all selected days.</p>
+            <ScheduleTimes
+              entry={first}
+              name="Shared"
+              prefix={`${prefix}-shared`}
+              onChange={(fields) => onChange(value.map((entry) => ({ ...entry, ...fields })))}
+            />
           </div>
-        );
-      })}
+        ) : (
+          <p className="vo-schedule-help">Select at least one working day to set shared hours.</p>
+        )
+      ) : value.length ? (
+        orderedSchedule(value).map((entry) => (
+          <section key={entry.day} className="vo-schedule-day" aria-label={`${workingDays[entry.day]} hours`}>
+            <h4>{workingDays[entry.day]}</h4>
+            <ScheduleTimes
+              entry={entry}
+              name={workingDays[entry.day]}
+              prefix={`${prefix}-${entry.day}`}
+              onChange={(fields) => update(entry.day, fields)}
+            />
+          </section>
+        ))
+      ) : (
+        <p className="vo-schedule-help">Select working days to set individual hours.</p>
+      )}
+      <p className="vo-schedule-help">Shifts must not overlap, including overnight shifts.</p>
     </fieldset>
   );
 }
@@ -243,7 +351,7 @@ export function ProfileWorkSchedule({
           <h3>Approved schedule · Asia/Manila</h3>
           <ScheduleSummary schedule={work.schedule} />
           <p>
-            Request changes below. An Admin or Super Admin must approve them. Open sessions retain their original
+            Request changes below. An office administrator must approve them. Open sessions retain their original
             schedule.
           </p>
           <EmployeeScheduleForm key={`${work.policy_id}-${pending?.revision ?? 0}`} work={work} refresh={refresh} />
