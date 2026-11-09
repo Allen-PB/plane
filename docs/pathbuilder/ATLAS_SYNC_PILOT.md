@@ -52,3 +52,9 @@ The passing chat summary and `CHAT_VERIFIED` marker are in the dev release's `at
 The key from the initial staging log was revoked on Sync dev. It returned HTTP 403 with no ticket data. The replacement returned HTTP 200 and was loaded by Atlas staging. A fresh model-driven chat returned the approved ticket's exact ID, title, status, and link. The new HTTP 200 audit entry matched the replacement credential, and the saved chat log and transcript contain no raw replacement key. Evidence is in `atlas-staging/rotation-chat-verification.log` and `atlas-staging/ROTATED_CHAT_VERIFIED` under the dev release directory. Production was untouched.
 
 The replacement key also passed both denial checks. A known other-project ticket returned the same generic HTTP 404 as a missing ticket, including when the approved project ID was substituted. PATCH returned HTTP 405 on the Atlas endpoint and HTTP 403 on the regular Sync API. The disposable ticket's entire database row was unchanged, and the ticket was removed afterward. Evidence is in `atlas-staging/rotation-denials-verification.log`.
+
+## Non-admin pilot verification on 10 November 2026
+
+A dedicated Atlas staging user with the regular user role received individual read grants for the Atlas profile, its Qwen base model, and the Workflow QA tool. The user could discover the tool and was denied access to the admin tool settings. The chat returned the approved ticket's exact ID, title, status, and link. A fresh Sync HTTP 200 audit entry matched the rotated key.
+
+The returned URL opened `WFQA-1` through the SSH tunnel in a Sync dev browser session with Workflow QA access. The title and Backlog state matched the chat. The temporary browser test membership was deactivated afterward. Evidence is in `atlas-staging/pilot-chat-verification.log`, `atlas-staging/PILOT_CHAT_VERIFIED`, and `atlas-staging/PILOT_LINK_VERIFIED` under the dev release directory.
