@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+from django.urls import path
+
+from plane.api.views.atlas import AtlasTicketEndpoint
+
 from .asset import urlpatterns as asset_patterns
 from .cycle import urlpatterns as cycle_patterns
 from .intake import urlpatterns as intake_patterns
@@ -16,6 +20,11 @@ from .invite import urlpatterns as invite_patterns
 from .sticky import urlpatterns as sticky_patterns
 
 urlpatterns = [
+    path(
+        "integrations/atlas/workspaces/<slug:slug>/projects/<uuid:project_id>/tickets/<uuid:ticket_id>/",
+        AtlasTicketEndpoint.as_view(),
+        name="atlas-ticket",
+    ),
     *asset_patterns,
     *cycle_patterns,
     *intake_patterns,

@@ -419,6 +419,10 @@ LIVE_URL = urljoin(LIVE_BASE_URL, LIVE_BASE_PATH) if LIVE_BASE_URL else None
 # WEB URL
 WEB_URL = os.environ.get("WEB_URL")
 
+ATLAS_SYNC_KEY_SHA256 = os.environ.get("ATLAS_SYNC_KEY_SHA256", "")
+ATLAS_SYNC_USER_ID = os.environ.get("ATLAS_SYNC_USER_ID", "")
+ATLAS_SYNC_PROJECT_ID = os.environ.get("ATLAS_SYNC_PROJECT_ID", "")
+
 HARD_DELETE_AFTER_DAYS = int(os.environ.get("HARD_DELETE_AFTER_DAYS", 60))
 
 
